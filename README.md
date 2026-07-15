@@ -13,6 +13,65 @@ This repository supports development by the designated Nexa project team. The te
 - Reporting, attribution and customer analytics
 - SaaS administration, plans and tenant operations
 
+## System Architecture
+
+Nexa uses a **modular monolith with supporting platform services**. It is not a full microservices architecture. The customer-facing product is one versioned PHP application with clear module boundaries, one release process and one shared user experience. Background workers use the same application contracts, while the SaaS control plane and high-volume event workloads remain separate operational boundaries.
+
+### Core Product Modules
+
+- Platform core: shared configuration, feature flags, queues, audit events and API conventions.
+- CRM data platform: accounts, contacts, leads, opportunities, activities, custom objects and associations.
+- Sales workspace: pipelines, tasks, calendars, collaboration and account-centered workflows.
+- Marketing: contacts, segments, campaigns, forms, consent, email and deliverability.
+- Automation: triggers, actions, delays, branching, scoring and omnichannel orchestration.
+- Service and engagement: cases, knowledge, portals, conversations, bots and shared inboxes.
+- Messaging and channels: team email, SMS, WhatsApp, social, advertising and provider integrations.
+- Analytics: reporting, attribution, customer journeys, behavioral events and governed metrics.
+- Identity and access: users, teams, roles, permissions, SSO, sensitive data and audited support access.
+- SaaS administration: tenants, plans, entitlements, usage, subscriptions, provisioning and operator controls.
+
+### Architecture Diagram
+
+```mermaid
+flowchart TB
+    U[Users and API Clients] --> R[Gateway and Tenant Router]
+    R --> CP[SaaS Control Plane<br/>tenants, domains, plans, placement]
+    R --> APP[Nexa Modular PHP Monolith]
+
+    subgraph CORE[Core Product]
+        APP --> CRM[CRM and Sales]
+        APP --> MKT[Marketing and Automation]
+        APP --> SVC[Service and Conversations]
+        APP --> IAM[Identity and Administration]
+        APP --> RPT[Reporting and Analytics APIs]
+    end
+
+    APP --> W[Background and Queue Workers]
+    APP --> TDB[(Selected Tenant Database<br/>core and all Nexa modules)]
+    W --> TDB
+    CP --> CDB[(Shared Control-Plane Database)]
+    CP --> TDB
+    APP --> OBJ[Object Storage]
+    APP --> EXT[Email, SMS, WhatsApp, Social and Billing Providers]
+    W --> EVT[Event and Analytics Platform]
+```
+
+Transactional customer data uses a **cell-based, database-per-tenant model**. Each tenant database contains the existing CRM records and every Nexa business module for one customer. The shared control-plane database contains only routing, placement, plan, entitlement, subscription and operational metadata.
+
+### Implementation Status
+
+| Area | Current state |
+|---|---|
+| Complete shared PHP application codebase | Implemented and tracked in Git |
+| Modular product catalogue and build order | Documented |
+| Initial control-plane SQL schema | Scaffolded in `database/control-plane/migrations/` |
+| Tenant migration and synthetic seed boundaries | Scaffolded under `database/tenant/` |
+| Tenant router, immutable tenant context and database selection | Planned tenancy spike |
+| Automated provisioning and schema-fleet migrations | Planned control-plane work |
+| Marketing, automation, service and analytics modules | Planned in ordered build phases |
+
+The database model is therefore an accepted target architecture with an initial schema scaffold; it is not yet a completed multi-tenant runtime. See the [SaaS data architecture](docs/architecture/saas-data-architecture.md) and [module roadmap](docs/product/module-build-roadmap.md) for delivery order and launch gates.
+
 ## Team Documentation
 
 Team members should read the documents relevant to their work before modifying shared contracts:
