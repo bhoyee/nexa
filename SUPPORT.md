@@ -1,8 +1,8 @@
 # Support
 
-Use GitHub Issues for reproducible bugs and approved feature work. Use GitHub Discussions for setup questions, architecture discussions and general help once Discussions is enabled.
+This repository does not provide public product or implementation support. GitHub Issues are used by designated Nexa team members for assigned bugs and approved feature work.
 
-Before opening an issue:
+Before a team member opens an issue:
 
 1. Search existing issues.
 2. Confirm the problem on the pinned environment.
