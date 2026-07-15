@@ -14,7 +14,12 @@ The principal architectural gap is tenant isolation. The current application ini
 
 We considered modifying all existing EspoCRM tables to add `tenant_id` and placing every customer in one shared CRM schema. Although possible, this would create a large permanent fork and make customer isolation dependent on every current and future code path remembering the correct tenant condition. One missed condition could expose one customer's data to another.
 
-We therefore recommend a **cell-based, database-per-tenant architecture**:
+We therefore recommend two complementary architecture decisions:
+
+- **Application architecture:** a modular PHP monolith for the customer-facing product, with clear internal module boundaries, shared contracts and one release process. Background workers use the same product contracts. Separate services are introduced only for distinct SaaS control-plane, scaling, security or workload needs.
+- **Data and deployment architecture:** a cell-based, database-per-tenant model for transactional customer data.
+
+The target topology applies these decisions as follows:
 
 - A small shared control plane manages tenants, domains, plans, subscriptions, entitlements, database placement and provisioning.
 - Each customer receives one logical tenant database containing both the existing EspoCRM core tables and every new Nexa CRM, marketing, automation and service table for that customer.
@@ -100,27 +105,19 @@ Reviewing every visible feature cannot prove that every internal query path has 
 
 ## 4. Recommended Target Architecture
 
-```text
-                              Users
-                                |
-                    Gateway / Tenant Router
-                                |
-                         Nexa Control Plane
-             tenant, domain, plan, entitlement, placement
-                                |
-             +------------------+------------------+
-             |                                     |
-       Application Cell A                    Application Cell B
-       shared Nexa code                      shared Nexa code
-             |                                     |
-      MariaDB Cluster A                     MariaDB Cluster B
-      +------+-------+                      +------+-------+
-      |              |                      |              |
- tenant_db_A    tenant_db_B             tenant_db_C    tenant_db_D
- Espo + Nexa    Espo + Nexa             Espo + Nexa    Espo + Nexa
-```
+![Nexa modular monolith architecture showing users, tenant routing, control plane, product modules, background workers, tenant databases, storage, providers and analytics](../assets/nexa-system-architecture.png)
 
-### 4.1 Control Plane
+### 4.1 Application Architecture: Modular Monolith
+
+The main Nexa product is one versioned PHP application and one coordinated user experience. Its internal modules cover platform core, CRM, sales, marketing, automation, service, conversations, reporting, identity and tenant administration. Modules own their metadata, services, views, jobs and tests behind deliberate boundaries even though they are deployed together.
+
+This is not a full microservices architecture. With two developers, splitting every product area into independently deployed services would add service discovery, distributed transactions, API versioning, deployment coordination, observability and local-development overhead before the product demonstrates a scaling need.
+
+The modular monolith does not prohibit supporting services. A responsibility can be extracted when it has a clear contract and a concrete reason such as independent scaling, stronger isolation, specialist storage, provider processing or a different failure profile. The SaaS control plane, event ingestion and high-volume analytics are the initial separate boundaries.
+
+Background and queue workers run independently from web requests but use the same versioned application code and tenant-context contracts. Every queued job must identify its tenant and cell.
+
+### 4.2 Control Plane
 
 The control plane is a small Nexa-owned PHP service. Laravel is a reasonable implementation option because it provides mature migrations, queues, authentication and billing integration, but the framework decision can be made separately.
 
@@ -136,7 +133,7 @@ The control plane stores:
 
 It must not store ordinary contacts, deals, message bodies, attachments or other customer CRM data.
 
-### 4.2 Tenant Database
+### 4.3 Tenant Database
 
 One logical tenant database contains the complete transactional product for one customer:
 
@@ -151,15 +148,18 @@ One logical tenant database contains the complete transactional product for one 
 
 All tenant databases use one canonical schema version. Product plans are enforced through entitlements, not different schemas.
 
-### 4.3 Shared Infrastructure
+### 4.4 Shared Infrastructure
 
 - A gateway resolves customer domains and routes requests.
-- Redis or an equivalent service handles cache, locks and queues with tenant-prefixed keys.
-- Object storage keeps attachments and exports under immutable tenant prefixes.
-- A queue transports jobs containing an immutable tenant identifier.
+- Redis handles cache, queues, distributed locks and rate limits with tenant-prefixed keys.
+- Object storage keeps attachments, imports, exports and media under immutable tenant prefixes.
+- OpenSearch supports global search and high-volume event queries with enforced tenant boundaries.
+- An analytics database with Metabase or an equivalent reporting tool serves governed reporting models.
+- Dedicated workers process marketing email, automation, imports, webhooks and scheduled jobs with immutable tenant context.
 - A secrets manager stores database and provider credentials.
 - Central logs, metrics and traces include tenant, cell and request identifiers.
-- A later event/analytics store handles high-volume website and message events.
+
+These components support the modular monolith; they do not turn every product module into a microservice. Each addition requires tenant-isolation tests, monitoring, backup or recovery procedures and a supported local-development path.
 
 ## 5. How a Request Reaches the Correct EspoCRM Data
 
@@ -194,7 +194,7 @@ A customer database can be backed up, restored, cloned into a sandbox, moved to 
 
 ### 6.5 It Is More Realistic for a Two-Person Team
 
-The architecture creates operational work around provisioning and migrations, but that work is explicit and automatable. Shared-schema tenancy would distribute security-sensitive work across almost every feature both developers build.
+The architecture creates operational work around provisioning and migrations, but that work is explicit and automatable. Shared-schema tenancy would distribute security-sensitive work across almost every feature both developers build. A modular monolith also keeps delivery, debugging, testing and local setup manageable without closing the door to later service extraction.
 
 ## 7. Trade-Offs and Mitigations
 
@@ -233,7 +233,7 @@ Docker and XAMPP can both serve the PHP application, but the team must align PHP
 ### Stage 1: Phase 0 Baseline
 
 - Approve this report and ADR-0001.
-- Create the private Git remote and protected `main` branch.
+- Maintain the public Git remote and protect the `main` branch.
 - Align Docker and XAMPP versions.
 - Establish migration, seed, CI and review rules.
 - Keep the existing EspoCRM database unchanged while the architecture spike is built.
@@ -293,16 +293,19 @@ The bundled EspoCRM source identifies the application as AGPLv3 and includes an 
 Stakeholders are asked to approve the following:
 
 1. EspoCRM 9.1.9 remains the pinned CRM foundation.
-2. Nexa uses a cell-based, logical database-per-tenant model for transactional customer data.
-3. Espo core and all Nexa customer features live together inside each tenant database.
-4. A separate shared control plane stores only SaaS routing, commercial and operational metadata.
-5. Multiple logical tenant databases share MariaDB clusters; dedicated cells are optional.
-6. High-volume event and analytics workloads are separated from transactional CRM when required.
-7. The team completes the tenancy proof of concept before broad product customization.
-8. A legal review is required before final rebranding and commercial launch.
+2. The main customer-facing product uses a modular PHP monolith with explicit internal module boundaries and one coordinated release process.
+3. Background workers share the versioned application code and immutable tenant-context contracts.
+4. Nexa uses a cell-based, logical database-per-tenant model for transactional customer data.
+5. Espo core and all Nexa customer features live together inside each tenant database.
+6. A separate shared control plane stores only SaaS routing, commercial and operational metadata.
+7. Multiple logical tenant databases share MariaDB clusters; dedicated cells are optional.
+8. Redis, object storage, OpenSearch, analytics and dedicated workers are introduced as supporting infrastructure when justified.
+9. High-volume event and analytics workloads are separated from transactional CRM when required.
+10. The team completes the tenancy proof of concept before broad product customization.
+11. A legal review is required before final rebranding and commercial launch.
 
 ## Conclusion
 
 EspoCRM is suitable as the CRM engine inside Nexa, but it should not be treated as an already multi-tenant SaaS platform. Retrofitting shared-schema tenancy into every existing and future Espo path would consume significant engineering effort while leaving customer isolation dependent on perfect application filtering.
 
-The recommended cell-based architecture retains the value of EspoCRM, keeps all customer-specific core and new functionality together, provides stronger isolation and creates a credible path from the current two-developer project to a scalable SaaS product.
+The recommended modular-monolith and cell-based architecture retains the value of EspoCRM, keeps the product manageable for the current team, keeps all customer-specific core and new functionality together, provides stronger isolation and creates a credible path to a scalable SaaS product. Supporting services are added deliberately when their operational value exceeds their complexity.
