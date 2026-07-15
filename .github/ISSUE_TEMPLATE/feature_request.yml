@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose scoped product work
+title: "[Feature]: "
+labels: ["type: feature", "status: triage"]
+body:
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement and module
+      placeholder: F-000 / M00 or proposed new requirement
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe who needs this and why.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+      description: State observable acceptance criteria, not an implementation preference.
+    validations:
+      required: true
+  - type: textarea
+    id: tenancy
+    attributes:
+      label: SaaS, security and data considerations
+      description: Note tenant, entitlement, quota, privacy and migration effects.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -1,0 +1,340 @@
+body.modern-login-page {
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 0 !important;
+    overflow-x: hidden;
+    background: #f7f8f6;
+    color: #172222;
+}
+
+body.modern-login-page #main { min-height: 100vh; }
+
+.modern-login-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 58fr) minmax(420px, 42fr);
+}
+
+.modern-login-visual {
+    position: relative;
+    min-height: 100vh;
+    padding: clamp(28px, 4vw, 64px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #172222;
+    background-image: url('../img/login-workspace.png');
+    background-size: cover;
+    background-position: center;
+    isolation: isolate;
+}
+
+.modern-login-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(13, 28, 27, 0.52);
+}
+
+.modern-login-brand,
+.modern-login-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.modern-login-mark {
+    width: 40px;
+    height: 40px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 40px;
+    border-radius: 8px;
+    background: #f4f7f2;
+    color: #0f766e;
+    font-size: 20px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.modern-login-brand-name { letter-spacing: 0; }
+
+.modern-login-visual-copy {
+    max-width: 600px;
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.modern-login-kicker,
+.modern-login-eyebrow {
+    margin: 0 0 12px;
+    color: #b7e4d8;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+
+.modern-login-visual-copy h2 {
+    max-width: 560px;
+    margin: 0 0 16px;
+    color: #fff;
+    font-size: clamp(34px, 4vw, 58px);
+    line-height: 1.08;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.modern-login-visual-copy > p:last-child {
+    max-width: 500px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+.modern-login-auth {
+    min-width: 0;
+    padding: 72px clamp(36px, 5vw, 88px) 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7f8f6;
+}
+
+.modern-login-mobile-brand { display: none; color: #172222; }
+
+#login.modern-login-panel {
+    width: min(100%, 430px);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.modern-login-header { margin-bottom: 34px; }
+.modern-login-eyebrow { color: #0f766e; }
+
+.modern-login-header h1 {
+    margin: 0 0 10px;
+    color: #172222;
+    font-size: 38px;
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.modern-login-header > p:last-child {
+    margin: 0;
+    color: #687574;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.modern-login-form .form-group { margin-bottom: 20px; }
+
+.modern-login-form label {
+    display: block;
+    margin: 0 0 8px;
+    color: #354342;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.modern-login-input {
+    position: relative;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd3d0;
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.modern-login-input:focus-within {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.modern-login-input > span:first-child {
+    width: 46px;
+    flex: 0 0 46px;
+    color: #7b8886;
+    text-align: center;
+}
+
+.modern-login-input .form-control {
+    height: 48px;
+    min-width: 0;
+    padding: 0 42px 0 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #172222;
+    box-shadow: none;
+    font-size: 15px;
+}
+
+.modern-login-input .form-control:focus { box-shadow: none; }
+
+.modern-login-password-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 46px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    color: #687574;
+    cursor: pointer;
+}
+
+.modern-login-password-toggle:hover,
+.modern-login-password-toggle:focus {
+    color: #0f766e;
+    text-decoration: none;
+}
+
+.modern-login-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modern-login-forgot {
+    align-self: flex-end;
+    color: #0f766e;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.modern-login-forgot:hover,
+.modern-login-forgot:focus { color: #0b5f59; }
+
+#login.modern-login-panel #btn-login,
+#login.modern-login-panel #sign-in {
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid #0f766e;
+    border-radius: 8px;
+    background: #0f766e;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(15, 118, 110, 0.2);
+}
+
+#login.modern-login-panel #btn-login:hover,
+#login.modern-login-panel #btn-login:focus,
+#login.modern-login-panel #sign-in:hover,
+#login.modern-login-panel #sign-in:focus {
+    border-color: #0b5f59;
+    background: #0b5f59;
+}
+
+#login.modern-login-panel #btn-login .fa-arrow-right { margin-left: 8px; }
+
+.modern-login-provider { position: relative; margin-bottom: 22px; }
+
+.modern-login-provider > .btn-icon {
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    color: #fff;
+}
+
+.modern-login-another-user {
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 3px solid #e87961;
+    background: #fff;
+    color: #687574;
+}
+
+.modern-login-another-user strong { color: #172222; }
+
+.modern-login-security {
+    margin: 28px 0 0;
+    color: #7b8886;
+    font-size: 12px;
+    text-align: center;
+}
+
+.modern-login-security .fa-shield-alt { margin-right: 6px; color: #0f766e; }
+
+body.modern-login-page > footer {
+    position: fixed;
+    z-index: 2;
+    right: 0;
+    bottom: 18px;
+    width: 42%;
+    padding: 0 24px;
+    background: transparent;
+    color: #7b8886;
+    text-align: center;
+}
+
+body.modern-login-page > footer a { color: #53615f; }
+
+@media (max-width: 920px) {
+    .modern-login-shell { grid-template-columns: minmax(0, 48fr) minmax(400px, 52fr); }
+    .modern-login-visual { padding: 32px; }
+    .modern-login-visual-copy h2 { font-size: 38px; }
+    body.modern-login-page > footer { width: 52%; }
+}
+
+@media (max-width: 767px) {
+    .modern-login-shell { min-height: 100vh; display: block; }
+
+    .modern-login-visual {
+        min-height: 180px;
+        height: 24vh;
+        max-height: 240px;
+        padding: 22px;
+        background-position: center 45%;
+    }
+
+    .modern-login-visual::before { background: rgba(13, 28, 27, 0.3); }
+    .modern-login-visual-copy,
+    .modern-login-visual > .modern-login-brand { display: none; }
+
+    .modern-login-auth {
+        min-height: calc(100vh - 180px);
+        padding: 28px 22px 72px;
+        display: block;
+    }
+
+    .modern-login-mobile-brand { display: flex; margin-bottom: 36px; }
+    #login.modern-login-panel { max-width: 480px; margin: 0 auto; }
+    .modern-login-header h1 { font-size: 32px; }
+
+    body.modern-login-page > footer {
+        position: static;
+        width: 100%;
+        padding: 0 20px 20px;
+        background: #f7f8f6;
+    }
+}
+
+@media (max-width: 420px) {
+    .modern-login-visual { min-height: 136px; height: 18vh; }
+    .modern-login-auth { min-height: calc(100vh - 136px); padding: 24px 18px 56px; }
+    .modern-login-mobile-brand { margin-bottom: 28px; }
+    .modern-login-mark { width: 36px; height: 36px; flex-basis: 36px; font-size: 18px; }
+    .modern-login-header { margin-bottom: 28px; }
+    .modern-login-header h1 { font-size: 29px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modern-login-input { transition: none; }
+}

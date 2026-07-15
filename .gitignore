@@ -1,0 +1,33 @@
+.env
+.env.*
+!.env.example
+downloads/*.zip
+downloads/*.part
+*.sql.gz
+*.dump
+*.bak
+backups/
+# EspoCRM core and runtime data are reproducible; keep custom code trackable.
+espocrm/*
+!espocrm/LICENSE.txt
+!espocrm/custom/
+!espocrm/client/
+espocrm/client/*
+!espocrm/client/custom/
+espocrm/.nexa-source-version
+
+# Local editor and operating-system files.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated local analysis and browser-test artifacts.
+.qa/
+.xlsx-read/
+
+# Generated dependency, coverage and build output.
+node_modules/
+coverage/
+build/
+dist/
