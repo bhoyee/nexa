@@ -13,6 +13,20 @@ This repository supports development by the designated Nexa project team. The te
 - Reporting, attribution and customer analytics
 - SaaS administration, plans and tenant operations
 
+## Team Documentation
+
+Team members should read the documents relevant to their work before modifying shared contracts:
+
+- [Feature inventory](docs/product/feature-inventory.md): functional and SaaS requirements.
+- [Module and build roadmap](docs/product/module-build-roadmap.md): module ownership, dependency order and delivery phases.
+- [SaaS architecture recommendation](docs/architecture/espocrm-saas-architecture-recommendation.md): recommended product and data architecture.
+- [Tenant isolation ADR](docs/architecture/ADR-0001-tenant-database-isolation.md): accepted database-isolation decision.
+- [SaaS data architecture](docs/architecture/saas-data-architecture.md): routing, placement, migration and operational model.
+- [Development collaboration](docs/development/phase-0-collaboration.md): shared code and database workflow.
+- [Environment baseline](docs/development/environment-baseline.md): required versions and extensions.
+- [Git workflow](docs/development/git-workflow.md): branches, commits, pull requests and releases.
+- [XAMPP setup](docs/development/xampp-setup.md): detailed Windows/XAMPP installation.
+
 ## Development Baseline
 
 | Component | Version |
@@ -48,7 +62,251 @@ docker compose down
 
 ## XAMPP Setup
 
-Designated team members using XAMPP should follow the [development environment baseline](docs/development/environment-baseline.md). Docker and XAMPP contributors use the same source, schema migrations, synthetic fixtures and verification checks.
+XAMPP contributors use the same Git repository, application release, custom files and database migrations as Docker contributors. XAMPP is only a different way to run Apache and PHP locally.
+
+### 1. Install the Required Software
+
+Install:
+
+- Git for Windows.
+- XAMPP with PHP 8.2.
+- MariaDB 10.11.
+- PowerShell 5.1 or later.
+
+Do not use XAMPP's bundled MariaDB 10.4 as the project compatibility baseline. Run MariaDB 10.11 separately and leave XAMPP MySQL stopped.
+
+### 2. Clone the Repository
+
+```powershell
+Set-Location C:\xampp\htdocs
+git clone https://github.com/bhoyee/nexa.git
+Set-Location nexa
+```
+
+### 3. Obtain the Approved Application Package
+
+Obtain the complete packaged application release `9.1.9` from the project owner and place it at:
+
+```text
+C:\xampp\htdocs\nexa\downloads\application-9.1.9.zip
+```
+
+An upgrade archive is not a complete installation package and cannot be used for this step.
+
+### 4. Prepare the Source and Local Environment
+
+```powershell
+$env:Path = "C:\xampp\php;$env:Path"
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
+  -ArchivePath downloads/application-9.1.9.zip `
+  -SkipStart
+```
+
+This creates an ignored `.env`, extracts the application into `espocrm/`, preserves tracked Nexa custom files and checks PHP extensions and the pinned version.
+
+Review the generated settings:
+
+```powershell
+Get-Content .env
+```
+
+Change `ESPOCRM_SITE_URL` to `http://nexa.local` for the XAMPP installation. Never commit `.env`.
+
+### 5. Create the Local Database
+
+Start the MariaDB 10.11 Windows service. Connect with its administrator account:
+
+```powershell
+& 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' -u root -p
+```
+
+Create the local database and application user. Replace `<DB_PASSWORD>` with the `DB_PASSWORD` value from `.env`:
+
+```sql
+CREATE DATABASE espocrm
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'espocrm'@'localhost'
+    IDENTIFIED BY '<DB_PASSWORD>';
+
+GRANT ALL PRIVILEGES ON espocrm.*
+    TO 'espocrm'@'localhost';
+
+FLUSH PRIVILEGES;
+```
+
+Each developer owns an independent local database. Do not import another developer's full database dump.
+
+### 6. Configure Apache
+
+Open `C:\xampp\apache\conf\httpd.conf` and confirm these lines are enabled:
+
+```apache
+LoadModule rewrite_module modules/mod_rewrite.so
+Include conf/extra/httpd-vhosts.conf
+```
+
+Add this virtual host to `C:\xampp\apache\conf\extra\httpd-vhosts.conf`:
+
+```apache
+<VirtualHost *:80>
+    ServerName nexa.local
+    DocumentRoot "C:/xampp/htdocs/nexa/espocrm"
+
+    <Directory "C:/xampp/htdocs/nexa/espocrm">
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+As Administrator, add this entry to `C:\Windows\System32\drivers\etc\hosts`:
+
+```text
+127.0.0.1 nexa.local
+```
+
+Start Apache from the XAMPP Control Panel. Keep the XAMPP MySQL service stopped when MariaDB 10.11 is running on port 3306.
+
+### 7. Complete Browser Installation
+
+Open <http://nexa.local/install> and use:
+
+| Installer setting | Value |
+|---|---|
+| Database platform | MySQL/MariaDB |
+| Host | `127.0.0.1` |
+| Port | `3306` |
+| Database | `espocrm` |
+| Database user | `espocrm` |
+| Database password | `DB_PASSWORD` from `.env` |
+| Administrator username | `ADMIN_USERNAME` from `.env` |
+| Administrator password | `ADMIN_PASSWORD` from `.env` |
+
+Use the actual MariaDB port if it differs from `3306`.
+
+### 8. Rebuild and Verify
+
+```powershell
+Set-Location C:\xampp\htdocs\nexa\espocrm
+& 'C:\xampp\php\php.exe' rebuild.php
+& 'C:\xampp\php\php.exe' clear_cache.php
+
+Set-Location C:\xampp\htdocs\nexa
+powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
+```
+
+Open <http://nexa.local>, sign in and confirm Accounts, Contacts, Leads and Opportunities load correctly.
+
+### 9. Enable Scheduled Jobs
+
+Create a Windows Task Scheduler job that runs the following command every minute:
+
+```text
+C:\xampp\php\php.exe C:\xampp\htdocs\nexa\espocrm\cron.php
+```
+
+Use the same Windows account that owns the local project files. Scheduled jobs are required for email queues, workflows and background processing.
+
+See [XAMPP Setup](docs/development/xampp-setup.md) for troubleshooting, database reset rules and validation details.
+
+## Repository Structure
+
+```text
+nexa/
+|-- .github/                 GitHub Actions, issue forms and PR template
+|-- database/                Versioned SQL migrations and synthetic seeds
+|   |-- control-plane/       SaaS tenant, plan and provisioning schema
+|   `-- tenant/              Exceptional tenant migrations and test seeds
+|-- docs/
+|   |-- architecture/        Architecture reports and decision records
+|   |-- development/         Environment, Git and collaboration guides
+|   `-- product/             Feature inventory and build roadmap
+|-- downloads/               Ignored local release/upgrade packages
+|-- espocrm/                 Materialized application and Nexa custom code
+|   |-- application/Espo/    Existing PHP backend framework and modules
+|   |-- client/              Existing browser application resources
+|   |   `-- custom/          Nexa frontend JavaScript, CSS, templates and assets
+|   |-- custom/              Nexa backend PHP, metadata and server modules
+|   |-- data/                Local runtime config, cache and logs; never commit
+|   |-- public/              Public HTTP entry points and web assets
+|   `-- vendor/              Installed PHP dependencies; generated locally
+|-- scripts/dev/             Setup, bootstrap, environment and verification tools
+|-- .env.example             Shareable environment-variable template
+|-- compose.yaml             Docker development services
+`-- README.md                Project onboarding and structure
+```
+
+### Nexa Backend Customization
+
+Backend changes belong under `espocrm/custom/`:
+
+```text
+espocrm/custom/Espo/Custom/
+|-- Classes/                 Nexa PHP services, controllers, hooks and jobs
+`-- Resources/
+    |-- metadata/            Entities, fields, scopes, routes and client registration
+    `-- i18n/                Backend and shared translations
+```
+
+Only directories needed by current features exist today. Create new directories as modules are implemented, following existing application conventions.
+
+The current client asset registration is located at:
+
+```text
+espocrm/custom/Espo/Custom/Resources/metadata/app/client.json
+```
+
+### Nexa Frontend Customization
+
+Frontend changes belong under `espocrm/client/custom/`:
+
+```text
+espocrm/client/custom/
+|-- modules/                 Nexa views, controllers and client modules
+|-- res/templates/           Nexa HTML templates
+|-- css/                     Nexa styles and design-system overrides
+|-- img/                     Nexa images and interface assets
+`-- login-patch.js           Current login experience integration
+```
+
+Current login customization files include:
+
+- `client/custom/login-patch.js`
+- `client/custom/res/templates/login-modern.tpl`
+- `client/custom/css/modern-login.css`
+- `client/custom/img/login-workspace.png`
+
+### Existing Application Files
+
+Treat these as the materialized application foundation:
+
+- `espocrm/application/Espo/`: existing PHP backend and ORM.
+- `espocrm/application/Espo/Modules/Crm/`: existing CRM backend modules.
+- `espocrm/client/src/`: existing readable client source where present.
+- `espocrm/client/res/`: existing templates and client resources.
+- `espocrm/client/lib/`: generated/bundled client libraries.
+- `espocrm/public/`: public routes, installer and entry points.
+
+Do not make routine product changes directly in those paths. Prefer Nexa custom paths. An unavoidable existing-file change requires an architecture record, reproducible bootstrap patch and regression test so another developer receives it after cloning.
+
+### Database Assets
+
+- `database/control-plane/migrations/`: immutable shared SaaS schema changes.
+- `database/control-plane/seeds/`: synthetic plans and feature definitions.
+- `database/tenant/migrations/`: exceptional tenant changes not represented by metadata.
+- `database/tenant/seeds/`: synthetic CRM fixtures.
+
+The current local application database is `espocrm`. The planned local control-plane database is `nexa_control`. These are separate logical databases on the same local MariaDB server. Schema and safe fixtures move through Git; local records and database volumes do not.
+
+### Developer Scripts
+
+- `scripts/dev/setup.ps1`: creates `.env`, prepares source and optionally starts Docker.
+- `scripts/dev/bootstrap-espocrm.ps1`: materializes the approved application release.
+- `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
+- `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 
 ## Team Workflow
 
@@ -62,18 +320,6 @@ Designated team members using XAMPP should follow the [development environment b
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
 ```
-
-The detailed workflow is maintained in [Git and GitHub Workflow](docs/development/git-workflow.md).
-
-## Development Boundaries
-
-- Server customizations belong under `espocrm/custom/`.
-- Browser customizations belong under `espocrm/client/custom/`.
-- Immutable database migrations and synthetic seeds belong under `database/`.
-- Architecture and product decisions belong under `docs/`.
-- Credentials, customer data, runtime files, database dumps and commercial extensions must never be committed.
-
-Developers maintain independent local databases. Database structure moves through Git as metadata and migrations; approved synthetic data moves through seed files.
 
 ## Security
 
