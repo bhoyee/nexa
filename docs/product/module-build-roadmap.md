@@ -4,7 +4,7 @@
 
 Nexa CRM will use EspoCRM 9.1.9 as its CRM foundation, but the finished product will have its own design system, navigation, terminology, modules, SaaS controls and operating model. It will not embed or merge the Mautic codebase. Marketing and automation capabilities will be implemented as Nexa-owned modules or connected providers.
 
-"Customize everything" means that every relevant workflow and user-facing surface is deliberately reviewed, branded and tested. It does **not** mean editing every upstream EspoCRM source file. Keep the pinned EspoCRM tree as the foundation and implement product behavior through `custom/`, `client/custom/`, metadata, extension packages, APIs and separately deployed services. A core-file change requires an architecture decision record, an automated regression test and a documented reason that no extension point can satisfy the requirement.
+"Customize everything" means that every relevant workflow and user-facing surface is deliberately reviewed, branded and tested. The complete pinned application is versioned as the shared Nexa codebase. Prefer `custom/`, `client/custom/`, metadata and clear module boundaries where they fit, while allowing reviewed changes to existing backend and frontend files when the product requires them. Core changes need focused tests and must remain distinguishable from the pinned baseline.
 
 ## Architecture Layers
 

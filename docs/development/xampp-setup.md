@@ -10,7 +10,6 @@ This guide gives a designated Nexa team member a repeatable Windows environment 
 - PowerShell 5.1 or later
 - XAMPP with PHP 8.2
 - MariaDB 10.11
-- Internet access for the first verified application-package download
 
 Required PHP extensions are `curl`, `json`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
 
@@ -33,15 +32,12 @@ Run:
 ```powershell
 $env:Path = "C:\xampp\php;$env:Path"
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
-  -DownloadSource `
   -SkipStart
 ```
 
-The command downloads the official complete `EspoCRM-9.1.9.zip`, verifies the repository-pinned SHA-256 checksum, materializes the application under `espocrm/` and keeps the archive in the ignored `downloads/` cache. It must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
+The complete application tree and Nexa changes are already in the clone. The command creates local environment settings and must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
 
-The full application tree is intentionally reproducible instead of committed. Git tracks Nexa backend changes in `espocrm/custom/` and frontend changes in `espocrm/client/custom/`; setup adds the upstream `application/`, `bin/`, `client/`, `install/`, `public/`, `vendor/` and root application files around them. Local `data/`, generated config, caches, logs and credentials remain untracked.
-
-Do not use `EspoCRM-upgrade-9.0.8-to-9.1.9.zip`: an upgrade archive only transforms an existing installation and is not a complete application package. For an approved offline setup, place the complete release archive on the machine and use `-ArchivePath C:\path\to\EspoCRM-9.1.9.zip` instead of `-DownloadSource`.
+Local `data/` configuration, caches, logs, temporary files, uploads and credentials remain untracked. The verified download option in `bootstrap-espocrm.ps1` is for recovery only and must not replace the versioned team code during normal setup.
 
 ### Create Database
 

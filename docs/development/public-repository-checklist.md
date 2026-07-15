@@ -29,7 +29,7 @@
 
 - [ ] Second developer clones the public repository rather than receiving a folder.
 - [ ] Setup creates a personal `.env` without exposing credentials.
-- [ ] Pinned EspoCRM source is materialized successfully.
+- [ ] Clone contains the complete pinned application and committed Nexa interface.
 - [ ] Docker or XAMPP reaches the login page.
 - [ ] Environment and repository verification passes.
 - [ ] Database version and schema match the baseline.

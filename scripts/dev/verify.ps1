@@ -51,10 +51,17 @@ $shareableTextFiles = $shareablePaths |
     ForEach-Object { Join-Path $root $_ } |
     Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
 $privateKeyFiles = @()
-if ($shareableTextFiles) {
-    $privateKeyFiles = Select-String -LiteralPath $shareableTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
+$keyMarkerTextFiles = $shareableTextFiles | Where-Object {
+    $_ -notmatch '\\espocrm\\vendor\\phpseclib\\phpseclib\\phpseclib\\Crypt\\.*\\Formats\\Keys\\'
 }
-if ($privateKeyFiles) { Fail 'A private-key marker exists in a shareable file.' } else { Pass 'No private-key markers found' }
+if ($keyMarkerTextFiles) {
+    $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
+}
+$keyFileExtensions = @('.key', '.pem', '.p12', '.pfx')
+$keyFiles = $shareablePaths |
+    ForEach-Object { Join-Path $root $_ } |
+    Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
+if ($privateKeyFiles -or $keyFiles) { Fail 'A private key or key file exists in a shareable path.' } else { Pass 'No private keys found' }
 
 $migrationNames = Get-ChildItem -LiteralPath (Join-Path $root 'database') -Filter '*.sql' -File -Recurse | Select-Object -ExpandProperty Name
 foreach ($name in $migrationNames) {

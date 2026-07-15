@@ -48,7 +48,7 @@ cd nexa
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1
 ```
 
-The setup command creates ignored local credentials, materializes the pinned application source, validates the environment and starts the application services.
+The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment and starts the application services.
 
 Open <http://localhost:8080>. Local administrator credentials are stored in the ignored `.env` file.
 
@@ -88,13 +88,10 @@ Set-Location nexa
 ```powershell
 $env:Path = "C:\xampp\php;$env:Path"
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
-  -DownloadSource `
   -SkipStart
 ```
 
-This creates an ignored `.env`, downloads the complete approved `9.1.9` application package from the official release, verifies its pinned SHA-256 checksum, extracts it into `espocrm/`, preserves tracked Nexa custom files and checks PHP extensions and the pinned version. The package is cached under the ignored `downloads/` directory.
-
-The repository intentionally does not duplicate the complete upstream application or generated dependencies. Git supplies Nexa-owned code and documentation; this command supplies `application/`, `bin/`, the upstream `client/` resources, `install/`, `public/`, `vendor/` and the other required application files. An upgrade archive is not a complete installation package and must not be used here.
+This creates an ignored `.env` and checks PHP extensions and the pinned application version. Git already supplies `application/`, `bin/`, `client/`, `custom/`, `install/`, `public/`, `vendor/` and the required root application files, including all committed Nexa redesigns and feature changes.
 
 Review the generated settings:
 
@@ -216,15 +213,15 @@ nexa/
 |   |-- architecture/        Architecture reports and decision records
 |   |-- development/         Environment, Git and collaboration guides
 |   `-- product/             Feature inventory and build roadmap
-|-- downloads/               Ignored local release/upgrade packages
-|-- espocrm/                 Materialized application and Nexa custom code
+|-- downloads/               Ignored recovery release/upgrade packages
+|-- espocrm/                 Complete versioned application codebase
 |   |-- application/Espo/    Existing PHP backend framework and modules
 |   |-- client/              Existing browser application resources
 |   |   `-- custom/          Nexa frontend JavaScript, CSS, templates and assets
 |   |-- custom/              Nexa backend PHP, metadata and server modules
 |   |-- data/                Local runtime config, cache and logs; never commit
 |   |-- public/              Public HTTP entry points and web assets
-|   `-- vendor/              Installed PHP dependencies; generated locally
+|   `-- vendor/              Pinned PHP runtime dependencies
 |-- scripts/dev/             Setup, bootstrap, environment and verification tools
 |-- .env.example             Shareable environment-variable template
 |-- compose.yaml             Docker development services
@@ -273,7 +270,7 @@ Current login customization files include:
 
 ### Existing Application Files
 
-Treat these as the materialized application foundation:
+The complete application is tracked so every developer receives the identical working product. These are shared product code:
 
 - `espocrm/application/Espo/`: existing PHP backend and ORM.
 - `espocrm/application/Espo/Modules/Crm/`: existing CRM backend modules.
@@ -282,7 +279,7 @@ Treat these as the materialized application foundation:
 - `espocrm/client/lib/`: generated/bundled client libraries.
 - `espocrm/public/`: public routes, installer and entry points.
 
-Do not make routine product changes directly in those paths. Prefer Nexa custom paths. An unavoidable existing-file change requires an architecture record, reproducible bootstrap patch and regression test so another developer receives it after cloning.
+Prefer established extension points when they keep a change clear, but core files may be changed when the product redesign or behavior requires it. Every core change must be committed with focused tests and reviewed carefully because it can affect shared framework behavior. Never edit `vendor/` directly; update its pinned dependency source instead.
 
 ### Database Assets
 
@@ -296,7 +293,7 @@ The current local application database is `espocrm`. The planned local control-p
 ### Developer Scripts
 
 - `scripts/dev/setup.ps1`: creates `.env`, prepares source and optionally starts Docker.
-- `scripts/dev/bootstrap-espocrm.ps1`: materializes the approved application release.
+- `scripts/dev/bootstrap-espocrm.ps1`: restores the approved application release for recovery; normal clones already contain it.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
 - `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 

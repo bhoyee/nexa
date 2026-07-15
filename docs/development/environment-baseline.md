@@ -17,18 +17,18 @@ The version baseline changes only through an architecture/release decision and a
 
 Tracked:
 
-- Nexa server customizations under `espocrm/custom/`.
-- Nexa browser customizations under `espocrm/client/custom/`.
+- The complete pinned application under `espocrm/`, including backend, browser resources and runtime dependencies.
+- Nexa customizations and approved changes to existing application files.
 - Database migrations and synthetic seeds.
 - Documentation, scripts and CI configuration.
 
-Generated locally:
+Local and ignored:
 
-- The remaining pinned EspoCRM application tree.
-- Runtime configuration, cache, logs and attachments.
+- Runtime configuration under `espocrm/data/`.
+- Cache, logs, temporary files, attachments and uploads.
 - `.env`, databases and downloaded archives.
 
-Run `scripts/dev/setup.ps1` after cloning. It materializes the pinned upstream tree without committing generated or runtime files.
+A clean clone contains the same application code and user interface for every developer. Run `scripts/dev/setup.ps1` to create local credentials, validate the baseline and start services. The recovery bootstrap can restore the approved release but is not part of normal onboarding.
 
 ## Required PHP Extensions
 

@@ -26,7 +26,7 @@ This machine has XAMPP PHP 8.2.12 and XAMPP MariaDB 10.4.32. The XAMPP developer
 5. The other developer reviews every pull request.
 6. Merge only when code, migration, tests and documentation agree.
 
-Never commit `.env`, credentials, cache, attachments, logs, generated core files or customer data.
+Never commit `.env`, credentials, cache, attachments, logs, runtime configuration or customer data. Application source, bundled client assets and pinned runtime dependencies are shared through Git.
 
 ## Local Database Layout
 

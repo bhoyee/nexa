@@ -7,13 +7,27 @@ downloads/*.part
 *.dump
 *.bak
 backups/
-# EspoCRM core and runtime data are reproducible; keep custom code trackable.
-espocrm/*
-!espocrm/LICENSE.txt
-!espocrm/custom/
-!espocrm/client/
-espocrm/client/*
-!espocrm/client/custom/
+# The complete application source is tracked. Only local runtime state is ignored.
+espocrm/data/*
+!espocrm/data/.data
+!espocrm/data/cache/
+espocrm/data/cache/*
+!espocrm/data/cache/.gitkeep
+!espocrm/data/logs/
+espocrm/data/logs/*
+!espocrm/data/logs/.gitkeep
+!espocrm/data/tmp/
+espocrm/data/tmp/*
+!espocrm/data/tmp/.gitkeep
+!espocrm/data/upload/
+espocrm/data/upload/*
+!espocrm/data/upload/.gitkeep
+espocrm/data/config.php
+espocrm/data/config-internal.php
+
+# Third-party CI fixtures and repository metadata are not runtime dependencies.
+espocrm/vendor/**/.ci/
+espocrm/vendor/**/.github/
 espocrm/.nexa-source-version
 
 # Local editor and operating-system files.
