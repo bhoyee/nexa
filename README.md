@@ -36,6 +36,18 @@ Nexa uses a **modular monolith with supporting platform services**. It is not a 
 
 Transactional customer data uses a **cell-based, database-per-tenant model**. Each tenant database contains the existing CRM records and every Nexa business module for one customer. The shared control-plane database contains only routing, placement, plan, entitlement, subscription and operational metadata.
 
+## Supporting Infrastructure
+
+Supporting infrastructure will be introduced as product scale and operational requirements justify it:
+
+- Redis for cache, queues, distributed locks and rate limits.
+- Object storage for attachments, imports, exports and media.
+- OpenSearch for global search and high-volume event queries.
+- An analytics database with Metabase or equivalent reporting tools.
+- Dedicated workers for marketing email, automation, imports, webhooks and scheduled processing.
+
+These components support the modular monolith and do not change its core architecture. Infrastructure adoption must include tenant isolation, monitoring, backup, security and local-development support.
+
 ## Team Documentation
 
 Team members should read the documents relevant to their work before modifying shared contracts:
