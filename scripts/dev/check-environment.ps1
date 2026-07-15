@@ -31,7 +31,7 @@ Write-Check 'Control migration' (Test-Path (Join-Path $root 'database\control-pl
 $espoDefaults = Join-Path $root 'espocrm\application\Espo\Resources\defaults\config.php'
 $espoVersionMatches = (Test-Path -LiteralPath $espoDefaults) -and
     (Select-String -LiteralPath $espoDefaults -SimpleMatch "'version' => '9.1.9'" -Quiet)
-Write-Check 'EspoCRM source' $espoVersionMatches 'expected materialized version 9.1.9'
+Write-Check 'Tracked application codebase' $espoVersionMatches 'expected complete version 9.1.9'
 
 $git = Get-Command git -ErrorAction SilentlyContinue
 if ($git) {

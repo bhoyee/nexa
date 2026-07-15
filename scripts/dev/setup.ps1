@@ -1,7 +1,5 @@
 [CmdletBinding()]
 param(
-    [string] $ArchivePath,
-    [switch] $DownloadSource,
     [switch] $SkipStart
 )
 
@@ -30,17 +28,7 @@ else {
     Write-Host 'Keeping the existing .env file.'
 }
 
-$bootstrap = Join-Path $PSScriptRoot 'bootstrap-espocrm.ps1'
-if ($ArchivePath) {
-    & $bootstrap -ArchivePath $ArchivePath
-}
-elseif ($DownloadSource) {
-    & $bootstrap -Download
-}
-else {
-    & $bootstrap
-}
-
+& (Join-Path $PSScriptRoot 'bootstrap-espocrm.ps1')
 & (Join-Path $PSScriptRoot 'check-environment.ps1')
 
 if (-not $SkipStart) {

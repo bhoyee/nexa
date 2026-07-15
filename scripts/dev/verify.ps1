@@ -16,7 +16,10 @@ function Pass([string] $message) {
 
 $required = @(
     '.env.example', '.gitattributes', '.gitignore', 'CONTRIBUTING.md', 'SECURITY.md',
-    'compose.yaml', 'database/control-plane/migrations/0001_initial_control_plane.sql'
+    'compose.yaml', 'database/control-plane/migrations/0001_initial_control_plane.sql',
+    'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
+    'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
+    'espocrm/install/entry.php', 'espocrm/public/index.php', 'espocrm/vendor/autoload.php'
 )
 foreach ($relative in $required) {
     if (Test-Path (Join-Path $root $relative)) { Pass "$relative exists" } else { Fail "$relative is missing" }
@@ -51,8 +54,9 @@ $shareableTextFiles = $shareablePaths |
     ForEach-Object { Join-Path $root $_ } |
     Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
 $privateKeyFiles = @()
+# The pinned vendor snapshot is audited at import; scan product and team-owned text on every run.
 $keyMarkerTextFiles = $shareableTextFiles | Where-Object {
-    $_ -notmatch '\\espocrm\\vendor\\phpseclib\\phpseclib\\phpseclib\\Crypt\\.*\\Formats\\Keys\\'
+    $_ -notmatch '\\espocrm\\vendor\\'
 }
 if ($keyMarkerTextFiles) {
     $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List

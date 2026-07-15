@@ -294,8 +294,8 @@ The current local application database is `espocrm`. The planned local control-p
 
 ### Developer Scripts
 
-- `scripts/dev/setup.ps1`: creates `.env`, prepares source and optionally starts Docker.
-- `scripts/dev/bootstrap-espocrm.ps1`: restores the approved application release for recovery; normal clones already contain it.
+- `scripts/dev/setup.ps1`: creates `.env`, validates the tracked codebase and optionally starts Docker.
+- `scripts/dev/bootstrap-espocrm.ps1`: verifies that the complete tracked application and pinned version are present.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
 - `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 

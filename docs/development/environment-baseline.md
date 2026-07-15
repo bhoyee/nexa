@@ -28,7 +28,7 @@ Local and ignored:
 - Cache, logs, temporary files, attachments and uploads.
 - `.env`, databases and downloaded archives.
 
-A clean clone contains the same application code and user interface for every developer. Run `scripts/dev/setup.ps1` to create local credentials, validate the baseline and start services. The recovery bootstrap can restore the approved release but is not part of normal onboarding.
+A clean clone contains the same application code and user interface for every developer. Run `scripts/dev/setup.ps1` to create local credentials, validate the complete tracked codebase and start services. Missing application files must be restored from Git or by cloning again, never from an upstream package.
 
 ## Required PHP Extensions
 

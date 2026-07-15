@@ -37,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
 
 The complete application tree and Nexa changes are already in the clone. The command creates local environment settings and must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
 
-Local `data/` configuration, caches, logs, temporary files, uploads and credentials remain untracked. The verified download option in `bootstrap-espocrm.ps1` is for recovery only and must not replace the versioned team code during normal setup.
+Local `data/` configuration, caches, logs, temporary files, uploads and credentials remain untracked. `bootstrap-espocrm.ps1` verifies the complete tracked codebase; missing application files must be restored from Git or by cloning again.
 
 ### Create Database
 
