@@ -74,7 +74,7 @@ Every existing area receives a product decision: retain and redesign, extend, re
 
 ### Phase 0 - Product and Engineering Baseline
 
-**Goal:** Make two-developer work reproducible before feature development.
+**Goal:** Establish a reliable shared development setup before feature development.
 
 The working agreement and exit checklist are maintained in [Phase 0 Collaboration and Database Workflow](../development/phase-0-collaboration.md). The tenant isolation decision is recorded in [ADR-0001](../architecture/ADR-0001-tenant-database-isolation.md) and detailed in the [SaaS Data Architecture](../architecture/saas-data-architecture.md).
 
