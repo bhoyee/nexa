@@ -32,45 +32,9 @@ Nexa uses a **modular monolith with supporting platform services**. It is not a 
 
 ### Architecture Diagram
 
-```mermaid
-flowchart TB
-    U[Users and API Clients] --> R[Gateway and Tenant Router]
-    R --> CP[SaaS Control Plane<br/>tenants, domains, plans, placement]
-    R --> APP[Nexa Modular PHP Monolith]
-
-    subgraph CORE[Core Product]
-        APP --> CRM[CRM and Sales]
-        APP --> MKT[Marketing and Automation]
-        APP --> SVC[Service and Conversations]
-        APP --> IAM[Identity and Administration]
-        APP --> RPT[Reporting and Analytics APIs]
-    end
-
-    APP --> W[Background and Queue Workers]
-    APP --> TDB[(Selected Tenant Database<br/>core and all Nexa modules)]
-    W --> TDB
-    CP --> CDB[(Shared Control-Plane Database)]
-    CP --> TDB
-    APP --> OBJ[Object Storage]
-    APP --> EXT[Email, SMS, WhatsApp, Social and Billing Providers]
-    W --> EVT[Event and Analytics Platform]
-```
+![Nexa modular monolith architecture showing users, tenant routing, control plane, product modules, background workers, tenant databases, storage, providers and analytics](docs/assets/nexa-system-architecture.png)
 
 Transactional customer data uses a **cell-based, database-per-tenant model**. Each tenant database contains the existing CRM records and every Nexa business module for one customer. The shared control-plane database contains only routing, placement, plan, entitlement, subscription and operational metadata.
-
-### Implementation Status
-
-| Area | Current state |
-|---|---|
-| Complete shared PHP application codebase | Implemented and tracked in Git |
-| Modular product catalogue and build order | Documented |
-| Initial control-plane SQL schema | Scaffolded in `database/control-plane/migrations/` |
-| Tenant migration and synthetic seed boundaries | Scaffolded under `database/tenant/` |
-| Tenant router, immutable tenant context and database selection | Planned tenancy spike |
-| Automated provisioning and schema-fleet migrations | Planned control-plane work |
-| Marketing, automation, service and analytics modules | Planned in ordered build phases |
-
-The database model is therefore an accepted target architecture with an initial schema scaffold; it is not yet a completed multi-tenant runtime. See the [SaaS data architecture](docs/architecture/saas-data-architecture.md) and [module roadmap](docs/product/module-build-roadmap.md) for delivery order and launch gates.
 
 ## Team Documentation
 
