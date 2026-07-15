@@ -56,7 +56,7 @@ $shareableTextFiles = $shareablePaths |
 $privateKeyFiles = @()
 # The pinned vendor snapshot is audited at import; scan product and team-owned text on every run.
 $keyMarkerTextFiles = $shareableTextFiles | Where-Object {
-    $_ -notmatch '\\espocrm\\vendor\\'
+    $_ -notmatch '[\\/]espocrm[\\/]vendor[\\/]'
 }
 if ($keyMarkerTextFiles) {
     $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
