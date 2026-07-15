@@ -54,6 +54,8 @@ Recommended types are `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`
 - Release notes list migrations, configuration changes, known risks and rollback guidance.
 - Never rewrite published release tags.
 
+The `VERSION` file defines the release identifier and the tag-driven workflow publishes the corresponding GitHub Release. Follow the complete [release process](release-process.md) when preparing or publishing a version.
+
 ## Database Conflicts
 
 Do not resolve competing migrations by editing a migration already merged to `main`. Rebase, retain both immutable files and add a later corrective migration when ordering or behavior requires it.

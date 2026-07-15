@@ -15,7 +15,8 @@ function Pass([string] $message) {
 }
 
 $required = @(
-    '.env.example', '.gitattributes', '.gitignore', 'CONTRIBUTING.md', 'SECURITY.md',
+    '.env.example', '.gitattributes', '.gitignore', '.github/CODEOWNERS',
+    '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
     'compose.yaml', 'database/control-plane/migrations/0001_initial_control_plane.sql',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
