@@ -13,7 +13,7 @@ This guide gives a designated Nexa team member a repeatable Windows environment 
 
 Required PHP extensions are `curl`, `json`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
 
-Do not use an upgrade archive as the application package. Do not use XAMPP MariaDB 10.4 as the compatibility baseline.
+No application archive or official-website download is required after cloning. Do not use XAMPP MariaDB 10.4 as the compatibility baseline.
 
 ## Installation
 

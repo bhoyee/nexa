@@ -50,6 +50,8 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1
 
 The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment and starts the application services.
 
+No application archive is downloaded from the official website during normal Docker setup. Docker may automatically pull the pinned PHP/application runtime image and MariaDB image when they are not already present; `./espocrm` is then bind-mounted over `/var/www/html`, so the running application code is the exact version committed to this repository.
+
 Open <http://localhost:8080>. Local administrator credentials are stored in the ignored `.env` file.
 
 ```powershell
@@ -91,7 +93,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
   -SkipStart
 ```
 
-This creates an ignored `.env` and checks PHP extensions and the pinned application version. Git already supplies `application/`, `bin/`, `client/`, `custom/`, `install/`, `public/`, `vendor/` and the required root application files, including all committed Nexa redesigns and feature changes.
+This creates an ignored `.env` and checks PHP extensions and the pinned application version. Git already supplies `application/`, `bin/`, `client/`, `custom/`, `install/`, `public/`, `vendor/` and the required root application files, including all committed Nexa redesigns and feature changes. No application archive or official-website download is needed.
 
 Review the generated settings:
 
