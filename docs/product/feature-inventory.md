@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This document is the canonical inventory of the HubSpot-referenced capabilities supplied for the Nexa CRM product, plus the non-functional SaaS requirements needed to operate the product securely and reliably.
+This document lists the required functional capabilities and non-functional SaaS requirements for Nexa CRM.
 
-Implementation order, module ownership and release gates are defined in [Nexa CRM Module and Build Roadmap](module-build-roadmap.md).
+The inventory contains **86 functional requirements**. Every listed requirement must be implemented and operational in the product.
 
-The supplied list contains **86 functional requirements**. A feature appearing here does not imply that it already exists in EspoCRM or that its final behavior has been specified. Each item still needs acceptance criteria, a delivery decision (`reuse`, `extend`, `build`, or `integrate`), a release target, and an owner.
+Implementation order is defined in the [Nexa CRM Module and Build Roadmap](module-build-roadmap.md).
 
 ## Functional Requirements
 
