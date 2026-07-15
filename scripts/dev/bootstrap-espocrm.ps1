@@ -54,7 +54,7 @@ try {
         $container = (& docker create $image).Trim()
         if (-not $container) { throw "Could not create a temporary container from $image." }
         try {
-            & docker cp "${container}:/var/www/html/." $temporary
+            & docker cp "${container}:/usr/src/espocrm/." $temporary
             if ($LASTEXITCODE -ne 0) { throw 'Could not extract EspoCRM from the temporary container.' }
         }
         finally {
