@@ -10,7 +10,7 @@ This guide gives a designated Nexa team member a repeatable Windows environment 
 - PowerShell 5.1 or later
 - XAMPP with PHP 8.2
 - MariaDB 10.11
-- The complete approved application `9.1.9` package
+- Internet access for the first verified application-package download
 
 Required PHP extensions are `curl`, `json`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
 
@@ -28,16 +28,20 @@ Set-Location nexa
 
 ### Prepare Files
 
-Place the approved package at `downloads/application-9.1.9.zip`, then run:
+Run:
 
 ```powershell
 $env:Path = "C:\xampp\php;$env:Path"
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
-  -ArchivePath downloads/application-9.1.9.zip `
+  -DownloadSource `
   -SkipStart
 ```
 
-The command must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
+The command downloads the official complete `EspoCRM-9.1.9.zip`, verifies the repository-pinned SHA-256 checksum, materializes the application under `espocrm/` and keeps the archive in the ignored `downloads/` cache. It must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
+
+The full application tree is intentionally reproducible instead of committed. Git tracks Nexa backend changes in `espocrm/custom/` and frontend changes in `espocrm/client/custom/`; setup adds the upstream `application/`, `bin/`, `client/`, `install/`, `public/`, `vendor/` and root application files around them. Local `data/`, generated config, caches, logs and credentials remain untracked.
+
+Do not use `EspoCRM-upgrade-9.0.8-to-9.1.9.zip`: an upgrade archive only transforms an existing installation and is not a complete application package. For an approved offline setup, place the complete release archive on the machine and use `-ArchivePath C:\path\to\EspoCRM-9.1.9.zip` instead of `-DownloadSource`.
 
 ### Create Database
 

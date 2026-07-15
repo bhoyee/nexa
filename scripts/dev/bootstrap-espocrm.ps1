@@ -2,6 +2,7 @@
 param(
     [string] $Version = '9.1.9',
     [string] $ArchivePath,
+    [switch] $Download,
     [switch] $Force
 )
 
@@ -10,6 +11,14 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $target = Join-Path $root 'espocrm'
 $bootstrapFile = Join-Path $target 'bootstrap.php'
 $marker = Join-Path $target '.nexa-source-version'
+$downloads = Join-Path $root 'downloads'
+
+$releasePackages = @{
+    '9.1.9' = @{
+        Url = 'https://github.com/espocrm/espocrm/releases/download/9.1.9/EspoCRM-9.1.9.zip'
+        Sha256 = 'fa846ee8e5e684255b05def8cc38ee0a027831f7af251e6d59e628ff3ee65646'
+    }
+}
 
 if ((Test-Path $bootstrapFile) -and -not $Force) {
     $defaults = Join-Path $target 'application\Espo\Resources\defaults\config.php'
@@ -34,19 +43,59 @@ function Copy-UpstreamTree([string] $source) {
     }
 }
 
+function Expand-ApplicationArchive([string] $path) {
+    Expand-Archive -LiteralPath $path -DestinationPath $temporary -Force
+    $bootstrap = Get-ChildItem -LiteralPath $temporary -Filter 'bootstrap.php' -File -Recurse | Select-Object -First 1
+    if (-not $bootstrap) { throw 'The archive does not contain a packaged EspoCRM application.' }
+    Copy-UpstreamTree $bootstrap.Directory.FullName
+}
+
+function Get-VerifiedReleaseArchive {
+    if (-not $releasePackages.ContainsKey($Version)) {
+        throw "No verified application package is configured for version $Version."
+    }
+
+    $release = $releasePackages[$Version]
+    New-Item -ItemType Directory -Path $downloads -Force | Out-Null
+    $archive = Join-Path $downloads "EspoCRM-$Version.zip"
+    $partial = "$archive.part"
+
+    if (Test-Path $archive) {
+        $existingHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($existingHash -eq $release.Sha256) {
+            Write-Host "Using verified cached package $archive."
+            return $archive
+        }
+        throw "The cached package checksum is invalid: $archive. Remove it and run setup again."
+    }
+
+    Write-Host "Downloading the approved EspoCRM $Version application package..."
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try {
+        Invoke-WebRequest -UseBasicParsing -Uri $release.Url -OutFile $partial
+        $actualHash = (Get-FileHash -LiteralPath $partial -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualHash -ne $release.Sha256) {
+            throw "Downloaded package checksum mismatch. Expected $($release.Sha256), received $actualHash."
+        }
+        Move-Item -LiteralPath $partial -Destination $archive -Force
+    }
+    finally {
+        if (Test-Path $partial) { Remove-Item -LiteralPath $partial -Force }
+    }
+
+    Write-Host "Verified SHA-256 $($release.Sha256)."
+    return $archive
+}
+
 try {
     if ($ArchivePath) {
         $resolvedArchive = (Resolve-Path $ArchivePath).Path
-        Expand-Archive -LiteralPath $resolvedArchive -DestinationPath $temporary -Force
-        $bootstrap = Get-ChildItem -LiteralPath $temporary -Filter 'bootstrap.php' -File -Recurse | Select-Object -First 1
-        if (-not $bootstrap) { throw 'The archive does not contain a packaged EspoCRM application.' }
-        Copy-UpstreamTree $bootstrap.Directory.FullName
+        Expand-ApplicationArchive $resolvedArchive
+    }
+    elseif ($Download -or -not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        Expand-ApplicationArchive (Get-VerifiedReleaseArchive)
     }
     else {
-        if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-            throw 'Docker is unavailable. Pass -ArchivePath with the packaged EspoCRM 9.1.9 release archive.'
-        }
-
         $image = "espocrm/espocrm:$Version"
         & docker image inspect $image *> $null
         if ($LASTEXITCODE -ne 0) { & docker pull $image; if ($LASTEXITCODE -ne 0) { throw "Could not pull $image." } }

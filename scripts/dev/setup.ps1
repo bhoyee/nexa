@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string] $ArchivePath,
+    [switch] $DownloadSource,
     [switch] $SkipStart
 )
 
@@ -30,7 +31,15 @@ else {
 }
 
 $bootstrap = Join-Path $PSScriptRoot 'bootstrap-espocrm.ps1'
-if ($ArchivePath) { & $bootstrap -ArchivePath $ArchivePath } else { & $bootstrap }
+if ($ArchivePath) {
+    & $bootstrap -ArchivePath $ArchivePath
+}
+elseif ($DownloadSource) {
+    & $bootstrap -Download
+}
+else {
+    & $bootstrap
+}
 
 & (Join-Path $PSScriptRoot 'check-environment.ps1')
 

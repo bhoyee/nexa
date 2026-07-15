@@ -83,26 +83,18 @@ git clone https://github.com/bhoyee/nexa.git
 Set-Location nexa
 ```
 
-### 3. Obtain the Approved Application Package
-
-Obtain the complete packaged application release `9.1.9` from the project owner and place it at:
-
-```text
-C:\xampp\htdocs\nexa\downloads\application-9.1.9.zip
-```
-
-An upgrade archive is not a complete installation package and cannot be used for this step.
-
-### 4. Prepare the Source and Local Environment
+### 3. Prepare the Source and Local Environment
 
 ```powershell
 $env:Path = "C:\xampp\php;$env:Path"
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
-  -ArchivePath downloads/application-9.1.9.zip `
+  -DownloadSource `
   -SkipStart
 ```
 
-This creates an ignored `.env`, extracts the application into `espocrm/`, preserves tracked Nexa custom files and checks PHP extensions and the pinned version.
+This creates an ignored `.env`, downloads the complete approved `9.1.9` application package from the official release, verifies its pinned SHA-256 checksum, extracts it into `espocrm/`, preserves tracked Nexa custom files and checks PHP extensions and the pinned version. The package is cached under the ignored `downloads/` directory.
+
+The repository intentionally does not duplicate the complete upstream application or generated dependencies. Git supplies Nexa-owned code and documentation; this command supplies `application/`, `bin/`, the upstream `client/` resources, `install/`, `public/`, `vendor/` and the other required application files. An upgrade archive is not a complete installation package and must not be used here.
 
 Review the generated settings:
 
@@ -112,7 +104,7 @@ Get-Content .env
 
 Change `ESPOCRM_SITE_URL` to `http://nexa.local` for the XAMPP installation. Never commit `.env`.
 
-### 5. Create the Local Database
+### 4. Create the Local Database
 
 Start the MariaDB 10.11 Windows service. Connect with its administrator account:
 
@@ -138,7 +130,7 @@ FLUSH PRIVILEGES;
 
 Each developer owns an independent local database. Do not import another developer's full database dump.
 
-### 6. Configure Apache
+### 5. Configure Apache
 
 Open `C:\xampp\apache\conf\httpd.conf` and confirm these lines are enabled:
 
@@ -170,7 +162,7 @@ As Administrator, add this entry to `C:\Windows\System32\drivers\etc\hosts`:
 
 Start Apache from the XAMPP Control Panel. Keep the XAMPP MySQL service stopped when MariaDB 10.11 is running on port 3306.
 
-### 7. Complete Browser Installation
+### 6. Complete Browser Installation
 
 Open <http://nexa.local/install> and use:
 
@@ -187,7 +179,7 @@ Open <http://nexa.local/install> and use:
 
 Use the actual MariaDB port if it differs from `3306`.
 
-### 8. Rebuild and Verify
+### 7. Rebuild and Verify
 
 ```powershell
 Set-Location C:\xampp\htdocs\nexa\espocrm
@@ -200,7 +192,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
 
 Open <http://nexa.local>, sign in and confirm Accounts, Contacts, Leads and Opportunities load correctly.
 
-### 9. Enable Scheduled Jobs
+### 8. Enable Scheduled Jobs
 
 Create a Windows Task Scheduler job that runs the following command every minute:
 
