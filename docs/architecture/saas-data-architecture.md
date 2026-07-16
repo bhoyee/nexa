@@ -137,6 +137,38 @@ Tenant resolution happens before Espo authentication. The hostname determines wh
 
 Password-reset, invitation and login links retain the verified tenant hostname. Session cookies are host-bound and session/cache keys include tenant identity. Platform-operator identity and audited support access remain separate from ordinary tenant users.
 
+### Tenant, User and Record Identity
+
+Database selection identifies the customer; Espo's records identify the user and business object inside that customer's database. These identities form one chain rather than two disconnected data models:
+
+```text
+nexa_control.tenant.id
+        |
+        +--> tenant_placement --> selected tenant database
+                                      |
+                                      +--> nexa_tenant_identity.tenant_id (must match)
+                                      +--> Espo user.id
+                                      +--> Espo entity type + entity id
+```
+
+Every tenant database contains exactly one immutable `nexa_tenant_identity` row created during provisioning. Before Espo boots, `TenantConnectionFactory` reads it and compares it with `TenantContext.tenantId`. A missing or different value is a routing or restore error and the request fails closed. This marker is a database-identity assertion, not row-level tenancy and not a substitute for database isolation.
+
+Ordinary Espo tables do not need a `tenant_id` column because every row in the selected database belongs to the same customer. Espo's existing `User.id`, `createdById`, `modifiedById`, `assignedUserId`, teams, roles, authentication logs, action history, stream and audited fields continue to identify and track activity within that tenant. Nexa tenant-owned tables live in the same database and use the same local Espo user and entity identifiers where relationships are required.
+
+A local user ID or entity ID is never globally meaningful on its own. Platform code, logs and external events use these composite identities:
+
+- Actor: `(tenant_id, actor_type, local_user_id)`.
+- Record: `(tenant_id, entity_type, entity_id)`.
+- Request: `(tenant_id, request_id, correlation_id)`.
+
+The control plane does not duplicate every CRM user or maintain foreign keys into tenant databases. An optional identity directory may map an external SSO subject to `(tenant_id, local_user_id)`, but the tenant database remains the source of truth for the user's CRM profile, teams and roles.
+
+### Audit and Event Attribution
+
+Espo's history facilities remain enabled, but they are not the complete SaaS security audit contract. Each tenant database also requires an append-only Nexa audit ledger and a transactional outbox. Audit records capture the action, tenant identity, actor type, local Espo user when applicable, subject type and ID, timestamp, request and correlation IDs, authentication-log reference, source and redacted change metadata. The ledger must distinguish tenant users, API clients, system jobs and platform operators; support impersonation additionally records the operator, authorization grant and reason.
+
+The tenant identity in audit and outbox records is derived from the verified `TenantContext` and database marker, never from request payload. Events leaving the tenant database carry that identity explicitly so consumers can safely aggregate usage, analytics or notifications without guessing from a local Espo ID. Full sensitive values are not copied into audit payloads by default; field names, approved summaries and protected references are used according to retention and privacy policy.
+
 ### Entitlements and Usage
 
 Plans and entitlements remain in the control plane. A tenant runtime reads an immutable entitlement snapshot through an explicit `EntitlementProvider`, normally backed by a short-lived tenant-keyed cache. Product modules do not join CRM tables to `plan_entitlement`.
@@ -169,9 +201,10 @@ Provisioning is an idempotent saga rather than one cross-database transaction:
 2. Select an active cell and cluster.
 3. Use the cluster-administrator secret to create an opaque tenant database and restricted tenant user.
 4. Store only the new `credential_secret_ref` and placement metadata in the control plane.
-5. Build the canonical Espo plus Nexa tenant schema, seed reference data and create the first administrator.
-6. Run login, CRUD, queue, file and backup smoke tests.
-7. Mark placement and tenant active, then publish routing-cache invalidation.
+5. Build the canonical Espo plus Nexa tenant schema and write the immutable `nexa_tenant_identity` marker.
+6. Seed reference data and create the first administrator.
+7. Verify the database marker, then run login, CRUD, audit, queue, file and backup smoke tests.
+8. Mark placement and tenant active, then publish routing-cache invalidation.
 
 A tenant move or restore creates and verifies a new database first, then atomically changes only `tenant_placement` in the control plane. Old placement remains recoverable for the approved rollback window. Requests never guess between two placements.
 

@@ -145,6 +145,7 @@ One logical tenant database contains the complete transactional product for one 
 - Conversations, scoring, attribution and tenant integrations.
 - Transactional outbox records for reliable external event delivery.
 - Applied tenant-schema migration history.
+- One immutable tenant-identity marker used to verify database routing.
 
 All tenant databases use one canonical schema version. Product plans are enforced through entitlements, not different schemas.
 
@@ -175,6 +176,8 @@ These components support the modular monolith; they do not turn every product mo
 The browser or API caller must never provide a raw database name or credential reference.
 
 There are only two database roles in this flow. Customer A's database is the complete EspoCRM plus Nexa business database for Customer A; there is no separate shared EspoCRM database. The application opens a dedicated control-plane connection for routing and then creates a separate tenant connection before Espo's ORM and authentication services initialize. The two databases never join each other or share one transaction.
+
+The selected database identifies the customer and Espo's `User.id` identifies the acting user inside it. The connection factory verifies a one-row tenant-identity marker before booting Espo, so the control-plane tenant and opened database cannot silently disagree. Existing creator, modifier, assignment, login, action-history and audited-field records continue to work. For platform-wide logs and events, local identifiers are always qualified by tenant ID, for example `(tenant_id, user_id)` and `(tenant_id, entity_type, entity_id)`. Nexa also adds an append-only audit ledger for system jobs, API clients and audited operator access that Espo's ordinary record history does not fully cover.
 
 The required pre-bootstrap platform kernel, tenant-scoped configuration and cache handling, background-job re-resolution, entitlement and usage-event flow, provisioning saga and failure behavior are specified in [Nexa CRM SaaS Data Architecture](saas-data-architecture.md#runtime-communication-contract). The current Docker Compose configuration remains a single-tenant baseline until that adapter passes the two-tenant proof of concept.
 
