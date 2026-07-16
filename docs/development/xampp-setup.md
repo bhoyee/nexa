@@ -21,7 +21,7 @@ No application archive or official-website download is required after cloning. D
 
 ```powershell
 Set-Location C:\xampp\htdocs
-git clone https://github.com/bhoyee/nexa.git
+git clone https://github.com/NaxoCRM-Team/nexa.git
 Set-Location nexa
 ```
 
@@ -88,9 +88,17 @@ Add `127.0.0.1 nexa.local` to the Windows hosts file as Administrator. Start Apa
 
 Use database host `127.0.0.1`, database `espocrm`, user `espocrm` and the generated `DB_PASSWORD`. Use the generated `ADMIN_USERNAME` and `ADMIN_PASSWORD` for the local administrator.
 
-After browser installation:
+After browser installation, apply the shared schema before rebuilding. The command prompts for the `espocrm` database user's password:
 
 ```powershell
+Set-Location C:\xampp\htdocs\nexa
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
+  -Mode Local `
+  -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' `
+  -Database espocrm `
+  -User espocrm `
+  -IncludeDevelopmentSeeds
+
 Set-Location C:\xampp\htdocs\nexa\espocrm
 & 'C:\xampp\php\php.exe' rebuild.php
 & 'C:\xampp\php\php.exe' clear_cache.php
@@ -125,6 +133,12 @@ Run the task once manually and inspect `espocrm/data/logs/` if it fails. Logs ar
 ```powershell
 git switch main
 git pull --ff-only
+
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
+  -Mode Local `
+  -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' `
+  -Database espocrm `
+  -User espocrm
 
 Set-Location espocrm
 & 'C:\xampp\php\php.exe' rebuild.php

@@ -80,12 +80,12 @@ Changes to the baseline require an approved pull request that updates local setu
 Prerequisites: Git, PowerShell 5.1+ and Docker Desktop in Linux-container mode.
 
 ```powershell
-git clone https://github.com/bhoyee/nexa.git
+git clone https://github.com/NaxoCRM-Team/nexa.git
 cd nexa
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1
 ```
 
-The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment and starts the application services.
+The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment, waits for healthy application services and applies all checksum-tracked shared-schema migrations and development seeds.
 
 No application archive is downloaded from the official website during normal Docker setup. Docker may automatically pull the pinned PHP/application runtime image and MariaDB image when they are not already present; `./espocrm` is then bind-mounted over `/var/www/html`, so the running application code is the exact version committed to this repository.
 
@@ -118,7 +118,7 @@ Do not use XAMPP's bundled MariaDB 10.4 as the project compatibility baseline. R
 
 ```powershell
 Set-Location C:\xampp\htdocs
-git clone https://github.com/bhoyee/nexa.git
+git clone https://github.com/NaxoCRM-Team/nexa.git
 Set-Location nexa
 ```
 
@@ -215,9 +215,17 @@ Open <http://nexa.local/install> and use:
 
 Use the actual MariaDB port if it differs from `3306`.
 
-### 7. Rebuild and Verify
+### 7. Apply Shared Schema, Rebuild and Verify
 
 ```powershell
+Set-Location C:\xampp\htdocs\nexa
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
+  -Mode Local `
+  -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' `
+  -Database espocrm `
+  -User espocrm `
+  -IncludeDevelopmentSeeds
+
 Set-Location C:\xampp\htdocs\nexa\espocrm
 & 'C:\xampp\php\php.exe' rebuild.php
 & 'C:\xampp\php\php.exe' clear_cache.php
