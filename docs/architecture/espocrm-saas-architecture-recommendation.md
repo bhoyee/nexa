@@ -174,6 +174,10 @@ These components support the modular monolith; they do not turn every product mo
 
 The browser or API caller must never provide a raw database name or credential reference.
 
+There are only two database roles in this flow. Customer A's database is the complete EspoCRM plus Nexa business database for Customer A; there is no separate shared EspoCRM database. The application opens a dedicated control-plane connection for routing and then creates a separate tenant connection before Espo's ORM and authentication services initialize. The two databases never join each other or share one transaction.
+
+The required pre-bootstrap platform kernel, tenant-scoped configuration and cache handling, background-job re-resolution, entitlement and usage-event flow, provisioning saga and failure behavior are specified in [Nexa CRM SaaS Data Architecture](saas-data-architecture.md#runtime-communication-contract). The current Docker Compose configuration remains a single-tenant baseline until that adapter passes the two-tenant proof of concept.
+
 ## 6. Why This Recommendation Best Fits Nexa
 
 ### 6.1 It Works With EspoCRM Instead of Rebuilding Its ORM

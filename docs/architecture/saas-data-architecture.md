@@ -56,17 +56,148 @@ A cell is a bounded group of application workers, queue workers, cache resources
 
 MariaDB remains the transactional source of truth. High-volume web tracking, email events and analytics should move to a dedicated event/analytics platform when volume justifies it; they should not overload CRM tables.
 
-## Request Routing
+## Runtime Communication Contract
 
-Every request follows this sequence:
+### Two Database Roles
 
-1. Resolve the normalized hostname against `tenant_domain`.
-2. Reject suspended, deleted or unverified tenants before Espo bootstraps.
-3. Load tenant placement and an opaque database credential reference.
-4. create an immutable `TenantContext` containing tenant, cell, region and request IDs.
-5. Boot the Espo entity manager using only that tenant's database connection.
-6. Add tenant and request IDs to logs, queue messages, cache keys and outbox events.
-7. Clear tenant-scoped services after the request or job completes.
+The phrase "EspoCRM database" means the selected tenant transactional database. There is no third shared database containing Espo records.
+
+| Connection role | Opened by | Permitted data | Prohibited behavior |
+|---|---|---|---|
+| `ControlPlaneConnection` | Nexa platform kernel and platform workers | Tenant registry, domain, placement, plan, entitlement, usage summary and operations | Reading or writing Contacts, Accounts, Deals, messages or other customer records |
+| `TenantConnection` | Tenant-scoped Espo runtime and tenant workers | All Espo core tables and Nexa business tables for one tenant | Accessing another tenant database or control-plane tables |
+| Cluster administrator | Provisioning and migration workers only | Database creation, restricted-user creation, migrations and verified operational actions | Serving browser requests or ordinary product queries |
+
+A runtime process may temporarily hold a control-plane connection and one tenant connection, but application code treats them as separate units of work. There are no cross-database joins, foreign keys or atomic commits between them.
+
+### Runtime Components
+
+The modular monolith needs a platform kernel in front of Espo's normal bootstrap:
+
+| Component | Responsibility |
+|---|---|
+| `TrustedHostResolver` | Normalize the gateway-provided hostname and reject untrusted forwarding headers |
+| `TenantPlacementResolver` | Query the control-plane routing records and enforce tenant, placement, cluster and cell status |
+| `SecretsProvider` | Exchange an opaque credential reference for tenant credentials without exposing them to domain code |
+| `TenantContext` | Hold immutable tenant, cell, region, request, entitlement-version and routing-version identity |
+| `TenantConnectionFactory` | Create database parameters and a connection restricted to the selected tenant database |
+| `TenantRuntimeFactory` | Construct tenant-scoped Espo configuration, ORM, authentication, ACL, metadata, cache and file services |
+| `TenantRuntimeScope` | Tear down connections, identity maps, configuration overlays and caches after every request or job |
+
+Espo's shared filesystem configuration cannot remain the source of customer-specific settings in a shared cell. The tenancy proof of concept must split immutable platform configuration from tenant configuration and provide tenant-aware configuration/cache adapters before Espo boots. It must never rewrite one global `data/config.php` while serving concurrent tenants.
+
+### Request Routing
+
+```text
+Browser or API client
+        |
+        | Host: customer-a.nexa.example
+        v
+Gateway / trusted proxy
+        |
+        v
+Nexa platform kernel
+        |
+        +-- ControlPlaneConnection --> tenant_domain
+        |                              tenant
+        |                              tenant_placement
+        |                              database_cluster
+        |                              cell
+        |
+        +-- SecretsProvider ---------> restricted tenant credential
+        |
+        v
+TenantContext(customer-a)
+        |
+        v
+TenantRuntimeFactory
+        |
+        +-- TenantConnection --------> nexa_tenant_a1b2c3
+                                       Espo core + Nexa business tables
+```
+
+Every browser or API request follows this sequence:
+
+1. The gateway preserves the original hostname through a trusted, normalized server value.
+2. `TrustedHostResolver` rejects malformed hosts and direct attempts to select a tenant, database or credential.
+3. `TenantPlacementResolver` resolves the verified hostname through `tenant_domain` and loads the matching `tenant`, `tenant_placement`, `database_cluster` and `cell` records.
+4. Routing fails closed unless every required status is active and the placement schema is compatible with the application release.
+5. `SecretsProvider` resolves `credential_secret_ref`; the control database never stores the password.
+6. The platform creates one immutable `TenantContext` and tenant database parameter set.
+7. `TenantRuntimeFactory` initializes Espo's ORM, authentication, ACL and customer configuration against only the selected tenant database.
+8. Existing Espo queries then operate normally inside that physical database boundary.
+9. Logs, traces, cache keys, file prefixes, queue messages and outbox events receive tenant and request identity.
+10. `TenantRuntimeScope` clears every tenant-specific service and closes or returns connections safely.
+
+There is no fallback to a default tenant database. A missing or invalid route returns a generic not-found response; an unavailable required dependency returns a tenant-safe service-unavailable response.
+
+### Authentication and Sessions
+
+Tenant resolution happens before Espo authentication. The hostname determines which tenant database contains the Users, Teams, Roles and password-recovery data used for authentication. Session storage, wherever backed, is tenant-namespaced. The same email address may represent separate users in separate tenants because those records never share a database.
+
+Password-reset, invitation and login links retain the verified tenant hostname. Session cookies are host-bound and session/cache keys include tenant identity. Platform-operator identity and audited support access remain separate from ordinary tenant users.
+
+### Entitlements and Usage
+
+Plans and entitlements remain in the control plane. A tenant runtime reads an immutable entitlement snapshot through an explicit `EntitlementProvider`, normally backed by a short-lived tenant-keyed cache. Product modules do not join CRM tables to `plan_entitlement`.
+
+Control-plane changes publish an entitlement-version invalidation event. Security-critical or cost-critical actions revalidate current entitlement and quota state before execution.
+
+Customer activity is not synchronously dual-written into `usage_counter` during every CRM transaction. The tenant transaction writes an idempotent event to its local outbox. A worker publishes that event with `tenant_id`; a control-plane consumer validates the idempotency key and updates usage counters. Analytics receives the same governed event separately.
+
+### Background and Scheduled Jobs
+
+A queued job contains `tenant_id`, `cell_id`, job identity, payload version and correlation identity. It never contains a raw database name, password or caller-selected credential reference.
+
+A worker repeats the trusted runtime sequence:
+
+1. Resolve current placement from the control plane by `tenant_id`.
+2. Verify tenant and placement status.
+3. Resolve the tenant credential secret.
+4. Create a new `TenantContext`.
+5. Boot tenant-scoped Espo services and run the job.
+6. Commit tenant business changes and outbox records in the tenant database.
+7. Clear the runtime scope before accepting another tenant's job.
+
+The platform scheduler enumerates eligible tenants from the control plane and emits tenant-scoped jobs. Long-running workers must not reuse an Espo `EntityManager`, authenticated user, ACL, metadata cache, configuration overlay or database connection across tenant boundaries.
+
+### Provisioning and Placement Changes
+
+Provisioning is an idempotent saga rather than one cross-database transaction:
+
+1. Create `tenant` and `provisioning_operation` as pending in `nexa_control`.
+2. Select an active cell and cluster.
+3. Use the cluster-administrator secret to create an opaque tenant database and restricted tenant user.
+4. Store only the new `credential_secret_ref` and placement metadata in the control plane.
+5. Build the canonical Espo plus Nexa tenant schema, seed reference data and create the first administrator.
+6. Run login, CRUD, queue, file and backup smoke tests.
+7. Mark placement and tenant active, then publish routing-cache invalidation.
+
+A tenant move or restore creates and verifies a new database first, then atomically changes only `tenant_placement` in the control plane. Old placement remains recoverable for the approved rollback window. Requests never guess between two placements.
+
+### Failure and Cache Rules
+
+- Placement caches contain tenant-keyed routing metadata, never plaintext credentials.
+- Cache entries have a short lifetime and a routing version; suspension, moves and credential rotation publish invalidation.
+- If the control plane is unavailable, a runtime may use only a still-valid cached active route according to the approved availability policy. Without one, it fails closed.
+- If one tenant database is unavailable, only that tenant fails; the application must not connect to another or a default database.
+- Credential rotation changes the secret version, invalidates connection pools and forces new tenant connections.
+- A job whose placement changed is resolved again before retry rather than continuing with stale database parameters.
+- Logs may contain tenant and placement identifiers but never database passwords or secret values.
+
+### Current Implementation Boundary
+
+The current `compose.yaml` is a single-tenant development baseline. It supplies one static `ESPOCRM_DATABASE_NAME` and therefore does not yet implement runtime tenant resolution or database switching. The control-plane schema is versioned and tested separately, but the platform kernel and tenant runtime adapter described above still need to be built.
+
+The tenancy proof of concept should use one local MariaDB service with at least three logical databases:
+
+```text
+nexa_control
+nexa_tenant_alpha
+nexa_tenant_beta
+```
+
+It should use a restricted control-plane runtime user plus separate restricted users for Alpha and Beta. Two local hostnames must reach the same application code, resolve through `nexa_control`, and initialize Espo against different tenant databases. The proof is complete only when authentication, core CRM CRUD, cache, files and background jobs demonstrate cross-tenant isolation.
 
 Never allow a browser, API caller or queue payload to choose a raw database name or credential reference.
 
