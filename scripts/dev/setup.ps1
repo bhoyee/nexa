@@ -33,10 +33,12 @@ else {
 
 if (-not $SkipStart) {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-        throw 'Docker is unavailable. Use -SkipStart for an XAMPP setup.'
+        throw 'Docker is unavailable. Use -SkipStart for an XAMPP or WampServer setup.'
     }
-    & docker compose --project-directory $root up -d
-    if ($LASTEXITCODE -ne 0) { throw 'Docker Compose did not start successfully.' }
+    & docker compose --project-directory $root up -d --wait
+    if ($LASTEXITCODE -ne 0) { throw 'Docker Compose did not become healthy.' }
+    & (Join-Path $PSScriptRoot 'apply-shared-schema.ps1') -Mode Docker -IncludeDevelopmentSeeds
+    if ($LASTEXITCODE -ne 0) { throw 'Shared-schema migration failed.' }
     & docker compose --project-directory $root ps
 }
 

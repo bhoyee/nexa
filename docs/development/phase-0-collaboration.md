@@ -2,7 +2,7 @@
 
 ## Objective
 
-Both developers must be able to clone one repository, create equivalent environments, apply the same database structure, load safe development data and verify the same behavior. Docker and XAMPP are launch methods, not different architectures.
+Both developers must be able to clone one repository, create equivalent environments, apply the same database structure, load safe development data and verify the same behavior. Docker, XAMPP and WampServer are launch methods, not different architectures.
 
 The approved technical direction should follow the [EspoCRM SaaS Architecture Recommendation](../architecture/espocrm-saas-architecture-recommendation.md).
 
@@ -32,11 +32,10 @@ Never commit `.env`, credentials, cache, attachments, logs, runtime configuratio
 
 | Database | Purpose |
 |---|---|
-| `nexa_control` | Tenant registry, plans, entitlements, subscriptions and provisioning |
-| `nexa_tenant_local_<developer>` | Disposable Espo tenant data owned by one developer |
-| `nexa_tenant_test` | Created and destroyed by automated tests |
+| `espocrm` | One local shared schema containing Espo core, Nexa SaaS tables and at least two synthetic tenants |
+| `espocrm_test` | Disposable shared-schema database created by automated tests |
 
-Developers do not share one development database server or volume. Each local server may contain the control database and disposable logical tenant databases. Git synchronizes definitions; migrations synchronize installations; seeders synchronize safe examples. Shared staging is used only after local review.
+Developers do not share a development database server or volume. Each developer owns an independent local database with the same migration sequence and synthetic tenant fixtures. Git synchronizes definitions; migrations synchronize installations; seeders synchronize safe examples. Shared staging is used only after local review.
 
 ## Schema Change Rules
 
@@ -45,12 +44,12 @@ Developers do not share one development database server or volume. Each local se
 - Define fields, entities, relationships, indexes, layouts and scopes in Nexa custom metadata.
 - Run Espo rebuild after metadata changes.
 - Commit custom metadata and tests, not generated database/cache files.
-- Add a tenant migration only when rebuild cannot safely transform existing data.
+- Use explicit shared-schema migrations for tenant columns, service columns, backfills, composite indexes and cross-table integrity.
 
 ### Nexa-Owned Data
 
-- Put control-plane migrations in `database/control-plane/migrations/`.
-- Put exceptional tenant migrations in `database/tenant/migrations/`.
+- Put coordinated schema migrations in `database/shared/migrations/`.
+- Classify every affected table before adding tenant or service scope.
 - Use immutable sortable names such as `0002_add_subscription_period.sql`.
 - Never edit a migration after merge; add another migration.
 - Prefer expand/migrate/contract: add, backfill, switch readers, then remove later.
@@ -77,6 +76,7 @@ Developers do not share one development database server or volume. Each local se
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
 docker compose exec espocrm php rebuild.php
 docker compose exec espocrm php clear_cache.php
 powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
@@ -88,11 +88,23 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 2. Use PHP 8.2 with the same required extensions.
 3. Run MariaDB 10.11 or connect PHP to the project database container.
 4. Create a personal `.env` from `.env.example`.
-5. Configure a developer-specific tenant database.
-6. Apply the same migrations and fixtures.
+5. Configure the local `espocrm` shared database.
+6. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath <path-to-mariadb.exe> -IncludeDevelopmentSeeds`.
 7. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.
+
+## WampServer Developer
+
+1. Clone the same organization repository under `C:\wamp64\www\nexa`.
+2. Select PHP 8.2.x and enable the required extensions.
+3. Use MariaDB 10.11 and an independent local `espocrm` database.
+4. Complete the browser installation at the configured local virtual host.
+5. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local` with the MariaDB 10.11 client.
+6. Run rebuild, clear cache and repository verification.
+7. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure.
+
+Do not copy WampServer database files, another developer's database, or Docker volumes into the local installation.
 
 ## Phase 0 Exit Checklist
 
@@ -104,6 +116,7 @@ Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily s
 - [ ] Both developers load identical synthetic fixtures.
 - [ ] CI checks PHP, JSON, metadata and migration filenames.
 - [ ] Clean and upgrade smoke tests cover core CRM records.
-- [ ] Both developers review the cell-based SaaS data architecture and ADR.
+- [ ] Both developers review ADR-0002 and the shared-schema tenant isolation contract.
+- [ ] Two synthetic tenants prove authentication, CRUD, relationship, report and job isolation.
 
 Phase 1 starts only after this checklist is green.

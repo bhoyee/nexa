@@ -12,7 +12,7 @@ Nexa CRM will use EspoCRM 9.1.9 as its CRM foundation, but the finished product 
 |---|---|---|
 | Nexa experience | Application shell, navigation, design system, responsive layouts and branded workflows | Espo client custom modules |
 | Business modules | CRM, marketing, automation, service, conversations and administration | Espo custom PHP and client modules |
-| SaaS control plane | Tenants, plans, entitlements, metering, billing, provisioning and operator console | Separate Nexa service and worker |
+| SaaS administration | Tenants, plans, services, entitlements, metering, billing, provisioning and operator console | Module inside the shared-schema modular monolith |
 | Data and event platform | Event collection, queues, search, reporting models and audit data | Workers and supporting data stores |
 | Provider adapters | Email, SMS, WhatsApp, social, ads, identity, AI and analytics integrations | Versioned adapters behind Nexa interfaces |
 | Operations | CI/CD, secrets, monitoring, backups, security and incident tooling | Shared platform infrastructure |
@@ -25,7 +25,7 @@ The order below is the dependency order, not the menu order. Modules with lower 
 |---|---|---|---|
 | M01 | Nexa Platform Core | Module conventions, configuration, feature flags, audit events, API conventions, queues, shared errors and extension packaging | F-003 |
 | M02 | Nexa Design System and App Shell | Brand, login, global navigation, search, notifications, responsive layouts, accessibility, interface configuration and reusable UI components | F-002, F-012, F-059 |
-| M03 | SaaS Control Plane | Tenant lifecycle, plans, entitlements, quotas, metering, billing integration, tenant branding, domains and sandbox accounts | F-001, F-005, F-014, F-035, F-038, F-077 |
+| M03 | SaaS Administration | Tenant lifecycle, plans, entitlements, quotas, metering, billing integration, tenant branding, domains and sandbox accounts | F-001, F-005, F-014, F-035, F-038, F-077 |
 | M04 | Identity, Teams and Access | Users, social login, SSO, MFA hooks, permission sets, teams, hierarchy, field/content restrictions, sensitive-data protection and audited impersonation | F-015, F-024, F-067, F-072, F-073, F-074, F-079, F-083 |
 | M05 | CRM Data Platform | Accounts, contacts, leads, opportunities, custom objects, fields, associations, calculated properties, currencies, import/export and deduplication | F-026, F-029, F-039, F-040, F-047, F-068 |
 | M06 | Sales Workspace | Pipeline, lead and deal workspaces, activities, tasks, calendar, documents, collaboration and account-centered workflows | F-050 |
@@ -79,7 +79,7 @@ Every existing area receives a product decision: retain and redesign, extend, re
 The working agreement and exit checklist are maintained in [Phase 0 Collaboration and Database Workflow](../development/phase-0-collaboration.md). The tenant isolation decision is recorded in [ADR-0001](../architecture/ADR-0001-tenant-database-isolation.md) and detailed in the [SaaS Data Architecture](../architecture/saas-data-architecture.md).
 
 - Agree Git workflow, protected main branch, issue template, definition of done and ownership.
-- Make Docker and XAMPP use the same PHP version, extensions, database version, configuration and seed process.
+- Make Docker, XAMPP and WampServer use the same PHP version, extensions, database version, configuration, migrations and seed process.
 - Create sanitized fixtures; never share live database files or credentials.
 - Establish architecture decisions, coding standards, automated formatting and CI checks.
 - Baseline EspoCRM 9.1.9 behavior and record permitted extension points.

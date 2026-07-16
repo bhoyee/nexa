@@ -26,7 +26,8 @@ if ($php) {
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 Write-Check 'Compose configuration' (Test-Path (Join-Path $root 'compose.yaml')) 'compose.yaml'
 Write-Check 'Environment template' (Test-Path (Join-Path $root '.env.example')) '.env.example'
-Write-Check 'Control migration' (Test-Path (Join-Path $root 'database\control-plane\migrations\0001_initial_control_plane.sql')) '0001_initial_control_plane.sql'
+Write-Check 'Shared SaaS migration' (Test-Path (Join-Path $root 'database\shared\migrations\0001_initial_shared_saas.sql')) '0001_initial_shared_saas.sql'
+Write-Check 'Espo tenant expansion' (Test-Path (Join-Path $root 'database\shared\migrations\0002_expand_espocrm_tenant_scope.sql')) '0002_expand_espocrm_tenant_scope.sql'
 
 $espoDefaults = Join-Path $root 'espocrm\application\Espo\Resources\defaults\config.php'
 $espoVersionMatches = (Test-Path -LiteralPath $espoDefaults) -and
