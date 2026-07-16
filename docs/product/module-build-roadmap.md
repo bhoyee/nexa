@@ -237,16 +237,19 @@ The working agreement and exit checklist are maintained in [Phase 0 Collaboratio
 | R5 Enterprise Beta | Phase 11 | Salesforce and governed AI capabilities |
 | R6 SaaS General Availability | Phase 12 | Hardened production SaaS with operational evidence |
 
-Do not try to build all phases concurrently. For a two-person team, maintain one platform stream and one product stream, but finish each phase's shared contracts before starting dependent modules.
+Do not build all phases concurrently. Maintain one platform workstream and one product workstream inside the active phase, and finish shared contracts before starting dependent modules.
 
-## Two-Developer Ownership Model
+## Team Delivery and Ownership Model
 
-| Stream | Primary focus | Shared responsibility |
+| Workstream | Primary responsibility | Shared responsibility |
 |---|---|---|
-| Platform developer | M01, M03, M04, M11 infrastructure, M20, M22, CI/CD and NFRs | Data contracts, security review and releases |
-| Product developer | M02, M05-M10, M12-M19, M21 and M23 user workflows | Acceptance criteria, responsive UI and regression tests |
+| Platform lead | Architecture, database contracts, APIs, tenant isolation, security, infrastructure and CI/CD | Backend review, migrations, releases and operational requirements |
+| Product lead | Product workflows, frontend, responsive UX, accessibility and acceptance criteria | Regression testing, API usability and product documentation |
+| Both developers | Deliver the active phase and its modules end to end | Planning, integration, testing, documentation and release approval |
 
-Ownership is not exclusivity. Every pull request should be reviewed by the other developer. Rotate ownership periodically so neither the SaaS platform nor the product UI becomes single-person knowledge.
+Phases define dependency order and release gates, modules define architecture and ownership boundaries, and sprints define the work selected for delivery. Both workstreams operate within the same active phase instead of assigning whole groups of modules permanently to one person.
+
+For every active module, one developer is the implementation lead and the other is the review and integration lead. Ownership is not exclusivity: roles rotate between modules and major features so the platform, data model and product experience remain shared team knowledge.
 
 ## Mandatory Definition of Done
 
