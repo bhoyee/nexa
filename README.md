@@ -61,6 +61,7 @@ Team members should read the documents relevant to their work before modifying s
 - [Development collaboration](docs/development/phase-0-collaboration.md): shared code and database workflow.
 - [Environment baseline](docs/development/environment-baseline.md): required versions and extensions.
 - [Git workflow](docs/development/git-workflow.md): branches, commits, pull requests and releases.
+- [Delivery management](docs/development/delivery-management.md): Project fields, milestones, sprints, labels and issue workflow.
 - [Release process](docs/development/release-process.md): version changes, tags and GitHub Releases.
 - [XAMPP setup](docs/development/xampp-setup.md): detailed Windows/XAMPP installation.
 - [WampServer setup](docs/development/wampserver-setup.md): detailed Windows/WampServer installation.
