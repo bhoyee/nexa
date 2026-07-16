@@ -15,7 +15,7 @@ This repository supports development by the designated Nexa project team. The te
 
 ## System Architecture
 
-Nexa uses a **modular monolith with supporting platform services**. It is not a full microservices architecture. The customer-facing product is one versioned PHP application with clear module boundaries, one release process and one shared user experience. Background workers use the same application contracts, while the SaaS control plane and high-volume event workloads remain separate operational boundaries.
+Nexa uses a **modular monolith with supporting platform services**. It is not a full microservices architecture. The customer-facing product is one versioned PHP application with clear module boundaries, one release process and one shared user experience. Background workers use the same application contracts, while high-volume event and analytics workloads may use separate supporting infrastructure.
 
 ### Core Product Modules
 
@@ -32,9 +32,9 @@ Nexa uses a **modular monolith with supporting platform services**. It is not a 
 
 ### Architecture Diagram
 
-![Nexa modular monolith architecture showing users, tenant routing, control plane, product modules, background workers, tenant databases, storage, providers and analytics](docs/assets/nexa-system-architecture.png)
+![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](docs/assets/nexa-system-architecture.png)
 
-Transactional customer data uses a **cell-based, database-per-tenant model**. Each tenant database contains the existing CRM records and every Nexa business module for one customer. The shared control-plane database contains only routing, placement, plan, entitlement, subscription and operational metadata.
+Transactional data uses a **shared-schema multi-tenant model**. EspoCRM core tables, Nexa modules and SaaS administration tables live in one MariaDB schema. Every customer-owned row is protected by mandatory `tenant_id` scope; service-owned records and entitlements additionally use `service_id`.
 
 ## Supporting Infrastructure
 
@@ -55,8 +55,9 @@ Team members should read the documents relevant to their work before modifying s
 - [Feature inventory](docs/product/feature-inventory.md): functional and SaaS requirements.
 - [Module and build roadmap](docs/product/module-build-roadmap.md): module ownership, dependency order and delivery phases.
 - [SaaS architecture recommendation](docs/architecture/espocrm-saas-architecture-recommendation.md): recommended product and data architecture.
-- [Tenant isolation ADR](docs/architecture/ADR-0001-tenant-database-isolation.md): accepted database-isolation decision.
-- [SaaS data architecture](docs/architecture/saas-data-architecture.md): routing, placement, migration and operational model.
+- [Shared-schema tenancy ADR](docs/architecture/ADR-0002-shared-schema-multitenancy.md): accepted tenant-isolation decision.
+- [Superseded database-per-tenant ADR](docs/architecture/ADR-0001-tenant-database-isolation.md): retained decision history.
+- [SaaS data architecture](docs/architecture/saas-data-architecture.md): tenant scope, services, migration and operational model.
 - [Development collaboration](docs/development/phase-0-collaboration.md): shared code and database workflow.
 - [Environment baseline](docs/development/environment-baseline.md): required versions and extensions.
 - [Git workflow](docs/development/git-workflow.md): branches, commits, pull requests and releases.
@@ -245,8 +246,7 @@ See [XAMPP Setup](docs/development/xampp-setup.md) for troubleshooting, database
 nexa/
 |-- .github/                 GitHub Actions, issue forms and PR template
 |-- database/                Versioned SQL migrations and synthetic seeds
-|   |-- control-plane/       SaaS tenant, plan and provisioning schema
-|   `-- tenant/              Exceptional tenant migrations and test seeds
+|   `-- shared/              Shared Espo and SaaS schema migrations
 |-- docs/
 |   |-- architecture/        Architecture reports and decision records
 |   |-- development/         Environment, Git and collaboration guides
@@ -321,12 +321,10 @@ Prefer established extension points when they keep a change clear, but core file
 
 ### Database Assets
 
-- `database/control-plane/migrations/`: immutable shared SaaS schema changes.
-- `database/control-plane/seeds/`: synthetic plans and feature definitions.
-- `database/tenant/migrations/`: exceptional tenant changes not represented by metadata.
-- `database/tenant/seeds/`: synthetic CRM fixtures.
+- `database/shared/migrations/`: immutable migrations applied to the shared EspoCRM database.
+- `database/shared/seeds/`: synthetic plans, services and test fixtures.
 
-The current local application database is `espocrm`. The planned local control-plane database is `nexa_control`. These are separate logical databases on the same local MariaDB server. Schema and safe fixtures move through Git; local records and database volumes do not.
+Each local environment uses one `espocrm` database containing Espo core and Nexa SaaS tables. Schema and safe fixtures move through Git; local records and database volumes do not. Every tenant-owned table is converted through reviewed expand/backfill/enforce migrations rather than shared database dumps.
 
 ### Developer Scripts
 

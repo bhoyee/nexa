@@ -6,7 +6,7 @@
 - [x] Environment secrets and runtime data ignored.
 - [x] Public contribution, conduct, support and security policies added.
 - [x] Issue and pull-request templates added.
-- [x] CI validates source, metadata, Compose and control-plane SQL.
+- [x] CI validates source, metadata, Compose and shared-schema SaaS SQL.
 - [x] Environment and database baselines documented.
 - [x] Fresh-clone bootstrap and verification scripts added.
 - [ ] Fresh clone tested in a separate directory.

@@ -1,6 +1,6 @@
 # ADR-0001: Cell-Based Database-per-Tenant Isolation
 
-- Status: Accepted for initial implementation
+- Status: Superseded by [ADR-0002](ADR-0002-shared-schema-multitenancy.md)
 - Date: 2026-07-14
 - Owners: Nexa CRM team
 

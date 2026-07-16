@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "foundation-only",
+  "unclassifiedBehavior": "deny",
+  "description": "Table ownership contract for the Nexa shared-schema tenant conversion.",
+  "rules": {
+    "tenantOwned": "tenant_id is mandatory after expand/backfill/enforce migration",
+    "serviceOwned": "tenant_id and service_id are mandatory",
+    "tenantEvent": "tenant_id is mandatory and service_id is optional",
+    "platformGlobal": "ordinary tenant repositories cannot access the table",
+    "tenantRegistry": "the primary key is the tenant identity"
+  },
+  "tables": [
+    { "name": "nexa_tenant", "classification": "tenantRegistry", "tenantColumn": "id", "serviceScope": "none" },
+    { "name": "nexa_tenant_domain", "classification": "tenantOwned", "tenantColumn": "tenant_id", "serviceScope": "none" },
+    { "name": "nexa_service_definition", "classification": "platformGlobal", "tenantColumn": null, "serviceScope": "definition" },
+    { "name": "nexa_plan_definition", "classification": "platformGlobal", "tenantColumn": null, "serviceScope": "none" },
+    { "name": "nexa_plan_service", "classification": "platformGlobal", "tenantColumn": null, "serviceScope": "required" },
+    { "name": "nexa_tenant_subscription", "classification": "tenantOwned", "tenantColumn": "tenant_id", "serviceScope": "none" },
+    { "name": "nexa_tenant_service", "classification": "serviceOwned", "tenantColumn": "tenant_id", "serviceScope": "required" },
+    { "name": "nexa_usage_counter", "classification": "serviceOwned", "tenantColumn": "tenant_id", "serviceScope": "required" },
+    { "name": "nexa_provisioning_operation", "classification": "tenantOwned", "tenantColumn": "tenant_id", "serviceScope": "none" },
+    { "name": "nexa_audit_event", "classification": "tenantEvent", "tenantColumn": "tenant_id", "serviceScope": "optional" },
+    { "name": "nexa_outbox_event", "classification": "tenantEvent", "tenantColumn": "tenant_id", "serviceScope": "optional" }
+  ],
+  "espoCoreConversion": {
+    "status": "blocked-until-inventory-approved",
+    "nextMigration": "0002_expand_espocrm_tenant_scope.sql",
+    "requiredSources": [
+      "espocrm/application/Espo/Resources/metadata/entityDefs",
+      "espocrm/application/Espo/Modules/Crm/Resources/metadata/entityDefs",
+      "espocrm/custom/Espo/Custom/Resources/metadata/entityDefs"
+    ],
+    "requiredReview": [
+      "physical table and relationship ownership",
+      "tenant-qualified unique indexes",
+      "raw SQL and report callers",
+      "backfill dependency order",
+      "service ownership where applicable",
+      "two-tenant isolation tests"
+    ]
+  }
+}

@@ -1,318 +1,217 @@
-# EspoCRM to Nexa CRM SaaS: Architecture Recommendation
+# EspoCRM to Nexa CRM SaaS: Shared-Schema Architecture Recommendation
 
-**Prepared for:** Nexa CRM project stakeholders
+## 1. Executive Recommendation
 
-**Date:** 15 July 2026
+Nexa will use EspoCRM 9.1.9 as the starting application codebase and convert it into a deeply customized, shared-schema SaaS product. All Espo core records, Nexa modules and SaaS administration records will use one coordinated MariaDB schema.
 
-**Status:** Recommended architecture for team approval
+Customer-owned data is isolated with mandatory `tenant_id` scope. Service-specific records and entitlements additionally use `service_id`. The application will not prioritize compatibility with future upstream EspoCRM upgrades; the team accepts responsibility for its modified ORM, schema and security model.
 
-## Executive Summary
+The customer-facing application remains a modular PHP monolith. Redis, object storage, search, analytics and dedicated workers are supporting infrastructure, not independent product microservices.
 
-EspoCRM 9.1.9 is a useful foundation for Nexa CRM because it already provides mature CRM entities, permissions, activities, APIs and administration capabilities. However, it is designed primarily as a single-organization application. It is not a complete multi-tenant SaaS platform.
+## 2. Why Existing EspoCRM Is Not SaaS-Ready
 
-The principal architectural gap is tenant isolation. The current application initializes a central ORM and database connection for one configured database. It does not natively identify a SaaS tenant and enforce that tenant across every query, relationship, background job, cache key, attachment, export and integration.
+EspoCRM expects one organization in one database. Its existing users, accounts, contacts, opportunities, activities, reports and jobs do not carry or automatically enforce a SaaS tenant condition.
 
-We considered modifying all existing EspoCRM tables to add `tenant_id` and placing every customer in one shared CRM schema. Although possible, this would create a large permanent fork and make customer isolation dependent on every current and future code path remembering the correct tenant condition. One missed condition could expose one customer's data to another.
+A SaaS conversion must cover more than registration and login:
 
-We therefore recommend two complementary architecture decisions:
+- Repository reads, updates and deletes.
+- Entity relationships and junction tables.
+- REST APIs, imports, exports and duplicate checks.
+- Reports, dashboards, totals and search.
+- Scheduled jobs, email processing and automation.
+- Cache, sessions, files, attachments and queues.
+- Audit, support access and platform administration.
 
-- **Application architecture:** a modular PHP monolith for the customer-facing product, with clear internal module boundaries, shared contracts and one release process. Background workers use the same product contracts. Separate services are introduced only for distinct SaaS control-plane, scaling, security or workload needs.
-- **Data and deployment architecture:** a cell-based, database-per-tenant model for transactional customer data.
+Nexa is intentionally modifying the complete codebase, so a permanent tenant-aware fork is an accepted product decision rather than an accidental side effect.
 
-The target topology applies these decisions as follows:
+## 3. Chosen Data Model
 
-- A small shared control plane manages tenants, domains, plans, subscriptions, entitlements, database placement and provisioning.
-- Each customer receives one logical tenant database containing both the existing EspoCRM core tables and every new Nexa CRM, marketing, automation and service table for that customer.
-- Multiple logical tenant databases share the same MariaDB cluster initially. This does not require one physical database server per customer.
-- The same versioned Nexa/Espo application code serves all tenants.
-- High-volume tracking and analytics are separated from transactional CRM workloads as the product grows.
+One shared database contains four categories of data:
 
-This approach provides stronger isolation, preserves EspoCRM's existing data behavior, supports individual customer backup and restore, and gives the small development team a safer route to a commercial SaaS product.
+| Category | Identity | Examples |
+|---|---|---|
+| Platform-global | Privileged, no tenant owner | plans, service definitions and stable reference data |
+| Tenant-owned | `tenant_id` required | users, accounts, contacts, deals, activities, cases and campaigns |
+| Service-owned | `tenant_id` and `service_id` required | email sends, automation runs and service usage events |
+| Tenant events | `tenant_id` required, `service_id` optional | audit and transactional outbox events |
 
-## 1. Current EspoCRM Position
+The security rule is simple: `tenant_id` owns data; `service_id` controls or identifies a product service. A service ID never replaces tenant ID.
 
-### 1.1 What EspoCRM Provides
+General CRM records should not carry a service ID merely because several services use them. A Contact remains owned by its tenant whether CRM, marketing or customer service is currently enabled. Service availability and limits are represented by `nexa_tenant_service`.
 
-EspoCRM already supplies valuable product foundations:
+## 4. Target Architecture
 
-- Accounts, Contacts, Leads and Opportunities.
-- Cases, activities, tasks, calls, meetings and calendars.
-- Emails, templates, campaigns, target lists and mass-email foundations.
-- Users, teams, roles, permissions and portals.
-- Entity metadata, layouts, APIs, scheduled jobs and webhooks.
-- Import, export, duplicate detection, notes and attachments.
-- A PHP ORM and extension structure for custom server and client modules.
+![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](../assets/nexa-system-architecture.png)
 
-These capabilities make EspoCRM a reasonable product foundation. Nexa does not need to rebuild basic CRM behavior from zero.
+### 4.1 Modular Monolith
 
-### 1.2 What EspoCRM Does Not Provide Natively
+Nexa is one versioned PHP product with modules for platform core, CRM, sales, marketing, automation, service, conversations, analytics, identity and SaaS administration. Modules own their services, metadata, views, jobs and tests while using shared tenant and entitlement contracts.
 
-EspoCRM does not provide the full operating model required by a multi-customer SaaS platform:
+This avoids the operational overhead of prematurely splitting the product into many independently deployed services. High-volume or specialist workloads may be extracted later when measurement demonstrates a clear scaling, storage, isolation or provider-integration need.
 
-- Tenant registry and domain routing.
-- Guaranteed customer isolation across all storage and execution paths.
-- Automated tenant provisioning, suspension, cloning and deletion.
-- Subscription plans, billing and feature entitlements.
-- Per-tenant quotas and usage metering.
-- Fleet-wide tenant schema migrations.
-- Per-tenant backup and restore orchestration.
-- Cell placement, capacity management and regional residency.
-- SaaS operator tooling and controlled support impersonation.
-- Tenant-aware event ingestion, analytics and provider-cost controls.
+### 4.2 Shared MariaDB Schema
 
-EspoCRM permissions protect users and teams inside one organization. They should not be treated as the security boundary between unrelated paying customers.
+The same logical database contains:
 
-### 1.3 Evidence From the Pinned Source
+- Existing EspoCRM tables converted to tenant ownership where appropriate.
+- Nexa CRM, marketing, automation, service and reporting tables.
+- Tenant, domain, plan, service, subscription and entitlement tables.
+- Usage, provisioning, audit and transactional outbox tables.
+- A schema migration history.
 
-The local EspoCRM 9.1.9 source review found:
+A production cell may later host its own copy of this shared schema for capacity or regional reasons, but each cell still contains multiple tenants. The initial architecture does not provision a database per customer.
 
-- 91 core and CRM entity definitions before Nexa modules are added.
-- A central `EntityManager` constructed with one `DatabaseParams` object.
-- Database connection factories that select a configured database name.
-- No native `TenantContext` or global multi-tenant query scope in the reviewed application code.
+### 4.3 Supporting Infrastructure
 
-This means shared-schema tenancy would affect much more than the visible screens the team plans to redesign.
+- Redis stores tenant-prefixed cache entries, queues, locks and rate limits.
+- Object storage uses immutable tenant prefixes for attachments and media.
+- OpenSearch stores tenant-filtered search documents.
+- An analytics database and Metabase or equivalent provide governed reporting at scale.
+- Dedicated workers process marketing email, automation, imports, webhooks and schedules with immutable tenant context.
+- Central logs and traces include tenant, service, request and correlation identity.
 
-## 2. Why UI Customization Does Not Solve Tenancy
+## 5. Request and Login Flow
 
-The project intends to redesign every major EspoCRM workflow and add substantial marketing functionality. That gives the team control over the user experience, but tenant isolation also exists below the user interface.
+1. A user opens a verified tenant domain or chooses a workspace.
+2. `TenantResolver` loads the active tenant.
+3. The application creates an immutable `TenantContext`.
+4. Login queries the shared Espo user table using tenant ID and username/email.
+5. The authenticated session retains trusted tenant and user identity.
+6. The ORM automatically adds tenant scope to every tenant-owned query.
+7. Service commands check `nexa_tenant_service` before execution.
+8. Audit, cache, files, jobs and events receive the same tenant context.
 
-Adding a `tenant_id` column to a table is straightforward. Reliably enforcing it requires changes and tests across:
+The browser never chooses an arbitrary tenant ID through a hidden form field or API property.
 
-- ORM reads, writes, deletes and aggregate queries.
-- Relationship and many-to-many join tables.
-- Unique constraints and duplicate detection.
-- Authentication, password reset and user lookup.
-- Global search, autocomplete and dashboards.
-- Reports, exports and bulk operations.
-- Scheduled jobs, email queues and workflow workers.
-- Webhooks, API endpoints and provider callbacks.
-- Raw SQL in existing code, extensions and future integrations.
-- Cache keys, locks, sessions and rate limits.
-- Attachments, imports, exports and generated files.
-- Search indexes, analytics events and backups.
+A login query is logically equivalent to:
 
-Reviewing every visible feature cannot prove that every internal query path has been covered. The architecture should provide protection even when a developer makes a normal mistake.
+```sql
+SELECT *
+FROM user
+WHERE tenant_id = :trusted_tenant_id
+  AND user_name = :user_name
+  AND deleted = 0;
+```
 
-## 3. Options Considered
+## 6. Automatic Query Enforcement
 
-| Option | Advantages | Principal risks | Decision |
-|---|---|---|---|
-| Shared CRM schema with `tenant_id` | Simple database count, easy aggregate queries, simple initial provisioning | Large Espo fork, application-only isolation, difficult tenant restore/deletion, high breach impact | Not recommended initially |
-| Separate physical stack for every tenant | Very strong isolation and simple reasoning | High cost and operational overhead at scale | Optional for enterprise tenants |
-| Logical database per tenant on shared cells | Strong data boundary, preserves Espo behavior, individual restore/move, shared infrastructure cost | Requires provisioning and fleet migration tooling | Recommended |
-| Database shared by subscription plan | Fewer databases than per tenant | Plan changes require migration and customers remain co-mingled | Rejected |
+Developers must not manually remember `WHERE tenant_id = ...` on every screen. Espo's central ORM and repository framework will apply it based on an `EntityOwnershipRegistry`.
 
-## 4. Recommended Target Architecture
+The framework must scope:
 
-![Nexa modular monolith architecture showing users, tenant routing, control plane, product modules, background workers, tenant databases, storage, providers and analytics](../assets/nexa-system-architecture.png)
+- Select, count, update and delete queries.
+- Joined aliases and relationship tables.
+- Record services and API collections.
+- Report and dashboard query builders.
+- Scheduled jobs and queue workers.
+- Imports, exports, duplicate checks and global search.
 
-### 4.1 Application Architecture: Modular Monolith
+Raw SQL is prohibited for tenant-owned data unless it uses an approved scoped gateway. Cross-tenant platform operations require explicit authorization, purpose and audit records.
 
-The main Nexa product is one versioned PHP application and one coordinated user experience. Its internal modules cover platform core, CRM, sales, marketing, automation, service, conversations, reporting, identity and tenant administration. Modules own their metadata, services, views, jobs and tests behind deliberate boundaries even though they are deployed together.
+MariaDB triggers may reject missing tenant identity on inserts or updates, but they cannot secure ordinary reads. They are an additional write guard, not the tenancy system.
 
-This is not a full microservices architecture. With two developers, splitting every product area into independently deployed services would add service discovery, distributed transactions, API versioning, deployment coordination, observability and local-development overhead before the product demonstrates a scaling need.
+## 7. Database Integrity Rules
 
-The modular monolith does not prohibit supporting services. A responsibility can be extracted when it has a clear contract and a concrete reason such as independent scaling, stronger isolation, specialist storage, provider processing or a different failure profile. The SaaS control plane, event ingestion and high-volume analytics are the initial separate boundaries.
+- Every tenant-owned row has `tenant_id NOT NULL` after migration.
+- Every service-owned row has `tenant_id NOT NULL` and `service_id NOT NULL`.
+- Tenant-local uniqueness includes tenant ID.
+- Relationship tables carry tenant identity and cannot connect records from different tenants.
+- Frequent access paths use tenant-leading composite indexes.
+- Update and delete predicates include tenant scope.
+- Audit and outbox events always contain tenant identity.
+- Platform-global tables are accessible only through privileged gateways.
 
-Background and queue workers run independently from web requests but use the same versioned application code and tenant-context contracts. Every queued job must identify its tenant and cell.
+## 8. Initial Nexa Tables
 
-### 4.2 Control Plane
+The versioned shared-schema migration creates:
 
-The control plane is a small Nexa-owned PHP service. Laravel is a reasonable implementation option because it provides mature migrations, queues, authentication and billing integration, but the framework decision can be made separately.
+- `nexa_tenant`.
+- `nexa_tenant_domain`.
+- `nexa_plan_definition`.
+- `nexa_service_definition`.
+- `nexa_plan_service`.
+- `nexa_tenant_subscription`.
+- `nexa_tenant_service`.
+- `nexa_usage_counter`.
+- `nexa_provisioning_operation`.
+- `nexa_audit_event`.
+- `nexa_outbox_event`.
 
-The control plane stores:
+The `nexa_` prefix prevents collisions with Espo table names and makes ownership clear.
 
-- Tenant identity, status, region and domain mappings.
-- Cell and MariaDB-cluster placement.
-- Opaque database name and secrets-manager references.
-- Plans, features, entitlements and subscription references.
-- Aggregate usage and billing-period counters.
-- Provisioning, migration and backup status.
-- Audited platform-operator actions.
+## 9. EspoCRM Conversion Plan
 
-It must not store ordinary contacts, deals, message bodies, attachments or other customer CRM data.
+### Stage 1: Inventory
 
-### 4.3 Tenant Database
+Classify every existing table as platform-global, tenant-owned, service-owned or derived. Record relationships, unique indexes, raw query callers and expected service ownership.
 
-One logical tenant database contains the complete transactional product for one customer:
+### Stage 2: Expand
 
-- All required EspoCRM tables.
-- Nexa custom CRM tables and metadata.
-- Marketing contacts, consent, segments and campaigns.
-- Marketing-email definitions and suppression records.
-- Automation definitions, executions and history.
-- Conversations, scoring, attribution and tenant integrations.
-- Transactional outbox records for reliable external event delivery.
-- Applied tenant-schema migration history.
-- One immutable tenant-identity marker used to verify database routing.
+Add nullable tenant columns and indexes to approved tenant tables. Add service columns only to service-owned tables. Keep existing development data operational.
 
-All tenant databases use one canonical schema version. Product plans are enforced through entitlements, not different schemas.
+### Stage 3: Backfill
 
-### 4.4 Shared Infrastructure
+Create one baseline tenant for current records and backfill parent tables, relationship tables, histories and derived records in dependency order.
 
-- A gateway resolves customer domains and routes requests.
-- Redis handles cache, queues, distributed locks and rate limits with tenant-prefixed keys.
-- Object storage keeps attachments, imports, exports and media under immutable tenant prefixes.
-- OpenSearch supports global search and high-volume event queries with enforced tenant boundaries.
-- An analytics database with Metabase or an equivalent reporting tool serves governed reporting models.
-- Dedicated workers process marketing email, automation, imports, webhooks and scheduled jobs with immutable tenant context.
-- A secrets manager stores database and provider credentials.
-- Central logs, metrics and traces include tenant, cell and request identifiers.
+### Stage 4: Framework Enforcement
 
-These components support the modular monolith; they do not turn every product module into a microservice. Each addition requires tenant-isolation tests, monitoring, backup or recovery procedures and a supported local-development path.
+Implement tenant resolution, immutable context, ORM scope, write guards, entitlement checks and audited platform gateways. Convert authentication, reports, dashboards and jobs.
 
-## 5. How a Request Reaches the Correct EspoCRM Data
+### Stage 5: Database Enforcement
 
-1. A user opens `customer-a.nexa.example`.
-2. The gateway normalizes the hostname.
-3. The control plane finds Customer A and verifies that the tenant is active.
-4. It resolves Customer A's cell, cluster, database and credential reference.
-5. The application creates an immutable tenant context.
-6. EspoCRM starts with a connection to Customer A's database.
-7. Existing Espo queries operate normally but can physically see only Customer A's CRM records.
-8. Logs, jobs, cache keys, files and events receive Customer A's tenant identifier.
+Make tenant columns non-null, replace global uniqueness with tenant-qualified indexes and add relationship integrity checks.
 
-The browser or API caller must never provide a raw database name or credential reference.
+### Stage 6: Isolation Proof
 
-There are only two database roles in this flow. Customer A's database is the complete EspoCRM plus Nexa business database for Customer A; there is no separate shared EspoCRM database. The application opens a dedicated control-plane connection for routing and then creates a separate tenant connection before Espo's ORM and authentication services initialize. The two databases never join each other or share one transaction.
+Use at least two synthetic tenants with deliberately overlapping usernames and record names. Attempt cross-tenant access through every supported interface and execution path.
 
-The selected database identifies the customer and Espo's `User.id` identifies the acting user inside it. The connection factory verifies a one-row tenant-identity marker before booting Espo, so the control-plane tenant and opened database cannot silently disagree. Existing creator, modifier, assignment, login, action-history and audited-field records continue to work. For platform-wide logs and events, local identifiers are always qualified by tenant ID, for example `(tenant_id, user_id)` and `(tenant_id, entity_type, entity_id)`. Nexa also adds an append-only audit ledger for system jobs, API clients and audited operator access that Espo's ordinary record history does not fully cover.
+## 10. Reporting and Dashboards
 
-The required pre-bootstrap platform kernel, tenant-scoped configuration and cache handling, background-job re-resolution, entitlement and usage-event flow, provisioning saga and failure behavior are specified in [Nexa CRM SaaS Data Architecture](saas-data-architecture.md#runtime-communication-contract). The current Docker Compose configuration remains a single-tenant baseline until that adapter passes the two-tenant proof of concept.
+Tenant reports operate in the same shared database, which simplifies joins across CRM, marketing, automation and service modules. The reporting query builder must apply tenant scope to every participating tenant-owned table.
 
-## 6. Why This Recommendation Best Fits Nexa
+Service-specific dashboards additionally check the tenant's service entitlement. Platform-wide commercial or operational reporting uses a separate audited gateway and does not reuse a normal tenant session.
 
-### 6.1 It Works With EspoCRM Instead of Rebuilding Its ORM
+High-volume behavioral and delivery analytics may later move to an analytics store, but every event still carries tenant and optional service identity.
 
-EspoCRM continues operating within its expected single-organization database boundary. The team can focus on product modules and design instead of permanently patching every existing query.
+## 11. Registration and Services
 
-### 6.2 It Reduces Customer-Data Risk
+Customer registration creates:
 
-A query without a tenant filter remains confined to the selected tenant database. Database credentials, storage prefixes, cache keys and job context provide additional boundaries.
+1. A pending `nexa_tenant`.
+2. A verified domain or workspace slug.
+3. A subscription and enabled `nexa_tenant_service` rows.
+4. The first Espo user with the new tenant ID.
+5. Default tenant roles, teams and configuration.
+6. An audit trail and provisioning result.
 
-### 6.3 It Does Not Require One Server Per Customer
+Services are checked independently of record ownership. Disabling marketing email blocks sends and schedules while preserving the tenant's Contacts and historical data according to retention policy.
 
-One MariaDB cluster may host many logical tenant databases. Cells are added only when capacity, region or risk requires them. Dedicated cells remain an enterprise option.
+## 12. Security and Operational Risks
 
-### 6.4 It Supports SaaS Operations
+The main risk of shared-schema tenancy is cross-customer disclosure from a missing or incorrect tenant condition. Nexa reduces this risk through centralized ORM scope, table ownership metadata, database constraints, code review, static checks and attack-oriented two-tenant tests.
 
-A customer database can be backed up, restored, cloned into a sandbox, moved to another cluster, placed in a specific region or securely deleted without extracting rows from a shared CRM schema.
+Other required controls include:
 
-### 6.5 It Is More Realistic for a Two-Person Team
+- Tenant-prefixed cache, file and search keys.
+- Immutable tenant context in jobs and webhooks.
+- Audited operator impersonation.
+- Row-level export, deletion and legal-hold workflows.
+- Database-wide backup plus tested tenant-level logical recovery.
+- Query-plan and index monitoring as tenant volume grows.
 
-The architecture creates operational work around provisioning and migrations, but that work is explicit and automatable. Shared-schema tenancy would distribute security-sensitive work across almost every feature both developers build. A modular monolith also keeps delivery, debugging, testing and local setup manageable without closing the door to later service extraction.
+## 13. Team and Migration Workflow
 
-## 7. Trade-Offs and Mitigations
+Both Docker and XAMPP developers use one local `espocrm` database and apply the same migrations from `database/shared/migrations/`. Synthetic seeds provide the same service catalog and test tenants. Live dumps and database volumes are never shared through Git.
 
-| Trade-off | Mitigation |
-|---|---|
-| Many logical databases must be migrated | Build a schema-fleet runner with checksums, cohorts, pause thresholds and status tracking |
-| Cross-tenant reporting cannot join CRM databases | Send governed aggregate/event data to an analytics platform |
-| Connection counts grow with tenants | Use bounded cells, connection management and measured capacity limits |
-| Provisioning is more complex | Use an idempotent provisioning workflow and canonical database template/migrations |
-| Support staff cannot query every tenant casually | Provide audited, time-limited operator workflows and tenant health summaries |
-| Restore and moves require routing updates | Restore into a new database, verify it, then atomically update tenant placement |
+Every schema pull request includes migration, backfill behavior, index review, isolation tests, documentation and a recovery plan. Migrations are immutable after merge.
 
-## 8. Database and Migration Strategy
+## 14. Decision Summary
 
-### Control Plane
-
-The current initial migration establishes tenants, domains, cells, database clusters, tenant placement, plans, features, entitlements, subscriptions, usage and provisioning operations.
-
-### Tenant Schemas
-
-- Use Espo custom metadata for normal entities, fields, relationships and indexes.
-- Use explicit SQL migrations for transformations and structures Espo rebuild cannot safely express.
-- Never edit a migration after it has been released.
-- Apply expand/migrate/contract for risky changes.
-- Test every migration against a clean 9.1.9 database and a populated previous-version fixture.
-- Record migration filename, checksum and result separately for every tenant.
-
-### Developer Databases
-
-Each developer has an independent local database server or container containing a local control database and disposable tenant databases. Database structure and safe synthetic fixtures move through Git; database volumes and SQL dumps do not.
-
-Docker and XAMPP can both serve the PHP application, but the team must align PHP extensions and MariaDB 10.11 behavior.
-
-## 9. Implementation Plan
-
-### Stage 1: Phase 0 Baseline
-
-- Approve this report and ADR-0001.
-- Maintain the public Git remote and protect the `main` branch.
-- Align Docker and XAMPP versions.
-- Establish migration, seed, CI and review rules.
-- Keep the existing EspoCRM database unchanged while the architecture spike is built.
-
-### Stage 2: Tenancy Proof of Concept
-
-- Create two disposable tenant databases from the same schema.
-- Route two local hostnames through the same Nexa application code.
-- Resolve tenant placement before Espo's ORM is initialized.
-- Prove separate login, Contacts, Accounts and Opportunities.
-- Test cross-tenant API, search, cache, files and background jobs.
-
-This proof must pass before broad dashboard and module customization continues.
-
-### Stage 3: Control Plane and Provisioning
-
-- Implement tenant/domain registry and placement APIs.
-- Add idempotent provisioning, suspension and deletion.
-- Add secrets-manager integration.
-- Add plan entitlements and usage events.
-- Add fleet schema-version and backup status.
-
-### Stage 4: Canonical Nexa Tenant Product
-
-- Build the Nexa design system and redesigned CRM modules.
-- Add marketing, automation and conversation modules to the same canonical tenant schema.
-- Add transactional outbox and tenant-aware workers.
-- Release schema changes through migration cohorts.
-
-### Stage 5: Production Hardening
-
-- Automate backup, restore, tenant moves and disaster recovery.
-- Add cell capacity management, observability and rate limits.
-- Complete tenant-isolation, penetration, load and recovery testing.
-- Add analytics/event infrastructure before high-volume marketing rollout.
-
-## 10. Mandatory Security Gate
-
-No second real customer should be onboarded until automated tests prove isolation across:
-
-- Authentication and password recovery.
-- Database connections and APIs.
-- Background and scheduled jobs.
-- Cache, sessions and rate limits.
-- Attachments, imports and exports.
-- Search and analytics.
-- Webhooks and external integrations.
-- Backup, restore and deletion.
-- Platform support and impersonation.
-
-## 11. Licensing Consideration
-
-The bundled EspoCRM source identifies the application as AGPLv3 and includes an additional legal-notice requirement concerning the EspoCRM name in modified interactive interfaces. The team should obtain qualified open-source licensing advice before commercial launch, particularly for branding, source-availability obligations, hosted modifications and distribution of extensions. This report is an engineering recommendation, not legal advice.
-
-## 12. Decision Requested
-
-Stakeholders are asked to approve the following:
-
-1. EspoCRM 9.1.9 remains the pinned CRM foundation.
-2. The main customer-facing product uses a modular PHP monolith with explicit internal module boundaries and one coordinated release process.
-3. Background workers share the versioned application code and immutable tenant-context contracts.
-4. Nexa uses a cell-based, logical database-per-tenant model for transactional customer data.
-5. Espo core and all Nexa customer features live together inside each tenant database.
-6. A separate shared control plane stores only SaaS routing, commercial and operational metadata.
-7. Multiple logical tenant databases share MariaDB clusters; dedicated cells are optional.
-8. Redis, object storage, OpenSearch, analytics and dedicated workers are introduced as supporting infrastructure when justified.
-9. High-volume event and analytics workloads are separated from transactional CRM when required.
-10. The team completes the tenancy proof of concept before broad product customization.
-11. A legal review is required before final rebranding and commercial launch.
-
-## Conclusion
-
-EspoCRM is suitable as the CRM engine inside Nexa, but it should not be treated as an already multi-tenant SaaS platform. Retrofitting shared-schema tenancy into every existing and future Espo path would consume significant engineering effort while leaving customer isolation dependent on perfect application filtering.
-
-The recommended modular-monolith and cell-based architecture retains the value of EspoCRM, keeps the product manageable for the current team, keeps all customer-specific core and new functionality together, provides stronger isolation and creates a credible path to a scalable SaaS product. Supporting services are added deliberately when their operational value exceeds their complexity.
+1. Nexa remains a modular PHP monolith with supporting infrastructure.
+2. The application uses one shared MariaDB schema rather than a database per tenant.
+3. Every customer-owned row is secured by mandatory `tenant_id` scope.
+4. Service-owned rows and entitlements use `service_id` in addition to tenant ID.
+5. Espo's ORM, authentication, relationships, reports and jobs will be deeply modified.
+6. Compatibility with future upstream EspoCRM releases is not a priority.
+7. Automatic framework enforcement and two-tenant isolation tests are launch requirements.
+8. [ADR-0002](ADR-0002-shared-schema-multitenancy.md) is the governing decision record.

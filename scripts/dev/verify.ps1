@@ -17,7 +17,8 @@ function Pass([string] $message) {
 $required = @(
     '.env.example', '.gitattributes', '.gitignore', '.github/CODEOWNERS',
     '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
-    'compose.yaml', 'database/control-plane/migrations/0001_initial_control_plane.sql',
+    'compose.yaml', 'database/shared/migrations/0001_initial_shared_saas.sql',
+    'database/shared/table-ownership-manifest.json',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
     'espocrm/install/entry.php', 'espocrm/public/index.php', 'espocrm/vendor/autoload.php'
@@ -32,6 +33,15 @@ foreach ($file in $jsonFiles) {
     catch { Fail "Invalid JSON: $($file.FullName)" }
 }
 
+$ownershipManifest = Join-Path $root 'database\shared\table-ownership-manifest.json'
+try {
+    $manifest = Get-Content -LiteralPath $ownershipManifest -Raw | ConvertFrom-Json
+    if ($manifest.unclassifiedBehavior -ne 'deny') { Fail 'Table ownership manifest must deny unclassified tables.' }
+    elseif ($manifest.tables.Count -lt 1) { Fail 'Table ownership manifest has no classified tables.' }
+    else { Pass 'Shared-schema table ownership manifest' }
+} catch {
+    Fail "Invalid table ownership manifest: $ownershipManifest"
+}
 $php = Get-Command php -ErrorAction SilentlyContinue
 $phpFiles = Get-ChildItem -LiteralPath (Join-Path $root 'espocrm\custom'), (Join-Path $root 'espocrm\client\custom') -Filter '*.php' -File -Recurse -ErrorAction SilentlyContinue
 if ($php) {
