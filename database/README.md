@@ -4,9 +4,10 @@ Nexa uses one shared MariaDB schema for EspoCRM and Nexa-owned SaaS tables. Ever
 
 - `shared/migrations/`: immutable shared-schema migrations applied to the EspoCRM database.
 - `shared/seeds/`: synthetic plans and service definitions.
-- `shared/table-ownership-manifest.json`: fail-closed table classification and Espo conversion gate.
+- `shared/table-ownership-manifest.json`: fail-closed classification for all 136 Espo tables.
+- `shared/testing/0000_espocrm_9_1_9_schema.sql`: data-free schema fixture used only by migration CI.
 
-The first migration creates the Nexa tenant, domain, plan, service, subscription, usage, provisioning, audit and outbox tables. Espo core table conversion will be delivered through reviewed expand/backfill/enforce migrations after the table-ownership and index manifest is approved.
+Migration `0001` creates migration tracking plus the Nexa tenant, domain, plan, service, subscription, usage, provisioning, audit and outbox tables. Migration `0002` adds indexed tenant and service scope to 133 Espo tables, backfills the existing installation and tenant-qualifies business unique indexes. Three tables remain platform-global: `address_country`, `extension` and `system_data`.
 
 Espo entity definitions normally belong in `espocrm/custom/` and are applied by Espo rebuild. Cross-cutting tenant columns, composite indexes, constraints and data backfills require explicit SQL migrations because they change existing core tables.
 

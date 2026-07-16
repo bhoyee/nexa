@@ -326,11 +326,22 @@ Prefer established extension points when they keep a change clear, but core file
 
 Each local environment uses one `espocrm` database containing Espo core and Nexa SaaS tables. Schema and safe fixtures move through Git; local records and database volumes do not. Every tenant-owned table is converted through reviewed expand/backfill/enforce migrations rather than shared database dumps.
 
+Apply the shared schema after EspoCRM is installed:
+
+```powershell
+# Docker
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
+
+# XAMPP with MariaDB 10.11 client
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' -IncludeDevelopmentSeeds
+```
+
 ### Developer Scripts
 
 - `scripts/dev/setup.ps1`: creates `.env`, validates the tracked codebase and optionally starts Docker.
 - `scripts/dev/bootstrap-espocrm.ps1`: verifies that the complete tracked application and pinned version are present.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
+- `scripts/dev/apply-shared-schema.ps1`: applies checksum-tracked migrations through Docker or a local MariaDB client.
 - `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 
 ## Team Workflow

@@ -51,6 +51,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install MariaDB client
         run: sudo apt-get update && sudo apt-get install --yes mariadb-client
+      - name: Load pinned EspoCRM schema fixture
+        run: mariadb --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test < database/shared/testing/0000_espocrm_9_1_9_schema.sql
       - name: Apply shared-schema migrations
         run: |
           for migration in database/shared/migrations/*.sql; do
@@ -65,6 +67,9 @@ jobs:
           done
       - name: Verify expected baseline
         run: |
-          test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password --execute='SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = "nexa_shared_test"')" = "11"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password --execute='SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = "nexa_shared_test"')" = "148"
           test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test --execute='SELECT COUNT(*) FROM nexa_plan_definition')" = "3"
           test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test --execute='SELECT COUNT(*) FROM nexa_service_definition')" = "5"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password --execute='SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = "nexa_shared_test" AND column_name = "tenant_id"')" = "140"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password --execute='SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = "nexa_shared_test" AND column_name = "service_id"')" = "138"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password --execute='SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = "nexa_shared_test" AND table_name IN ("address_country", "extension", "system_data") AND column_name IN ("tenant_id", "service_id")')" = "0"

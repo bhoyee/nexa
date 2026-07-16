@@ -1,6 +1,14 @@
 -- Nexa shared-schema SaaS foundation.
 -- Apply this migration to the same logical database that contains EspoCRM.
 
+CREATE TABLE nexa_schema_migration (
+    migration_id VARCHAR(190) NOT NULL,
+    checksum_sha256 CHAR(64) NOT NULL,
+    applied_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    execution_ms INT UNSIGNED NULL,
+    applied_by VARCHAR(128) NOT NULL DEFAULT 'repository',
+    PRIMARY KEY (migration_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE nexa_tenant (
     id CHAR(36) NOT NULL,
     slug VARCHAR(63) NOT NULL,

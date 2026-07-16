@@ -76,6 +76,7 @@ Developers do not share a development database server or volume. Each developer 
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d
+powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
 docker compose exec espocrm php rebuild.php
 docker compose exec espocrm php clear_cache.php
 powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
@@ -88,7 +89,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 3. Run MariaDB 10.11 or connect PHP to the project database container.
 4. Create a personal `.env` from `.env.example`.
 5. Configure the local `espocrm` shared database.
-6. Apply the same migrations and two-tenant synthetic fixtures.
+6. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath <path-to-mariadb.exe> -IncludeDevelopmentSeeds`.
 7. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.

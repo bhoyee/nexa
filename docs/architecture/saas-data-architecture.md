@@ -165,7 +165,9 @@ Create a machine-readable manifest classifying every Espo and Nexa table. Identi
 
 ### Stage 2: Expand
 
-Add nullable `tenant_id` columns and supporting indexes to tenant-owned tables. Add `service_id` only to service-owned tables. Keep the existing single-tenant application functional during this stage.
+Migration `0002_expand_espocrm_tenant_scope.sql` inventories all 136 EspoCRM 9.1.9 tables. It adds indexed `tenant_id` and nullable `service_id` columns to 133 tables, backfills current records and tenant-qualifies 56 business unique indexes. `address_country`, `extension` and `system_data` are the explicit platform-global allowlist. Nine MariaDB `AUTO_INCREMENT` sequence indexes remain globally unique because their sequence column must lead the key.
+
+During the transition, new rows receive the stable legacy-local tenant by default so existing single-tenant Espo code cannot create null tenant rows. This default is temporary and must be removed when automatic ORM scoping is enforced.
 
 ### Stage 3: Backfill
 

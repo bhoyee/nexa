@@ -17,7 +17,9 @@ function Pass([string] $message) {
 $required = @(
     '.env.example', '.gitattributes', '.gitignore', '.github/CODEOWNERS',
     '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
-    'compose.yaml', 'database/shared/migrations/0001_initial_shared_saas.sql',
+    'compose.yaml', 'scripts/dev/apply-shared-schema.ps1',
+    'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
+    'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
     'database/shared/table-ownership-manifest.json',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
@@ -38,6 +40,7 @@ try {
     $manifest = Get-Content -LiteralPath $ownershipManifest -Raw | ConvertFrom-Json
     if ($manifest.unclassifiedBehavior -ne 'deny') { Fail 'Table ownership manifest must deny unclassified tables.' }
     elseif ($manifest.tables.Count -lt 1) { Fail 'Table ownership manifest has no classified tables.' }
+    elseif ($manifest.espoCoreConversion.tenantScopedTableCount -ne 133) { Fail 'Espo tenant table inventory must contain 133 tables.' }
     else { Pass 'Shared-schema table ownership manifest' }
 } catch {
     Fail "Invalid table ownership manifest: $ownershipManifest"
