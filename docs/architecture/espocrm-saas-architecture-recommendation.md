@@ -41,7 +41,7 @@ General CRM records should not carry a service ID merely because several service
 
 ## 4. Target Architecture
 
-![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](../assets/nexa-system-architecture.png)
+![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](../assets/nexa-system-architecture.svg)
 
 ### 4.1 Modular Monolith
 

@@ -32,7 +32,7 @@ Nexa uses a **modular monolith with supporting platform services**. It is not a 
 
 ### Architecture Diagram
 
-![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](docs/assets/nexa-system-architecture.png)
+![Nexa shared-schema modular monolith architecture showing tenant routing, automatic ORM scope, product modules, one shared database, workers and supporting infrastructure](docs/assets/nexa-system-architecture.svg)
 
 Transactional data uses a **shared-schema multi-tenant model**. EspoCRM core tables, Nexa modules and SaaS administration tables live in one MariaDB schema. Every customer-owned row is protected by mandatory `tenant_id` scope; service-owned records and entitlements additionally use `service_id`.
 
