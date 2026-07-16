@@ -193,7 +193,7 @@ Implementation order is defined in the [Nexa CRM Module and Build Roadmap](modul
 | NFR-056 | Version-controlled schema metadata, migrations, fixtures and idempotent seeders |
 | NFR-057 | Automated unit, integration, contract, end-to-end, accessibility and security tests |
 | NFR-058 | Continuous integration with required reviews and protected release branches |
-| NFR-059 | Reproducible local, staging and production environments for Docker and XAMPP contributors |
+| NFR-059 | Reproducible local, staging and production environments for Docker, XAMPP and WampServer contributors |
 | NFR-060 | Feature flags and staged releases for high-risk capabilities |
 | NFR-061 | API and event-schema versioning with backward-compatibility policy |
 | NFR-062 | Maintained architecture decisions, API documentation, data dictionary and operational guides |

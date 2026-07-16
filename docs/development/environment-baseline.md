@@ -39,4 +39,4 @@ A clean clone contains the same application code and user interface for every de
 - `pdo_mysql`
 - `zip`
 
-Both Docker and XAMPP contributors run the same repository checks. XAMPP may provide Apache/PHP, but MariaDB behavior must match 10.11.
+Docker, XAMPP and WampServer contributors run the same repository checks. XAMPP or WampServer may provide Apache/PHP, but PHP must remain 8.2.x and MariaDB behavior must match 10.11.

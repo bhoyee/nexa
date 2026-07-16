@@ -79,7 +79,7 @@ Every existing area receives a product decision: retain and redesign, extend, re
 The working agreement and exit checklist are maintained in [Phase 0 Collaboration and Database Workflow](../development/phase-0-collaboration.md). The tenant isolation decision is recorded in [ADR-0001](../architecture/ADR-0001-tenant-database-isolation.md) and detailed in the [SaaS Data Architecture](../architecture/saas-data-architecture.md).
 
 - Agree Git workflow, protected main branch, issue template, definition of done and ownership.
-- Make Docker and XAMPP use the same PHP version, extensions, database version, configuration and seed process.
+- Make Docker, XAMPP and WampServer use the same PHP version, extensions, database version, configuration, migrations and seed process.
 - Create sanitized fixtures; never share live database files or credentials.
 - Establish architecture decisions, coding standards, automated formatting and CI checks.
 - Baseline EspoCRM 9.1.9 behavior and record permitted extension points.

@@ -201,7 +201,7 @@ Other required controls include:
 
 ## 13. Team and Migration Workflow
 
-Both Docker and XAMPP developers use one local `espocrm` database and apply the same migrations from `database/shared/migrations/`. Synthetic seeds provide the same service catalog and test tenants. Live dumps and database volumes are never shared through Git.
+Docker, XAMPP and WampServer developers use one local `espocrm` database and apply the same migrations from `database/shared/migrations/`. Synthetic seeds provide the same service catalog and test tenants. Live dumps and database volumes are never shared through Git.
 
 Every schema pull request includes migration, backfill behavior, index review, isolation tests, documentation and a recovery plan. Migrations are immutable after merge.
 

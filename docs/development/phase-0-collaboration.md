@@ -2,7 +2,7 @@
 
 ## Objective
 
-Both developers must be able to clone one repository, create equivalent environments, apply the same database structure, load safe development data and verify the same behavior. Docker and XAMPP are launch methods, not different architectures.
+Both developers must be able to clone one repository, create equivalent environments, apply the same database structure, load safe development data and verify the same behavior. Docker, XAMPP and WampServer are launch methods, not different architectures.
 
 The approved technical direction should follow the [EspoCRM SaaS Architecture Recommendation](../architecture/espocrm-saas-architecture-recommendation.md).
 
@@ -93,6 +93,18 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 7. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.
+
+## WampServer Developer
+
+1. Clone the same organization repository under `C:\wamp64\www\nexa`.
+2. Select PHP 8.2.x and enable the required extensions.
+3. Use MariaDB 10.11 and an independent local `espocrm` database.
+4. Complete the browser installation at the configured local virtual host.
+5. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local` with the MariaDB 10.11 client.
+6. Run rebuild, clear cache and repository verification.
+7. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure.
+
+Do not copy WampServer database files, another developer's database, or Docker volumes into the local installation.
 
 ## Phase 0 Exit Checklist
 

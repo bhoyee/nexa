@@ -63,6 +63,7 @@ Team members should read the documents relevant to their work before modifying s
 - [Git workflow](docs/development/git-workflow.md): branches, commits, pull requests and releases.
 - [Release process](docs/development/release-process.md): version changes, tags and GitHub Releases.
 - [XAMPP setup](docs/development/xampp-setup.md): detailed Windows/XAMPP installation.
+- [WampServer setup](docs/development/wampserver-setup.md): detailed Windows/WampServer installation.
 
 ## Development Baseline
 
@@ -248,6 +249,12 @@ Use the same Windows account that owns the local project files. Scheduled jobs a
 
 See [XAMPP Setup](docs/development/xampp-setup.md) for troubleshooting, database reset rules and validation details.
 
+## WampServer Setup
+
+WampServer team members use the same PHP 8.2, MariaDB 10.11, shared migrations and repository checks. Clone the organization repository under `C:\wamp64\www`, complete the browser installation, then run the local migration mode with the WampServer MariaDB 10.11 client.
+
+See [WampServer Development Setup](docs/development/wampserver-setup.md) for the complete virtual-host, database, migration, scheduled-job and update workflow.
+
 ## Repository Structure
 
 ```text
@@ -340,7 +347,7 @@ Apply the shared schema after EspoCRM is installed:
 # Docker
 powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
 
-# XAMPP with MariaDB 10.11 client
+# XAMPP or WampServer with MariaDB 10.11 client
 powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' -IncludeDevelopmentSeeds
 ```
 

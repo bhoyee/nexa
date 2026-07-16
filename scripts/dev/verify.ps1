@@ -17,6 +17,7 @@ function Pass([string] $message) {
 $required = @(
     '.env.example', '.gitattributes', '.gitignore', '.github/CODEOWNERS',
     '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
+    'docs/development/wampserver-setup.md',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',

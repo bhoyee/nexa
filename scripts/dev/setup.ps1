@@ -33,7 +33,7 @@ else {
 
 if (-not $SkipStart) {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-        throw 'Docker is unavailable. Use -SkipStart for an XAMPP setup.'
+        throw 'Docker is unavailable. Use -SkipStart for an XAMPP or WampServer setup.'
     }
     & docker compose --project-directory $root up -d --wait
     if ($LASTEXITCODE -ne 0) { throw 'Docker Compose did not become healthy.' }
