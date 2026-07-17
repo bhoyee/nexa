@@ -8,23 +8,37 @@ use Espo\Core\Application;
 use Espo\Core\ORM\EntityManager;
 use Espo\Core\Tenant\TenantResolver;
 
-$password = getenv('NEXA_DEMO_ADMIN_PASSWORD') ?: getenv('ESPOCRM_ADMIN_PASSWORD');
-$userName = getenv('NEXA_DEMO_ADMIN_USERNAME') ?: 'demo-admin';
-
-if (!is_string($password) || strlen($password) < 12) {
-    fwrite(STDERR, "Set NEXA_DEMO_ADMIN_PASSWORD to a password of at least 12 characters.\n");
-    exit(1);
-}
-
-if (!is_string($userName) || $userName === '' || strlen($userName) > 50) {
-    fwrite(STDERR, "NEXA_DEMO_ADMIN_USERNAME must contain between 1 and 50 characters.\n");
-    exit(1);
-}
-
-$hosts = [
-    'tenant-a.localhost',
-    'tenant-b.localhost',
+$accounts = [
+    [
+        'host' => 'tenant-a.localhost',
+        'userName' => getenv('NEXA_TENANT_A_ADMIN_USERNAME') ?: 'demo-admin',
+        'password' => getenv('NEXA_TENANT_A_ADMIN_PASSWORD'),
+        'firstName' => 'Tenant A',
+    ],
+    [
+        'host' => 'tenant-b.localhost',
+        'userName' => getenv('NEXA_TENANT_B_ADMIN_USERNAME') ?: 'demo-admin-b',
+        'password' => getenv('NEXA_TENANT_B_ADMIN_PASSWORD'),
+        'firstName' => 'Tenant B',
+    ],
 ];
+
+foreach ($accounts as $account) {
+    if (!is_string($account['password']) || strlen($account['password']) < 12) {
+        fwrite(STDERR, "Set a password of at least 12 characters for {$account['host']}.\n");
+        exit(1);
+    }
+
+    if (!is_string($account['userName']) || $account['userName'] === '' || strlen($account['userName']) > 50) {
+        fwrite(STDERR, "The demo administrator username for {$account['host']} must contain between 1 and 50 characters.\n");
+        exit(1);
+    }
+}
+
+if ($accounts[0]['userName'] === $accounts[1]['userName']) {
+    fwrite(STDERR, "Tenant A and Tenant B demo administrator usernames must be different.\n");
+    exit(1);
+}
 
 $application = new Application();
 $container = $application->getContainer();
@@ -45,18 +59,22 @@ $update = $pdo->prepare(
     'last_name = :lastName, is_active = 1, modified_at = UTC_TIMESTAMP() ' .
     'WHERE id = :id AND tenant_id = :tenantId'
 );
+$deactivateOtherDemoAccount = $pdo->prepare(
+    'UPDATE user SET is_active = 0, modified_at = UTC_TIMESTAMP() ' .
+    'WHERE tenant_id = :tenantId AND user_name = :otherUserName AND deleted = 0'
+);
 
-foreach ($hosts as $host) {
-    $tenant = $tenantResolver->resolveHost($host);
+foreach ($accounts as $index => $account) {
+    $tenant = $tenantResolver->resolveHost($account['host']);
 
     if ($tenant === null) {
-        fwrite(STDERR, "Demo tenant for host {$host} is missing. Apply development seeds first.\n");
+        fwrite(STDERR, "Demo tenant for host {$account['host']} is missing. Apply development seeds first.\n");
         exit(1);
     }
 
     $find->execute([
         'tenantId' => $tenant->tenantId,
-        'userName' => $userName,
+        'userName' => $account['userName'],
     ]);
     $id = $find->fetchColumn();
     $created = !is_string($id);
@@ -65,10 +83,10 @@ foreach ($hosts as $host) {
         $id = substr(bin2hex(random_bytes(9)), 0, 17);
         $insert->execute([
             'id' => $id,
-            'userName' => $userName,
+            'userName' => $account['userName'],
             'type' => 'admin',
-            'password' => password_hash($password, PASSWORD_BCRYPT),
-            'firstName' => 'Demo',
+            'password' => password_hash($account['password'], PASSWORD_BCRYPT),
+            'firstName' => $account['firstName'],
             'lastName' => 'Administrator',
             'deleteId' => '0',
             'tenantId' => $tenant->tenantId,
@@ -77,13 +95,19 @@ foreach ($hosts as $host) {
         $update->execute([
             'id' => $id,
             'type' => 'admin',
-            'password' => password_hash($password, PASSWORD_BCRYPT),
-            'firstName' => 'Demo',
+            'password' => password_hash($account['password'], PASSWORD_BCRYPT),
+            'firstName' => $account['firstName'],
             'lastName' => 'Administrator',
             'tenantId' => $tenant->tenantId,
         ]);
     }
 
+    $otherAccount = $accounts[$index === 0 ? 1 : 0];
+    $deactivateOtherDemoAccount->execute([
+        'tenantId' => $tenant->tenantId,
+        'otherUserName' => $otherAccount['userName'],
+    ]);
+
     $action = $created ? 'created' : 'updated';
-    fwrite(STDOUT, "{$action}: {$host} / {$userName} / {$tenant->tenantId}\n");
+    fwrite(STDOUT, "{$action}: {$account['host']} / {$account['userName']} / {$tenant->tenantId}\n");
 }

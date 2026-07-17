@@ -93,10 +93,10 @@ No application archive is downloaded from the official website during normal Doc
 
 Open <http://localhost:8080>. Local administrator credentials are stored in the ignored `.env` file.
 
-Development setup also creates two isolated demo tenants. Their shared local-only credentials are configured by `DEMO_TENANT_ADMIN_USERNAME` and `DEMO_TENANT_ADMIN_PASSWORD` in the ignored `.env` file:
+Development setup also creates two isolated demo tenants with separate local-only credentials in the ignored `.env` file:
 
-- <http://tenant-a.localhost:8080>
-- <http://tenant-b.localhost:8080>
+- <http://tenant-a.localhost:8080> uses `DEMO_TENANT_A_ADMIN_USERNAME` and `DEMO_TENANT_A_ADMIN_PASSWORD`.
+- <http://tenant-b.localhost:8080> uses `DEMO_TENANT_B_ADMIN_USERNAME` and `DEMO_TENANT_B_ADMIN_PASSWORD`.
 
 Re-run demo login provisioning without changing tenant data:
 

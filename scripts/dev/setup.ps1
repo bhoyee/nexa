@@ -15,18 +15,40 @@ function New-RandomSecret {
     return [Convert]::ToBase64String($bytes).Replace('+', 'A').Replace('/', 'B').TrimEnd('=')
 }
 
+function Get-EnvValue([string] $Content, [string] $Name) {
+    $match = [regex]::Match($Content, '(?m)^' + [regex]::Escape($Name) + '=(.*)$')
+    if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    return $null
+}
+
+function Add-EnvValue([string] $Content, [string] $Name, [string] $Value) {
+    if (Get-EnvValue $Content $Name) { return $Content }
+    return $Content.TrimEnd("`r", "`n") + "`r`n${Name}=${Value}`r`n"
+}
+
 if (-not (Test-Path $envPath)) {
     $content = Get-Content -LiteralPath $envExample -Raw
     $content = $content.Replace('replace_with_a_long_random_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_different_long_random_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_third_long_random_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_strong_admin_password', (New-RandomSecret))
-    $content = $content.Replace('replace_with_a_demo_tenant_admin_password', (New-RandomSecret))
+    $content = $content.Replace('replace_with_a_tenant_a_admin_password', (New-RandomSecret))
+    $content = $content.Replace('replace_with_a_tenant_b_admin_password', (New-RandomSecret))
     Set-Content -LiteralPath $envPath -Value $content -Encoding ASCII
     Write-Host 'Created .env with local random credentials. Do not commit it.' -ForegroundColor Green
 }
 else {
-    Write-Host 'Keeping the existing .env file.'
+    $content = Get-Content -LiteralPath $envPath -Raw
+    $legacyUserName = Get-EnvValue $content 'DEMO_TENANT_ADMIN_USERNAME'
+    $legacyPassword = Get-EnvValue $content 'DEMO_TENANT_ADMIN_PASSWORD'
+
+    $content = Add-EnvValue $content 'DEMO_TENANT_A_ADMIN_USERNAME' $(if ($legacyUserName) { $legacyUserName } else { 'demo-admin' })
+    $content = Add-EnvValue $content 'DEMO_TENANT_A_ADMIN_PASSWORD' $(if ($legacyPassword) { $legacyPassword } else { New-RandomSecret })
+    $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_USERNAME' 'demo-admin-b'
+    $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_PASSWORD' (New-RandomSecret)
+    $content = [regex]::Replace($content, '(?m)^DEMO_TENANT_ADMIN_(USERNAME|PASSWORD)=.*\r?\n?', '')
+    Set-Content -LiteralPath $envPath -Value $content.TrimEnd("`r", "`n") -Encoding ASCII
+    Write-Host 'Kept the existing .env and ensured separate demo tenant credentials.'
 }
 
 & (Join-Path $PSScriptRoot 'bootstrap-espocrm.ps1')
@@ -40,7 +62,9 @@ if (-not $SkipStart) {
     if ($LASTEXITCODE -ne 0) { throw 'Docker Compose did not become healthy.' }
     & (Join-Path $PSScriptRoot 'apply-shared-schema.ps1') -Mode Docker -IncludeDevelopmentSeeds
     if ($LASTEXITCODE -ne 0) { throw 'Shared-schema migration failed.' }
-    & (Join-Path $PSScriptRoot 'provision-demo-tenants.ps1') -Mode Docker
+    & (Join-Path $PSScriptRoot 'provision-demo-tenants.ps1') -Mode Docker `
+        -TenantAUserName (Get-EnvValue $content 'DEMO_TENANT_A_ADMIN_USERNAME') `
+        -TenantBUserName (Get-EnvValue $content 'DEMO_TENANT_B_ADMIN_USERNAME')
     if ($LASTEXITCODE -ne 0) { throw 'Demo tenant provisioning failed.' }
     & docker compose --project-directory $root ps
 }
