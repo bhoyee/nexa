@@ -1,10 +1,12 @@
 {
     "cssList": [
         "__APPEND__",
-        "client/custom/css/modern-login.css"
+        "client/custom/css/modern-login.css",
+        "client/custom/css/tenant-workspace.css"
     ],
     "scriptList": [
         "__APPEND__",
-        "client/custom/login-patch.js"
+        "client/custom/login-patch.js",
+        "client/custom/tenant-workspace.js"
     ]
 }

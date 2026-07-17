@@ -1,3 +1,32 @@
+.nexa-app-loading {
+    min-height: calc(100vh - 52px);
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 14px;
+    color: #687574;
+    background: #f7f8f6;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.nexa-app-loading-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    color: #ffffff;
+    background: #0f766e;
+    font-size: 20px;
+    font-weight: 800;
+    animation: nexa-loading-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes nexa-loading-pulse {
+    from { opacity: 0.58; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
 body.modern-login-page {
     min-height: 100vh;
     margin: 0;
@@ -337,4 +366,5 @@ body.modern-login-page > footer a { color: #53615f; }
 
 @media (prefers-reduced-motion: reduce) {
     .modern-login-input { transition: none; }
+    .nexa-app-loading-mark { animation: none; }
 }

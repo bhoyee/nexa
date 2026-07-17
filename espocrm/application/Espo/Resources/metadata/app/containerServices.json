@@ -94,5 +94,23 @@
     },
     "applicationConfig": {
         "className": "Espo\\Core\\Utils\\Config\\ApplicationConfig"
+    },
+    "tenantContextStore": {
+        "className": "Espo\\Core\\Tenant\\TenantContextStore"
+    },
+    "tenantOwnershipRegistry": {
+        "className": "Espo\\Core\\Tenant\\EntityOwnershipRegistry"
+    },
+    "tenantResolver": {
+        "className": "Espo\\Core\\Tenant\\TenantResolver"
+    },
+    "tenantPlatformGateway": {
+        "className": "Espo\\Core\\Tenant\\PlatformExecutionGateway"
+    },
+    "tenantEntitlementChecker": {
+        "className": "Espo\\Core\\Tenant\\ServiceEntitlementChecker"
+    },
+    "tenantResourceKey": {
+        "className": "Espo\\Core\\Tenant\\TenantResourceKey"
     }
 }

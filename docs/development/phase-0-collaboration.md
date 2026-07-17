@@ -56,7 +56,7 @@ Developers do not share a development database server or volume. Each developer 
 
 ### Seed Data
 
-- Commit only synthetic, non-personal fixtures under `database/*/seeds/`.
+- Commit only synthetic, non-personal fixtures under `database/*/seeds/` or the idempotent demo tenant provisioner.
 - Never commit development or production dumps.
 - Keep encrypted backups outside Git.
 
@@ -77,6 +77,7 @@ Developers do not share a development database server or volume. Each developer 
 Copy-Item .env.example .env
 docker compose up -d
 powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
+powershell -ExecutionPolicy Bypass -File scripts/dev/provision-demo-tenants.ps1 -Mode Docker
 docker compose exec espocrm php rebuild.php
 docker compose exec espocrm php clear_cache.php
 powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
@@ -90,7 +91,8 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 4. Create a personal `.env` from `.env.example`.
 5. Configure the local `espocrm` shared database.
 6. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath <path-to-mariadb.exe> -IncludeDevelopmentSeeds`.
-7. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
+7. Run `scripts/dev/provision-demo-tenants.ps1 -Mode Local -PhpPath <path-to-php.exe>` to load both demo workspaces and their CRM fixtures.
+8. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.
 
@@ -101,8 +103,9 @@ Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily s
 3. Use MariaDB 10.11 and an independent local `espocrm` database.
 4. Complete the browser installation at the configured local virtual host.
 5. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local` with the MariaDB 10.11 client.
-6. Run rebuild, clear cache and repository verification.
-7. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure.
+6. Run `scripts/dev/provision-demo-tenants.ps1 -Mode Local -PhpPath <path-to-php.exe>`.
+7. Run rebuild, clear cache and repository verification.
+8. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure.
 
 Do not copy WampServer database files, another developer's database, or Docker volumes into the local installation.
 

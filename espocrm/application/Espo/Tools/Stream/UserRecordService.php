@@ -598,13 +598,9 @@ class UserRecordService
 
         $unionQuery = $builder->build();
 
-        $sql = $this->entityManager
-            ->getQueryComposer()
-            ->compose($unionQuery);
-
         $sthCollection = $this->entityManager
             ->getRDBRepositoryByClass(Note::class)
-            ->findBySql($sql);
+            ->findByQuery($unionQuery);
 
         $collection = $this->entityManager
             ->getCollectionFactory()

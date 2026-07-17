@@ -29,6 +29,7 @@
 
 namespace Espo\Core\ORM;
 
+use Espo\Core\Tenant\EntityOwnershipRegistry;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Metadata\OrmMetadataData;
 use Espo\ORM\MetadataDataProvider as MetadataDataProviderInterface;
@@ -37,7 +38,8 @@ class MetadataDataProvider implements MetadataDataProviderInterface
 {
     public function __construct(
         private OrmMetadataData $ormMetadataData,
-        private Metadata $metadata
+        private Metadata $metadata,
+        private EntityOwnershipRegistry $tenantOwnershipRegistry,
     ) {}
 
     public function get(): array
@@ -46,6 +48,19 @@ class MetadataDataProvider implements MetadataDataProviderInterface
 
         foreach (array_keys($data) as $entityType) {
             $data[$entityType]['fields'] = $this->metadata->get(['entityDefs', $entityType, 'fields']) ?? [];
+
+            if ($this->tenantOwnershipRegistry->isTenantEntity($entityType)) {
+                $data[$entityType]['attributes']['tenantId'] = [
+                    'type' => 'varchar',
+                    'len' => 36,
+                    'dbType' => 'string',
+                ];
+                $data[$entityType]['attributes']['serviceId'] = [
+                    'type' => 'varchar',
+                    'len' => 36,
+                    'dbType' => 'string',
+                ];
+            }
         }
 
         return $data;

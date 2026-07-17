@@ -1,3 +1,7 @@
+@font-face { font-family: 'Font Awesome 5 Free'; src: url('/client/fonts/fa-solid-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'Font Awesome 5 Brands'; src: url('/client/fonts/fa-brands-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: block; }
+.fas { font-family: 'Font Awesome 5 Free'; font-weight: 900; }
+.fab { font-family: 'Font Awesome 5 Brands'; font-weight: 400; }
 @font-face { font-family: Inter; src: url('/client/fonts/inter/InterVariable.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 
 :root {
@@ -47,6 +51,7 @@ p { margin-top: 0; }
 .site-nav a:hover, .nav-login:hover { color: #b9ebe3; }
 .scrolled .site-nav a:hover, .scrolled .nav-login:hover { color: var(--teal); }
 .nav-actions { display: flex; align-items: center; gap: 20px; }
+.mobile-nav-login { display: none; }
 .nav-toggle { display: none; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 6px; color: inherit; background: transparent; font-size: 20px; }
 
 .button { min-height: 48px; padding: 12px 20px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid transparent; border-radius: 6px; font-size: 14px; line-height: 1.2; font-weight: 760; transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease; }
@@ -202,6 +207,7 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
     .site-nav { position: absolute; top: 68px; left: 0; right: 0; padding: 14px 16px 22px; display: none; flex-direction: column; align-items: stretch; gap: 0; color: #fff; background: var(--deep); border-bottom: 1px solid #3a5554; }
     .site-nav.open { display: flex; }
     .site-nav a { padding: 12px 8px; border-bottom: 1px solid #294544; }
+    .site-nav .mobile-nav-login { display: block; color: #9fe1d6; font-weight: 750; }
     .nav-actions { display: none; }
     .brand-mark, .scrolled .brand-mark { color: var(--deep); background: #fff; }
     .hero { min-height: 720px; align-items: flex-end; background-position: 58% center; }

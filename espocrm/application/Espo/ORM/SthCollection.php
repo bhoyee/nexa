@@ -30,6 +30,7 @@
 namespace Espo\ORM;
 
 use Espo\ORM\Query\Select as SelectQuery;
+use Espo\ORM\Query\SelectingQuery;
 use IteratorAggregate;
 use Countable;
 use Traversable;
@@ -53,7 +54,7 @@ use Closure;
 class SthCollection implements Collection, IteratorAggregate, Countable
 {
     private string $entityType;
-    private ?SelectQuery $query = null;
+    private ?SelectingQuery $query = null;
     private ?PDOStatement $sth = null;
     private ?string $sql = null;
 
@@ -183,6 +184,23 @@ class SthCollection implements Collection, IteratorAggregate, Countable
             throw new RuntimeException("Query w/o entity type.");
         }
 
+        $obj->entityType = $entityType;
+        $obj->query = $query;
+
+        return $obj;
+    }
+
+    /**
+     * Create from any selecting query while retaining the hydrated entity type.
+     *
+     * @internal
+     */
+    public static function fromSelectingQuery(
+        SelectingQuery $query,
+        string $entityType,
+        EntityManager $entityManager
+    ): self {
+        $obj = new self($entityManager);
         $obj->entityType = $entityType;
         $obj->query = $query;
 

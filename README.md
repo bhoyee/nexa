@@ -87,11 +87,24 @@ cd nexa
 powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1
 ```
 
-The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment, waits for healthy application services and applies all checksum-tracked shared-schema migrations and development seeds.
+The clone already contains the complete pinned application source and dependencies. The setup command creates ignored local credentials, validates the environment, waits for healthy application services, applies all checksum-tracked shared-schema migrations and development seeds, and provisions tenant-scoped demo CRM records.
 
 No application archive is downloaded from the official website during normal Docker setup. Docker may automatically pull the pinned PHP/application runtime image and MariaDB image when they are not already present; `./espocrm` is then bind-mounted over `/var/www/html`, so the running application code is the exact version committed to this repository.
 
 Open <http://localhost:8080>. Local administrator credentials are stored in the ignored `.env` file.
+
+Development setup also creates two isolated demo tenants with separate local-only credentials in the ignored `.env` file. Each tenant receives its own synthetic accounts, contacts, leads, opportunities, tasks and meetings:
+
+Both accounts sign in through <http://localhost:8080/?login=1>. The application resolves the correct tenant from the submitted login identity:
+
+- Tenant A uses `DEMO_TENANT_A_ADMIN_USERNAME` and `DEMO_TENANT_A_ADMIN_PASSWORD`.
+- Tenant B uses `DEMO_TENANT_B_ADMIN_USERNAME` and `DEMO_TENANT_B_ADMIN_PASSWORD`.
+
+Refresh the demo administrators and their idempotent tenant-scoped CRM fixtures:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev/provision-demo-tenants.ps1 -Mode Docker
+```
 
 ```powershell
 docker compose ps
@@ -358,6 +371,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mo
 - `scripts/dev/bootstrap-espocrm.ps1`: verifies that the complete tracked application and pinned version are present.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
 - `scripts/dev/apply-shared-schema.ps1`: applies checksum-tracked migrations through Docker or a local MariaDB client.
+- `scripts/dev/provision-demo-tenants.ps1`: creates or refreshes login-ready administrators and tenant-scoped CRM fixtures for both synthetic tenants.
 - `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 
 ## Team Workflow

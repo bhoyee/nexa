@@ -35,6 +35,9 @@ use Espo\Core\Container\ContainerBuilder;
 use Espo\Core\Application\RunnerRunner;
 use Espo\Core\Application\Runner\Params as RunnerParams;
 use Espo\Core\Application\Exceptions\RunnerException;
+use Espo\Core\Tenant\PlatformExecutionGateway;
+use Espo\Core\Tenant\TenantContextStore;
+use Espo\Core\Tenant\TenantResolver;
 use Espo\Core\Utils\Autoload;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Metadata;
@@ -75,7 +78,36 @@ class Application
         $runnerRunner = $this->getInjectableFactory()->create(RunnerRunner::class);
 
         try {
-            $runnerRunner->run($className, $params);
+            $run = fn () => $runnerRunner->run($className, $params);
+
+            if (PHP_SAPI === 'cli') {
+                if (str_ends_with($className, '\\Cron') || str_ends_with($className, '\\Job')) {
+                    $this->container->getByClass(PlatformExecutionGateway::class)
+                        ->run('CLI runner ' . $className, $run);
+
+                    return;
+                }
+
+                $maintenanceTenant = $this->container->getByClass(TenantResolver::class)
+                    ->resolveHost('localhost');
+
+                if ($maintenanceTenant === null) {
+                    throw new \RuntimeException('The local maintenance tenant is not configured.');
+                }
+
+                $this->container->getByClass(TenantContextStore::class)->runWith($maintenanceTenant, $run);
+
+                return;
+            }
+
+            $host = preg_replace('/:\\d+$/', '', $_SERVER['HTTP_HOST'] ?? '') ?? '';
+            $tenant = $this->container->getByClass(TenantResolver::class)->resolveHost($host);
+
+            if ($tenant === null) {
+                throw new \RuntimeException('The request host is not assigned to an active tenant.');
+            }
+
+            $this->container->getByClass(TenantContextStore::class)->runWith($tenant, $run);
         } catch (RunnerException $e) {
             die($e->getMessage());
         }

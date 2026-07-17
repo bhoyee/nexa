@@ -869,14 +869,14 @@ class Service
 
         $builder->limit($offset, $limit);
 
-        $sql = $this->entityManager->getQueryComposer()->compose($builder->build());
+        $finalQuery = $builder->build();
 
         $collection = $this->entityManager
             ->getCollectionFactory()
             ->createFromSthCollection(
                 $this->entityManager
                     ->getRDBRepository($entityType)
-                    ->findBySql($sql)
+                    ->findByQuery($finalQuery)
             );
 
         $loadProcessorParams = FieldLoaderParams

@@ -29,6 +29,7 @@
 
 namespace Espo\Core;
 
+use Espo\Core\Tenant\PlatformExecutionGateway;
 use Espo\Core\Utils\SystemUser;
 use Espo\Entities\User;
 use Espo\Core\ORM\EntityManagerProxy;
@@ -46,7 +47,8 @@ class ApplicationUser
 
     public function __construct(
         private Container $container,
-        private EntityManagerProxy $entityManagerProxy
+        private EntityManagerProxy $entityManagerProxy,
+        private PlatformExecutionGateway $platformExecutionGateway,
     ) {}
 
     /**
@@ -54,20 +56,23 @@ class ApplicationUser
      */
     public function setupSystemUser(): void
     {
-        $user = $this->entityManagerProxy
-            ->getRDBRepository(User::ENTITY_TYPE)
-            ->select([
-                Attribute::ID,
-                'name',
-                'userName',
-                'type',
-                'isActive',
-                'firstName',
-                'lastName',
-                Attribute::DELETED,
-            ])
-            ->where(['userName' => SystemUser::NAME])
-            ->findOne();
+        $user = $this->platformExecutionGateway->run(
+            'Load framework system user',
+            fn () => $this->entityManagerProxy
+                ->getRDBRepository(User::ENTITY_TYPE)
+                ->select([
+                    Attribute::ID,
+                    'name',
+                    'userName',
+                    'type',
+                    'isActive',
+                    'firstName',
+                    'lastName',
+                    Attribute::DELETED,
+                ])
+                ->where(['userName' => SystemUser::NAME])
+                ->findOne()
+        );
 
         if (!$user) {
             throw new RuntimeException("System user is not found.");

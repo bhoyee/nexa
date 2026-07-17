@@ -25,10 +25,10 @@ Use a shared-schema, row-scoped multi-tenant architecture:
 
 ## Trusted Tenant Context
 
-The platform resolves tenant identity from a verified hostname, workspace slug or signed session before authenticating the Espo user. Browser fields, query parameters and API payloads cannot choose or override tenant identity.
+The common login resolves tenant identity from a globally unambiguous username before password verification. The server looks up the active user-to-tenant mapping, creates `TenantContext`, and then verifies credentials inside that tenant scope. Verified tenant domains and signed sessions remain supported routing inputs, but users do not need a tenant-specific login URL. Browser fields, query parameters and API payloads cannot submit or override `tenant_id`.
 
 ```text
-verified host/workspace
+login identity / signed session
         |
         v
 TenantResolver --> TenantContext(tenant_id)
@@ -74,6 +74,12 @@ Existing installations are converted with expand/backfill/enforce stages:
 7. Remove temporary compatibility paths only after verification.
 
 No blanket dynamic SQL migration may alter every table without an approved ownership and index manifest.
+
+## Implemented Runtime Boundary
+
+The initial shared-schema boundary is implemented through `TenantResolver`, immutable `TenantContext`, `TenantContextStore`, `EntityOwnershipRegistry`, `TenantQueryProcessor` and `TenantSqlExecutor`. A globally unambiguous login identity establishes context before password verification, while verified hosts remain optional routing inputs. Tenant-owned ORM queries receive mandatory scope, inserts receive server-derived ownership, direct SQL is rejected during tenant execution, and scheduled jobs restore ownership from the persisted job record.
+
+Migration `0003_enforce_tenant_runtime.sql` removes the expansion default and makes `tenant_id` non-null on all 133 registered Espo tables. Two stable synthetic tenants and domains are provided by `0002_two_tenant_isolation.sql`. The repository verifier and CI exercise fail-closed CRUD, relationships, dashboard/export/job queries, resource namespaces and database predicates.
 
 ## Consequences
 

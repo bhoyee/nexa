@@ -49,6 +49,8 @@ The order below is the dependency order, not the menu order. Modules with lower 
 
 All 86 functional IDs are assigned. The Additional features requirement remains a controlled discovery bucket in M01 and must be split into testable requirements before scheduling.
 
+The application sidebar includes disabled, grouped placeholders for planned customer-facing Nexa modules. A placeholder is a roadmap marker only: it has no route, controller, data model or implied implementation status, and is replaced by the real permission-aware module navigation when that module is delivered.
+
 ## Existing EspoCRM Coverage
 
 Every existing area receives a product decision: retain and redesign, extend, replace behind the same user workflow, or retire. Nothing should disappear accidentally.

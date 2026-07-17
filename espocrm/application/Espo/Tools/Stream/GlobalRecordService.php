@@ -302,14 +302,10 @@ class GlobalRecordService
 
         $unionQuery = $unionBuilder->build();
 
-        $sql = $this->entityManager
-            ->getQueryComposer()
-            ->compose($unionQuery);
-
         /** @var SthCollection<Note> */
         return $this->entityManager
             ->getRDBRepositoryByClass(Note::class)
-            ->findBySql($sql);
+            ->findByQuery($unionQuery);
     }
 
     /**

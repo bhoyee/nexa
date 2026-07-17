@@ -29,6 +29,8 @@
 
 namespace Espo\ORM\QueryComposer;
 
+use Espo\ORM\TenantIdProvider;
+
 use Espo\Core\ORM\Type\FieldType;
 use Espo\ORM\Defs\Params\AttributeParam;
 use Espo\ORM\Defs\Params\EntityParam;
@@ -208,7 +210,8 @@ abstract class BaseQueryComposer implements QueryComposer
         EntityFactory $entityFactory,
         Metadata $metadata,
         ?FunctionConverterFactory $functionConverterFactory = null,
-        ?EventDispatcher $eventDispatcher = null
+        ?EventDispatcher $eventDispatcher = null,
+        private ?TenantIdProvider $tenantIdProvider = null,
     ) {
         $this->entityFactory = $entityFactory;
         $this->pdo = $pdo;
@@ -2010,7 +2013,28 @@ abstract class BaseQueryComposer implements QueryComposer
             $part .= " AND $deletedColumnPart = $deletedValuePart";
         }
 
+        $part .= $this->getTenantJoinCondition($alias, $foreignEntityType);
+
         return $part;
+    }
+
+    private function getTenantJoinCondition(string $alias, ?string $entityType = null): string
+    {
+        $tenantId = $this->tenantIdProvider?->getTenantId();
+
+        if ($tenantId === null) {
+            return '';
+        }
+
+        if ($entityType !== null) {
+            $defs = $this->metadata->getDefs()->tryGetEntity($entityType);
+
+            if (!$defs || !$defs->hasAttribute('tenantId')) {
+                return '';
+            }
+        }
+
+        return ' AND ' . $this->quoteColumn($alias . '.tenant_id') . ' = ' . $this->quote($tenantId);
     }
 
     /**
@@ -3321,6 +3345,8 @@ abstract class BaseQueryComposer implements QueryComposer
                     " AND " .
                     "$middleDeletedColumn = " . $this->quote(false);
 
+                $sql .= $this->getTenantJoinCondition($midAlias);
+
                 $conditionParts = [];
 
                 foreach ($conditions as $left => $right) {
@@ -3347,6 +3373,8 @@ abstract class BaseQueryComposer implements QueryComposer
                         . " ON $rightKeyColumn = $middleDistantKeyColumn"
                         . " AND "
                         . "$rightDeletedColumn = " . $this->quote(false);
+
+                    $sql .= $this->getTenantJoinCondition($alias, $foreignEntityType);
                 }
 
                 return $sql;
@@ -3365,6 +3393,8 @@ abstract class BaseQueryComposer implements QueryComposer
                     . $this->quoteIdentifier($alias) . " ON "
                     . "$leftIdColumn = $rightIdColumn AND "
                     . "$leftDeletedColumn = " . $this->quote(false);
+
+                $sql .= $this->getTenantJoinCondition($alias, $foreignEntityType);
 
                 $conditionParts = [];
 
@@ -3400,6 +3430,8 @@ abstract class BaseQueryComposer implements QueryComposer
                     . "$leftIdColumn = $rightIdColumn AND "
                     . "$leftTypeColumn = " . $this->quote($entity->getEntityType()) . " AND "
                     . "$leftDeletedColumn = " . $this->quote(false);
+
+                $sql .= $this->getTenantJoinCondition($alias, $foreignEntityType);
 
                 $conditionParts = [];
 

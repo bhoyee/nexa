@@ -1,5 +1,12 @@
 {
     "fields": {
+        "tenantId": {
+            "type": "varchar",
+            "maxLength": 36,
+            "internal": true,
+            "readOnly": true,
+            "notNull": true
+        },
         "userName": {
             "type": "varchar",
             "maxLength": 50,
@@ -649,9 +656,10 @@
         "textFilterFields": ["name", "userName", "emailAddress"]
     },
     "indexes": {
-        "userNameDeleteId": {
+        "tenantNameDeleteId": {
             "type": "unique",
             "columns": [
+                "tenantId",
                 "userName",
                 "deleteId"
             ]

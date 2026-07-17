@@ -38,11 +38,14 @@ class DefaultQueryExecutor implements QueryExecutor
 {
     public function __construct(
         private SqlExecutor $sqlExecutor,
-        private QueryComposerWrapper $queryComposer
+        private QueryComposerWrapper $queryComposer,
+        private ?QueryProcessor $queryProcessor = null,
     ) {}
 
     public function execute(Query $query): PDOStatement
     {
+        $query = $this->queryProcessor?->process($query) ?? $query;
+
         $sql = $this->queryComposer->compose($query);
 
         return $this->sqlExecutor->execute($sql, true);

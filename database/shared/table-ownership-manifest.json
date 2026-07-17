@@ -1,6 +1,6 @@
 {
     "schemaVersion":  1,
-    "status":  "espo-9.1.9-inventory-complete-expand-pending",
+    "status":  "espo-9.1.9-runtime-tenant-enforced",
     "unclassifiedBehavior":  "deny",
     "description":  "Table ownership contract for the Nexa shared-schema tenant conversion.",
     "rules":  {
@@ -85,19 +85,19 @@
                    }
                ],
     "espoCoreConversion":  {
-                               "status":  "inventory-complete-expand-migration-generated",
-                               "nextMigration":  "0002_expand_espocrm_tenant_scope.sql",
+                               "status":  "runtime-enforced",
+                               "nextMigration":  null,
                                "requiredSources":  [
                                                        "espocrm/application/Espo/Resources/metadata/entityDefs",
                                                        "espocrm/application/Espo/Modules/Crm/Resources/metadata/entityDefs",
                                                        "espocrm/custom/Espo/Custom/Resources/metadata/entityDefs"
                                                    ],
                                "requiredReview":  [
-                                                      "automatic ORM and relationship scope before NOT NULL enforcement",
-                                                      "raw SQL, authentication, reports, dashboards and job callers",
-                                                      "AUTO_INCREMENT display sequences remain globally unique; next_number is tenant-scoped for new tenant-local counters",
+                                                      "new entities must be classified before use",
+                                                      "AUTO_INCREMENT display sequences remain globally unique",
                                                       "service ownership remains optional on existing shared CRM tables",
-                                                      "two-tenant isolation tests before real multi-tenant use"
+                                                      "production cache, file and search adapters must use TenantResourceKey",
+                                                      "security review is required before onboarding a real second tenant"
                                                   ],
                                "platformGlobalTables":  [
                                                             "address_country",
@@ -252,7 +252,7 @@
                                                              "webhook_event_queue_item\tUNIQ_NUMBER\tnumber",
                                                              "webhook_queue_item\tUNIQ_NUMBER\tnumber"
                                                          ],
-                               "transitionDefaultTenantId":  "00000000-0000-4000-8000-000000000001",
-                               "enforcementRule":  "Remove transition default and set tenant_id NOT NULL only after automatic ORM scope passes two-tenant tests."
+                               "transitionDefaultTenantId":  null,
+                               "enforcementRule":  "Migration 0003 removes the transition default and enforces tenant_id NOT NULL on all 133 tenant-owned Espo tables."
                            }
 }
