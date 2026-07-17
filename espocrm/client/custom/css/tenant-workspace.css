@@ -110,3 +110,33 @@ body.nexa-side-navigation #navbar .navbar-body > ul.tabs::-webkit-scrollbar-thum
         min-height: 160px;
     }
 }
+
+body.nexa-side-navigation #navbar .nexa-planned-module-link {
+    cursor: not-allowed;
+    opacity: 0.64;
+    padding-right: 36px;
+    position: relative;
+}
+
+body.nexa-side-navigation #navbar .nexa-planned-module-link:hover,
+body.nexa-side-navigation #navbar .nexa-planned-module-link:focus {
+    opacity: 0.82;
+    text-decoration: none;
+}
+
+body.nexa-side-navigation #navbar .nexa-planned-module-indicator {
+    font-size: 10px;
+    opacity: 0.72;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+body.nexa-side-navigation #navbar li[data-name="nexa-modules-divider"] .label-text {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0;
+    opacity: 0.72;
+    text-transform: uppercase;
+}
