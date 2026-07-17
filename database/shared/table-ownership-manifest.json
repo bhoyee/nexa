@@ -82,6 +82,18 @@
                        "classification":  "tenantEvent",
                        "tenantColumn":  "tenant_id",
                        "serviceScope":  "optional"
+                   },
+                   {
+                       "name":  "nexa_tenant_owner_identity",
+                       "classification":  "platformGlobal",
+                       "tenantColumn":  null,
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_signup_rate_limit",
+                       "classification":  "platformGlobal",
+                       "tenantColumn":  null,
+                       "serviceScope":  "none"
                    }
                ],
     "espoCoreConversion":  {

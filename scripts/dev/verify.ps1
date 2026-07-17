@@ -22,11 +22,13 @@ $required = @(
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
     'database/shared/migrations/0003_enforce_tenant_runtime.sql', 'database/shared/migrations/0004_tenant_qualified_user_identity.sql',
+    'database/shared/migrations/0005_self_service_tenant_signup.sql',
     'database/shared/seeds/0002_two_tenant_isolation.sql', 'espocrm/bin/provision-demo-tenants.php',
     'database/shared/table-ownership-manifest.json', 'espocrm/application/Espo/Resources/tenant-table-ownership.json',
     'tests/tenant/TenantRuntimeTest.php',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
+    'tests/signup/SignupValidatorTest.php',
     'espocrm/client/custom/tenant-workspace.js', 'espocrm/client/custom/css/tenant-workspace.css',
     'espocrm/custom/Espo/Custom/Tools/App/AppParams/TenantIdentity.php',
     'espocrm/install/entry.php', 'espocrm/html/main.html', 'espocrm/public/index.php',
@@ -79,6 +81,8 @@ if ($php) {
 if ($php) {
     & php (Join-Path $root 'tests\tenant\TenantRuntimeTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Tenant runtime isolation suite' } else { Fail 'Tenant runtime isolation suite failed.' }
+    & php (Join-Path $root 'tests\signup\SignupValidatorTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'Signup validation suite' } else { Fail 'Signup validation suite failed.' }
 }
 
 $tracked = & git -C $root ls-files
