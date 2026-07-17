@@ -18,7 +18,7 @@ final class TenantResolver
         }
 
         $statement = $this->entityManager->getPDO()->prepare(
-            'SELECT t.id, t.slug FROM nexa_tenant_domain d ' .
+            'SELECT t.id, t.slug, t.display_name FROM nexa_tenant_domain d ' .
             'INNER JOIN nexa_tenant t ON t.id = d.tenant_id ' .
             'WHERE d.hostname = :hostname AND d.verification_status = :verified ' .
             'AND t.status = :active LIMIT 1'
@@ -31,7 +31,7 @@ final class TenantResolver
         $row = $statement->fetch(\PDO::FETCH_ASSOC);
 
         return is_array($row)
-            ? new TenantContext($row['id'], $row['slug'], 'verified-host')
+            ? new TenantContext($row['id'], $row['slug'], 'verified-host', $row['display_name'])
             : null;
     }
 }

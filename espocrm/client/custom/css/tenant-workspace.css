@@ -1,0 +1,81 @@
+.nexa-tenant-identity {
+    align-items: center;
+    align-self: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    color: var(--navbar-inverse-link-color, #ffffff);
+    display: flex;
+    flex: 0 1 auto;
+    gap: 8px;
+    height: 34px;
+    margin: 3px 10px 3px 0;
+    max-width: 240px;
+    min-width: 0;
+    padding: 4px 10px 4px 5px;
+}
+
+.nexa-tenant-mark {
+    align-items: center;
+    background: #0f766e;
+    border-radius: 5px;
+    color: #ffffff;
+    display: inline-flex;
+    flex: 0 0 24px;
+    font-size: 11px;
+    font-weight: 700;
+    height: 24px;
+    justify-content: center;
+    line-height: 1;
+}
+
+.nexa-tenant-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    min-width: 0;
+}
+
+.nexa-tenant-label {
+    font-size: 9px;
+    font-weight: 600;
+    opacity: 0.72;
+    text-transform: uppercase;
+}
+
+.nexa-tenant-name {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 174px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+    .nexa-tenant-identity {
+        height: 32px;
+        margin-right: 6px;
+        max-width: 152px;
+        padding-right: 7px;
+    }
+
+    .nexa-tenant-label {
+        display: none;
+    }
+
+    .nexa-tenant-name {
+        max-width: 100px;
+    }
+}
+
+@media (max-width: 420px) {
+    .nexa-tenant-identity {
+        padding-right: 5px;
+    }
+
+    .nexa-tenant-copy {
+        display: none;
+    }
+}

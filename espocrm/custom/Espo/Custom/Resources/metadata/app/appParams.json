@@ -1,0 +1,5 @@
+{
+    "nexaTenant": {
+        "className": "Espo\\Custom\\Tools\\App\\AppParams\\TenantIdentity"
+    }
+}

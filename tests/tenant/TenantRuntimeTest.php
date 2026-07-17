@@ -59,8 +59,20 @@ function expectException(string $class, callable $callback): void
     throw new RuntimeException("Expected {$class} to be thrown.");
 }
 
-$tenantA = new TenantContext('30000000-0000-4000-8000-000000000001', 'isolation-alpha', 'test');
-$tenantB = new TenantContext('30000000-0000-4000-8000-000000000002', 'isolation-beta', 'test');
+$tenantA = new TenantContext(
+    '30000000-0000-4000-8000-000000000001',
+    'isolation-alpha',
+    'test',
+    'Isolation Alpha',
+);
+$tenantB = new TenantContext(
+    '30000000-0000-4000-8000-000000000002',
+    'isolation-beta',
+    'test',
+    'Isolation Beta',
+);
+expect($tenantA->displayName === 'Isolation Alpha', 'Tenant A display name is missing.');
+expect($tenantB->displayName === 'Isolation Beta', 'Tenant B display name is missing.');
 $store = new TenantContextStore();
 $processor = new TenantQueryProcessor(
     $store,

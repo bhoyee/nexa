@@ -21,6 +21,7 @@ if (-not (Test-Path $envPath)) {
     $content = $content.Replace('replace_with_a_different_long_random_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_third_long_random_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_strong_admin_password', (New-RandomSecret))
+    $content = $content.Replace('replace_with_a_demo_tenant_admin_password', (New-RandomSecret))
     Set-Content -LiteralPath $envPath -Value $content -Encoding ASCII
     Write-Host 'Created .env with local random credentials. Do not commit it.' -ForegroundColor Green
 }
