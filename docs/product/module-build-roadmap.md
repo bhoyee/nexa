@@ -270,9 +270,12 @@ A module or feature is not complete until it has:
 
 ## Immediate Backlog
 
-1. Finish Phase 0 environment parity and Git/CI workflow.
-2. Create the screen inventory for all existing EspoCRM routes and admin pages.
-3. Define Nexa design tokens and application navigation before redesigning individual modules.
-4. Specify tenant isolation architecture and decide database tenancy strategy.
-5. Add acceptance criteria, source strategy and release assignment to `feature-inventory.md`.
-6. Deliver R1 before beginning marketing-email or automation implementation.
+1. Close Phase 0 through clean Docker and native Windows validation, shared-schema fixture parity, repository/release verification and removal of local PHP timeouts.
+2. Complete the screen inventory for all existing application routes and administration pages.
+3. Add tenant-scoped clean-install and upgrade smoke tests for core CRM records.
+4. Define and verify the M01 module, API, event, queue, error and audit conventions.
+5. Deliver the M02 design foundations and responsive application shell through sprint-sized issues #25-#28.
+6. Add acceptance criteria, source strategy and release assignment to `feature-inventory.md` as each module enters discovery.
+7. Deliver R1 before beginning marketing-email or automation implementation.
+
+The shared-schema tenancy strategy and trusted tenant runtime are accepted and implemented through ADR-0002, issues #19 and #21, and PRs #20 and #24. They are no longer open product decisions.
