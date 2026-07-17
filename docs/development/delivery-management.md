@@ -77,6 +77,22 @@ During delivery, move work from Ready to In Progress and then In Review when its
 
 At sprint close, review completed outcomes, return unfinished work to Ready or deliberately schedule it, and record process improvements. Do not silently carry incomplete work into the next sprint.
 
+## Active Delivery Plan
+
+The Project is the live source for item status and assignment. This section records the agreed near-term sequence so repository documentation, milestones and Project iterations remain aligned.
+
+| Sprint | Dates | Goal | Committed scope |
+|---|---|---|---|
+| Sprint 01 | 20 July-2 August 2026 | Close the R0 engineering baseline and prepare the complete product screen map | #8 clean Docker clone, #9 clean XAMPP clone, #10 shared-schema parity, #13 repository and release verification, #14 screen inventory, #29 local PHP timeout removal |
+| Sprint 02 | 3-16 August 2026 | Establish platform, test and visual contracts for Phase 1 | #11 tenant-scoped CRM smoke tests, #16 M01 module conventions, #25 M02 design tokens and component foundations |
+| Sprint 03 | 17-30 August 2026 | Deliver and protect the responsive Nexa application shell | #26 desktop shell and navigation, #27 tablet/mobile shell, #28 accessibility and visual-regression gates |
+
+Phase 0 targets 2 August 2026. Phase 1 targets 30 August 2026. Later iterations remain capacity placeholders until their phase backlog has acceptance criteria, dependencies and sprint-sized issues. Do not fill all future sprints merely to make the roadmap look complete.
+
+Issue #15 is the M02 delivery umbrella and is not itself a sprint commitment. Its implementation is delivered through #25-#28.
+
+Sprint 01 may include the Phase 1 screen inventory because it is discovery work that does not depend on unfinished runtime changes. Phase 1 implementation remains gated by the Phase 0 exit criteria.
+
 ## Issue Readiness
 
 An issue is Ready only when it has:
