@@ -1,10 +1,32 @@
 require(['views/site/navbar'], NavbarView => {
+    const defaultData = NavbarView.prototype.data;
     const defaultAfterRender = NavbarView.prototype.afterRender;
+
+    NavbarView.prototype.data = function () {
+        const data = defaultData.call(this);
+
+        if (!this.isSide()) {
+            return data;
+        }
+
+        data.tabDefsList1 = [...data.tabDefsList1, ...data.tabDefsList2]
+            .filter(item => item.name !== 'show-more')
+            .map(item => ({
+                ...item,
+                isInMore: false,
+                isAfterShowMore: false,
+            }));
+        data.tabDefsList2 = [];
+
+        return data;
+    };
 
     NavbarView.prototype.afterRender = function () {
         const result = defaultAfterRender.call(this);
 
         try {
+            document.body.classList.toggle('nexa-side-navigation', this.isSide());
+
             const tenant = this.getHelper().getAppParam('nexaTenant');
             const container = this.element?.querySelector('.navbar-right-container');
 

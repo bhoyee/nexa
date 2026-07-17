@@ -157,6 +157,14 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
 
 This applies the Nexa foundation and mass tenant expansion, records migration checksums and skips migrations already applied.
 
+Provision the two local demo workspaces, their separate administrators and their tenant-scoped CRM fixtures. The command prompts for the two passwords stored in the ignored `.env` file:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev/provision-demo-tenants.ps1 `
+  -Mode Local `
+  -PhpPath $php
+```
+
 ## 7. Rebuild And Verify
 
 ```powershell
