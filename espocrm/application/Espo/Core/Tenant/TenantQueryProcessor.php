@@ -144,7 +144,8 @@ final class TenantQueryProcessor implements QueryProcessor
     {
         foreach (['joins', 'leftJoins'] as $joinKey) {
             foreach ($raw[$joinKey] ?? [] as $index => $join) {
-                $item = is_string($join) ? [$join] : $join;
+                $wasString = is_string($join);
+                $item = $wasString ? [$join] : $join;
                 $target = $item[0] ?? null;
 
                 if ($target instanceof Select) {
@@ -156,18 +157,13 @@ final class TenantQueryProcessor implements QueryProcessor
                         : $this->metadata->getDefs()->getEntity($rootEntityType)
                             ->tryGetRelation($target)?->tryGetForeignEntityType();
 
-                    if ($foreignType && $this->ownership->isTenantEntity($foreignType)) {
-                        if ($isTable) {
-                            $alias = $item[1] ?? $target;
-                            $item[2] = $this->addScope($item[2] ?? [], $alias . '.tenantId');
-                        } else {
-                            // Relation joins are scoped on both the middle and foreign aliases by the composer.
-                            $item[3]['nexaTenantScoped'] = true;
-                        }
+                    if ($foreignType && $this->ownership->isTenantEntity($foreignType) && $isTable) {
+                        $alias = $item[1] ?? $target;
+                        $item[2] = $this->addScope($item[2] ?? [], $alias . '.tenantId');
                     }
                 }
 
-                $raw[$joinKey][$index] = $item;
+                $raw[$joinKey][$index] = $wasString ? $join : $item;
             }
         }
 

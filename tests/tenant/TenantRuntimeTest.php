@@ -131,11 +131,12 @@ expect($joined['joins'][0][2][0]['c.tenantId'] === $tenantA->tenantId, 'Joined e
 
 $relationJoin = $store->runWith($tenantA, fn () => $processor->process(Select::fromRaw([
     'from' => 'Account',
-    'joins' => [['contacts', 'contacts']],
+    'joins' => ['contacts', ['contacts', 'contactAlias']],
 ]))->getRaw());
+expect($relationJoin['joins'][0] === 'contacts', 'String relationship join shape must be preserved.');
 expect(
-    ($relationJoin['joins'][0][3]['nexaTenantScoped'] ?? false) === true,
-    'Relationship join was not marked for middle and foreign alias scope.'
+    $relationJoin['joins'][1] === ['contacts', 'contactAlias'],
+    'Array relationship join shape must be preserved.'
 );
 
 foreach (['DashboardTemplate', 'Export', 'Job'] as $moduleEntity) {
