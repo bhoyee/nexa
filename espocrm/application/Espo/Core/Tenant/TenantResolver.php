@@ -30,8 +30,39 @@ final class TenantResolver
         ]);
         $row = $statement->fetch(\PDO::FETCH_ASSOC);
 
-        return is_array($row)
-            ? new TenantContext($row['id'], $row['slug'], 'verified-host', $row['display_name'])
-            : null;
+        return is_array($row) ? $this->contextFromRow($row, 'verified-host') : null;
+    }
+
+    public function resolveLoginIdentifier(string $identifier): ?TenantContext
+    {
+        $identifier = trim($identifier);
+
+        if ($identifier === '' || strlen($identifier) > 255) {
+            return null;
+        }
+
+        $statement = $this->entityManager->getPDO()->prepare(
+            'SELECT DISTINCT t.id, t.slug, t.display_name FROM user u ' .
+            'INNER JOIN nexa_tenant t ON t.id = u.tenant_id ' .
+            'WHERE u.user_name = :identifier AND u.deleted = 0 AND u.is_active = 1 ' .
+            'AND t.status = :active LIMIT 2'
+        );
+        $statement->execute([
+            'identifier' => $identifier,
+            'active' => 'active',
+        ]);
+        $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) !== 1) {
+            return null;
+        }
+
+        return $this->contextFromRow($rows[0], 'login-identity');
+    }
+
+    /** @param array{id: string, slug: string, display_name: string} $row */
+    private function contextFromRow(array $row, string $source): TenantContext
+    {
+        return new TenantContext($row['id'], $row['slug'], $source, $row['display_name']);
     }
 }

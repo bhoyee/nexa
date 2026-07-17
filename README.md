@@ -95,8 +95,10 @@ Open <http://localhost:8080>. Local administrator credentials are stored in the 
 
 Development setup also creates two isolated demo tenants with separate local-only credentials in the ignored `.env` file:
 
-- <http://tenant-a.localhost:8080> uses `DEMO_TENANT_A_ADMIN_USERNAME` and `DEMO_TENANT_A_ADMIN_PASSWORD`.
-- <http://tenant-b.localhost:8080> uses `DEMO_TENANT_B_ADMIN_USERNAME` and `DEMO_TENANT_B_ADMIN_PASSWORD`.
+Both accounts sign in through <http://localhost:8080/?login=1>. The application resolves the correct tenant from the submitted login identity:
+
+- Tenant A uses `DEMO_TENANT_A_ADMIN_USERNAME` and `DEMO_TENANT_A_ADMIN_PASSWORD`.
+- Tenant B uses `DEMO_TENANT_B_ADMIN_USERNAME` and `DEMO_TENANT_B_ADMIN_PASSWORD`.
 
 Re-run demo login provisioning without changing tenant data:
 

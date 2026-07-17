@@ -72,8 +72,8 @@ A production cell may later host its own copy of this shared schema for capacity
 
 ## 5. Request and Login Flow
 
-1. A user opens a verified tenant domain or chooses a workspace.
-2. `TenantResolver` loads the active tenant.
+1. A user opens the common Nexa login and submits a globally unambiguous username.
+2. `TenantResolver` maps that server-owned identity to exactly one active tenant; verified tenant domains remain optional.
 3. The application creates an immutable `TenantContext`.
 4. Login queries the shared Espo user table using tenant ID and username/email.
 5. The authenticated session retains trusted tenant and user identity.

@@ -12,7 +12,7 @@ A local environment uses one database such as `espocrm`. Production may later us
 
 ```text
                          Nexa application
-              hostname/session -> TenantContext
+         login identity/session -> TenantContext
                                 |
                  ORM tenant scope + entitlements
                                 |
@@ -59,28 +59,29 @@ Nexa-owned tables use a `nexa_` prefix to avoid collisions with existing Espo ta
 
 Tenant resolution occurs before Espo authentication:
 
-1. Normalize the trusted hostname or workspace identifier.
-2. Resolve an active `nexa_tenant` and verified `nexa_tenant_domain`.
+1. Decode the submitted username from the standard authorization request without accepting a tenant ID from the browser.
+2. Resolve exactly one active user and tenant from the server-owned identity records; reject unknown or ambiguous identifiers with a generic unauthorized response.
 3. Create an immutable `TenantContext` containing tenant, request and correlation identity.
-4. Authenticate the user with both user credentials and `TenantContext.tenantId`.
+4. Verify the password and user status inside `TenantContext.tenantId`.
 5. Attach the context to ORM, ACL, cache, file, search, queue and audit services.
-6. Clear all request-scoped identity after the request or job finishes.
+6. Retain tenant identity in the signed session and clear request-scoped identity after the request or job finishes.
 
 Tenant identity never comes from a writable form field, arbitrary HTTP header or record payload.
 
 ### Login
 
-A shared user table is tenant-owned. The login lookup is logically equivalent to:
+A shared user table is tenant-owned. The common login performs a server-side routing lookup first and accepts only an identifier that maps to exactly one active tenant. Password verification then uses the resolved tenant scope:
 
 ```sql
 SELECT *
 FROM user
-WHERE tenant_id = :trusted_tenant_id
+WHERE tenant_id = :resolved_tenant_id
   AND user_name = :user_name
-  AND deleted = 0;
+  AND deleted = 0
+  AND is_active = 1;
 ```
 
-The same email or username may exist in different tenants. Tenant-qualified unique indexes enforce the chosen identity rules. Password reset and invitation links retain the verified workspace or hostname.
+Usernames exposed through the common login must therefore be globally unambiguous. An identity found in multiple active tenants is rejected rather than guessed. Future multi-workspace membership should use a global login identity plus explicit tenant memberships, while password-reset and invitation links retain signed identity and tenant context.
 
 ### Automatic ORM Scope
 
@@ -105,7 +106,7 @@ Required framework components:
 | `PlatformExecutionGateway` | Permit explicit cross-tenant operations with a logged reason |
 | `TenantContextStore` | Stack and clear context after each request or job iteration |
 
-The runtime implementation is installed in `espocrm/application/Espo/Core/Tenant/`. HTTP application runners and API middleware resolve verified domains before authentication. Espo ORM metadata exposes `tenantId` and `serviceId`, and `DefaultQueryExecutor` passes immutable queries through `TenantQueryProcessor`. Legacy UNION callers now keep query objects instead of converting them to raw SQL. Cron can enumerate through `PlatformExecutionGateway`, while every scheduled job restores the `tenant_id` stored on its record.
+The runtime implementation is installed in `espocrm/application/Espo/Core/Tenant/`. HTTP application runners provide the public shell, and API middleware resolves a globally unambiguous login identity before password verification. Verified domains remain optional routing inputs. Espo ORM metadata exposes `tenantId` and `serviceId`, and `DefaultQueryExecutor` passes immutable queries through `TenantQueryProcessor`. Legacy UNION callers now keep query objects instead of converting them to raw SQL. Cron can enumerate through `PlatformExecutionGateway`, while every scheduled job restores the `tenant_id` stored on its record.
 
 Migration `0003_enforce_tenant_runtime.sql` removes the compatibility default and makes `tenant_id` non-null on all 133 tenant-owned Espo tables. The repository verifier runs `tests/tenant/TenantRuntimeTest.php`, and CI loads two synthetic tenants before executing database isolation checks.
 

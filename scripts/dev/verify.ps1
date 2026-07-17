@@ -29,7 +29,8 @@ $required = @(
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
     'espocrm/client/custom/tenant-workspace.js', 'espocrm/client/custom/css/tenant-workspace.css',
     'espocrm/custom/Espo/Custom/Tools/App/AppParams/TenantIdentity.php',
-    'espocrm/install/entry.php', 'espocrm/public/index.php', 'espocrm/vendor/autoload.php'
+    'espocrm/install/entry.php', 'espocrm/html/main.html', 'espocrm/public/index.php',
+    'espocrm/public/landing/index.html', 'espocrm/public/landing/styles.css', 'espocrm/vendor/autoload.php'
 )
 foreach ($relative in $required) {
     if (Test-Path (Join-Path $root $relative)) { Pass "$relative exists" } else { Fail "$relative is missing" }
