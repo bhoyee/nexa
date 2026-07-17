@@ -77,6 +77,7 @@ Developers do not share a development database server or volume. Each developer 
 Copy-Item .env.example .env
 docker compose up -d
 powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mode Docker -IncludeDevelopmentSeeds
+powershell -ExecutionPolicy Bypass -File scripts/dev/provision-demo-tenants.ps1 -Mode Docker
 docker compose exec espocrm php rebuild.php
 docker compose exec espocrm php clear_cache.php
 powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1

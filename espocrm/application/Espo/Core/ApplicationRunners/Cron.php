@@ -31,6 +31,7 @@ namespace Espo\Core\ApplicationRunners;
 
 use Espo\Core\Application\Runner;
 use Espo\Core\Job\JobManager;
+use Espo\Core\Tenant\PlatformExecutionGateway;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Log;
 
@@ -42,7 +43,7 @@ class Cron implements Runner
     use Cli;
     use SetupSystemUser;
 
-    public function __construct(private JobManager $jobManager, private Config $config, private Log $log)
+    public function __construct(private JobManager $jobManager, private Config $config, private Log $log, private PlatformExecutionGateway $tenantPlatformGateway)
     {}
 
     public function run(): void
@@ -53,6 +54,6 @@ class Cron implements Runner
             return;
         }
 
-        $this->jobManager->process();
+        $this->tenantPlatformGateway->run('cron queue enumeration', fn () => $this->jobManager->process());
     }
 }

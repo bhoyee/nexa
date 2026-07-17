@@ -85,6 +85,7 @@ class QueueUtil
             ->getRDBRepositoryByClass(JobEntity::class)
             ->select([
                 Attribute::ID,
+                'tenantId',
                 'scheduledJobId',
                 'scheduledJobJob',
                 'executeTime',
@@ -240,6 +241,7 @@ class QueueUtil
             ->getRDBRepositoryByClass(JobEntity::class)
             ->select([
                 Attribute::ID,
+                'tenantId',
                 'scheduledJobId',
                 'executeTime',
                 'targetId',
@@ -277,6 +279,7 @@ class QueueUtil
             ->getRDBRepositoryByClass(JobEntity::class)
             ->select([
                 Attribute::ID,
+                'tenantId',
                 'scheduledJobId',
                 'executeTime',
                 'targetId',
@@ -309,6 +312,7 @@ class QueueUtil
             ->getRDBRepositoryByClass(JobEntity::class)
             ->select([
                 Attribute::ID,
+                'tenantId',
                 'scheduledJobId',
                 'executeTime',
                 'targetId',

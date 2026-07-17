@@ -75,6 +75,12 @@ Existing installations are converted with expand/backfill/enforce stages:
 
 No blanket dynamic SQL migration may alter every table without an approved ownership and index manifest.
 
+## Implemented Runtime Boundary
+
+The initial shared-schema boundary is implemented through `TenantResolver`, immutable `TenantContext`, `TenantContextStore`, `EntityOwnershipRegistry`, `TenantQueryProcessor` and `TenantSqlExecutor`. Verified request hosts establish context before authentication. Tenant-owned ORM queries receive mandatory scope, inserts receive server-derived ownership, direct SQL is rejected during tenant execution, and scheduled jobs restore ownership from the persisted job record.
+
+Migration `0003_enforce_tenant_runtime.sql` removes the expansion default and makes `tenant_id` non-null on all 133 registered Espo tables. Two stable synthetic tenants and domains are provided by `0002_two_tenant_isolation.sql`. The repository verifier and CI exercise fail-closed CRUD, relationships, dashboard/export/job queries, resource namespaces and database predicates.
+
 ## Consequences
 
 ### Benefits

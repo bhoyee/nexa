@@ -93,6 +93,17 @@ No application archive is downloaded from the official website during normal Doc
 
 Open <http://localhost:8080>. Local administrator credentials are stored in the ignored `.env` file.
 
+Development setup also creates two isolated demo tenants. Both use the username `demo-admin` and the password configured as `ADMIN_PASSWORD` in the ignored `.env` file:
+
+- <http://tenant-a.localhost:8080>
+- <http://tenant-b.localhost:8080>
+
+Re-run demo login provisioning without changing tenant data:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev/provision-demo-tenants.ps1 -Mode Docker
+```
+
 ```powershell
 docker compose ps
 docker compose logs -f espocrm
@@ -358,6 +369,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 -Mo
 - `scripts/dev/bootstrap-espocrm.ps1`: verifies that the complete tracked application and pinned version are present.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
 - `scripts/dev/apply-shared-schema.ps1`: applies checksum-tracked migrations through Docker or a local MariaDB client.
+- `scripts/dev/provision-demo-tenants.ps1`: creates or refreshes login-ready administrators for the two synthetic tenants.
 - `scripts/dev/verify.ps1`: validates shareable files, JSON, PHP, secrets and Compose.
 
 ## Team Workflow

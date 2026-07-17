@@ -31,6 +31,8 @@ namespace Espo\Core\Job;
 
 use Espo\Core\ORM\EntityManager;
 use Espo\Core\ServiceFactory;
+use Espo\Core\Tenant\TenantContext;
+use Espo\Core\Tenant\TenantContextStore;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\System;
 use Espo\Core\Job\Job\Data;
@@ -50,6 +52,7 @@ class JobRunner
         private EntityManager $entityManager,
         private ServiceFactory $serviceFactory,
         private Log $log,
+        private TenantContextStore $tenantContextStore,
     ) {}
 
     /**
@@ -58,7 +61,7 @@ class JobRunner
     public function run(JobEntity $jobEntity): void
     {
         try {
-            $this->runInternal($jobEntity);
+            $this->runInTenantContext($jobEntity, fn () => $this->runInternal($jobEntity));
         } catch (Throwable $e) {
             throw new LogicException($e->getMessage());
         }
@@ -71,7 +74,21 @@ class JobRunner
      */
     public function runThrowingException(JobEntity $jobEntity): void
     {
-        $this->runInternal($jobEntity, true);
+        $this->runInTenantContext($jobEntity, fn () => $this->runInternal($jobEntity, true));
+    }
+
+    private function runInTenantContext(JobEntity $jobEntity, callable $callback): mixed
+    {
+        $tenantId = $jobEntity->get('tenantId');
+
+        if (!is_string($tenantId) || $tenantId === '') {
+            throw new RuntimeException('A job without tenant ownership cannot run.');
+        }
+
+        return $this->tenantContextStore->runWith(
+            new TenantContext($tenantId, 'background-job', 'job-record'),
+            $callback,
+        );
     }
 
     /**

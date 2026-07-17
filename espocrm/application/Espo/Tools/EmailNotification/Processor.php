@@ -161,14 +161,10 @@ class Processor
 
         $unionQuery = $builder->build();
 
-        $sql = $this->entityManager
-            ->getQueryComposer()
-            ->compose($unionQuery);
-
         /** @var Collection<Notification> $notifications */
         $notifications = $this->entityManager
             ->getRDBRepository(Notification::ENTITY_TYPE)
-            ->findBySql($sql);
+            ->findByQuery($unionQuery);
 
         foreach ($notifications as $notification) {
             $notification->set('emailIsProcessed', true);

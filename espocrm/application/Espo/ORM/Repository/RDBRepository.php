@@ -44,6 +44,7 @@ use Espo\ORM\BaseEntity;
 use Espo\ORM\Entity;
 use Espo\ORM\Mapper\RDBMapper;
 use Espo\ORM\Query\Select;
+use Espo\ORM\Query\SelectingQuery;
 use Espo\ORM\Query\Part\WhereItem;
 use Espo\ORM\Query\Part\Selection;
 use Espo\ORM\Query\Part\Join;
@@ -249,6 +250,16 @@ class RDBRepository implements Repository
         }
 
         return null;
+    }
+
+    /**
+     * Find records using a selecting query, including UNION queries.
+     *
+     * @return SthCollection<TEntity>
+     */
+    public function findByQuery(SelectingQuery $query): SthCollection
+    {
+        return SthCollection::fromSelectingQuery($query, $this->entityType, $this->entityManager);
     }
 
     /**

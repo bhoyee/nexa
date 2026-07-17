@@ -32,6 +32,7 @@ namespace Espo\Core\ApplicationRunners;
 use Espo\Core\Application\Runner\Params;
 use Espo\Core\Application\RunnerParameterized;
 use Espo\Core\Job\JobManager;
+use Espo\Core\Tenant\PlatformExecutionGateway;
 
 /**
  * Runs a job by ID. A job record should exist in database.
@@ -41,13 +42,13 @@ class Job implements RunnerParameterized
     use Cli;
     use SetupSystemUser;
 
-    public function __construct(private JobManager $jobManager)
+    public function __construct(private JobManager $jobManager, private PlatformExecutionGateway $tenantPlatformGateway)
     {}
 
     public function run(Params $params): void
     {
         $id = $params->get('id');
 
-        $this->jobManager->runJobById($id);
+        $this->tenantPlatformGateway->run('parallel job lookup', fn () => $this->jobManager->runJobById($id));
     }
 }

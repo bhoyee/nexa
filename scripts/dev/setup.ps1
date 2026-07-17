@@ -39,6 +39,8 @@ if (-not $SkipStart) {
     if ($LASTEXITCODE -ne 0) { throw 'Docker Compose did not become healthy.' }
     & (Join-Path $PSScriptRoot 'apply-shared-schema.ps1') -Mode Docker -IncludeDevelopmentSeeds
     if ($LASTEXITCODE -ne 0) { throw 'Shared-schema migration failed.' }
+    & (Join-Path $PSScriptRoot 'provision-demo-tenants.ps1') -Mode Docker
+    if ($LASTEXITCODE -ne 0) { throw 'Demo tenant provisioning failed.' }
     & docker compose --project-directory $root ps
 }
 

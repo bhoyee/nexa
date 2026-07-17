@@ -84,7 +84,7 @@ The same email or username may exist in different tenants. Tenant-qualified uniq
 
 ### Automatic ORM Scope
 
-A central `TenantScopeApplier` must modify every Espo select, update and delete for registered tenant-owned entities. Developers should write normal repository code while the framework adds the mandatory predicate:
+The central `TenantQueryProcessor` modifies every Espo select, insert, update and delete for registered tenant-owned entities. Developers should write normal repository code while the framework adds the mandatory predicate:
 
 ```sql
 WHERE tenant_id = :trusted_tenant_id
@@ -99,11 +99,15 @@ Required framework components:
 | `TenantResolver` | Resolve and validate tenant from trusted routing data |
 | `TenantContext` | Hold immutable tenant and request identity |
 | `EntityOwnershipRegistry` | Classify every table/entity and its service-scope rule |
-| `TenantScopeApplier` | Add tenant predicates to ORM reads, writes, updates and deletes |
-| `TenantWriteGuard` | Reject missing or conflicting tenant/service identity |
-| `EntitlementService` | Validate service availability and limits from `nexa_tenant_service` |
-| `PlatformDataGateway` | Permit reviewed cross-tenant operations with audit records |
-| `TenantContextScope` | Clear context after each request or long-running job iteration |
+| `TenantQueryProcessor` | Add tenant predicates to ORM reads, inserts, updates, deletes, unions and joins |
+| `TenantSqlExecutor` | Reject direct SQL during tenant execution so ORM scope cannot be bypassed |
+| `ServiceEntitlementChecker` | Validate service availability from `nexa_tenant_service` |
+| `PlatformExecutionGateway` | Permit explicit cross-tenant operations with a logged reason |
+| `TenantContextStore` | Stack and clear context after each request or job iteration |
+
+The runtime implementation is installed in `espocrm/application/Espo/Core/Tenant/`. HTTP application runners and API middleware resolve verified domains before authentication. Espo ORM metadata exposes `tenantId` and `serviceId`, and `DefaultQueryExecutor` passes immutable queries through `TenantQueryProcessor`. Legacy UNION callers now keep query objects instead of converting them to raw SQL. Cron can enumerate through `PlatformExecutionGateway`, while every scheduled job restores the `tenant_id` stored on its record.
+
+Migration `0003_enforce_tenant_runtime.sql` removes the compatibility default and makes `tenant_id` non-null on all 133 tenant-owned Espo tables. The repository verifier runs `tests/tenant/TenantRuntimeTest.php`, and CI loads two synthetic tenants before executing database isolation checks.
 
 ### Writes and Database Guards
 
@@ -167,7 +171,7 @@ Create a machine-readable manifest classifying every Espo and Nexa table. Identi
 
 Migration `0002_expand_espocrm_tenant_scope.sql` inventories all 136 EspoCRM 9.1.9 tables. It adds indexed `tenant_id` and nullable `service_id` columns to 133 tables, backfills current records and tenant-qualifies 56 business unique indexes. `address_country`, `extension` and `system_data` are the explicit platform-global allowlist. Nine MariaDB `AUTO_INCREMENT` sequence indexes remain globally unique because their sequence column must lead the key.
 
-During the transition, new rows receive the stable legacy-local tenant by default so existing single-tenant Espo code cannot create null tenant rows. This default is temporary and must be removed when automatic ORM scoping is enforced.
+Migration `0002` used a stable legacy-local default only during expansion and backfill. Migration `0003_enforce_tenant_runtime.sql` removes that default after deploying automatic ORM scope, verifies local hostname routing and changes all 133 Espo tenant columns to `NOT NULL`.
 
 ### Stage 3: Backfill
 
@@ -175,7 +179,7 @@ Create a baseline tenant for existing development data. Backfill parent records 
 
 ### Stage 4: Enforce
 
-Deploy automatic ORM scope and write guards, then make tenant columns non-null. Replace global unique indexes with tenant-qualified indexes where business identity is tenant-local.
+Automatic ORM scope, direct-SQL guards and job context restoration are deployed before migration `0003` makes tenant columns non-null. Migration `0002` already tenant-qualifies the reviewed business unique indexes.
 
 ### Stage 5: Prove Isolation
 
@@ -222,7 +226,7 @@ Enterprise physical isolation can later be implemented with a dedicated shared-s
 
 Each developer runs one independent `espocrm` database through Docker or MariaDB 10.11 used by XAMPP or WampServer. All supported local environments apply the same `database/shared/migrations/` sequence and synthetic seeds. Git synchronizes schema definitions; developers never exchange live dumps for routine collaboration.
 
-Local fixtures must include at least two synthetic tenants with overlapping usernames and record names so isolation tests can detect missing scope.
+Local fixtures include two synthetic tenants and verified domains. Runtime and CI tests use overlapping record criteria so a missing scope is visible.
 
 ## Delivery Order
 

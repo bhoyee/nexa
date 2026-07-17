@@ -32,6 +32,8 @@ namespace Espo\Core\Job;
 use DateTimeZone;
 use Espo\Core\Job\Preparator\Data as PreparatorData;
 use Espo\Core\ORM\EntityManager;
+use Espo\Core\Tenant\TenantContext;
+use Espo\Core\Tenant\TenantContextStore;
 use Espo\Core\Utils\DateTime as DateTimeUtil;
 use Espo\Core\Utils\Log;
 use Espo\Core\Job\Job\Status;
@@ -66,7 +68,8 @@ class ScheduleProcessor
         private ScheduleUtil $scheduleUtil,
         private PreparatorFactory $preparatorFactory,
         private MetadataProvider $metadataProvider,
-        private ConfigDataProvider $configDataProvider
+        private ConfigDataProvider $configDataProvider,
+        private TenantContextStore $tenantContextStore,
     ) {}
 
     public function process(): void
@@ -78,7 +81,16 @@ class ScheduleProcessor
             try {
                 $isRunning = in_array($scheduledJob->getId(), $runningScheduledJobIdList);
 
-                $this->createJobsFromScheduledJob($scheduledJob, $isRunning);
+                $tenantId = $scheduledJob->get('tenantId');
+
+                if (!is_string($tenantId) || $tenantId === '') {
+                    throw new \RuntimeException('A scheduled job without tenant ownership cannot run.');
+                }
+
+                $this->tenantContextStore->runWith(
+                    new TenantContext($tenantId, 'scheduled-job', 'scheduled-job-record'),
+                    fn () => $this->createJobsFromScheduledJob($scheduledJob, $isRunning),
+                );
             } catch (Throwable $e) {
                 $id = $scheduledJob->getId();
 

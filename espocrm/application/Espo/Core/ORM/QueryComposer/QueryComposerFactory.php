@@ -38,6 +38,7 @@ use Espo\ORM\PDO\PDOProvider;
 use Espo\ORM\QueryComposer\QueryComposer;
 use Espo\ORM\Metadata as OrmMetadata;
 use Espo\ORM\EntityFactory;
+use Espo\ORM\TenantIdProvider;
 
 use PDO;
 use RuntimeException;
@@ -51,7 +52,8 @@ class QueryComposerFactory implements \Espo\ORM\QueryComposer\QueryComposerFacto
         private OrmMetadata $ormMetadata,
         private EntityFactory $entityFactory,
         private FunctionConverterFactory $functionConverterFactory,
-        private EventDispatcher $eventDispatcher
+        private EventDispatcher $eventDispatcher,
+        private TenantIdProvider $tenantIdProvider,
     ) {}
 
     public function create(string $platform): QueryComposer
@@ -76,6 +78,7 @@ class QueryComposerFactory implements \Espo\ORM\QueryComposer\QueryComposerFacto
             ->bindInstance(EntityFactory::class, $this->entityFactory)
             ->bindInstance(FunctionConverterFactory::class, $this->functionConverterFactory)
             ->bindInstance(EventDispatcher::class, $this->eventDispatcher)
+            ->bindInstance(TenantIdProvider::class, $this->tenantIdProvider)
             ->build();
 
         return $this->injectableFactory->createWithBinding($className, $bindingContainer);

@@ -54,6 +54,7 @@ class ScheduleUtil
             ->getRDBRepository(ScheduledJobEntity::ENTITY_TYPE)
             ->select([
                 Attribute::ID,
+                'tenantId',
                 'scheduling',
                 'job',
                 'name',

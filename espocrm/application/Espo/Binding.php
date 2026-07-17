@@ -64,6 +64,39 @@ class Binding implements BindingProcessor
         );
 
         $binder->bindService(
+            'Espo\\Core\\Tenant\\TenantContextStore',
+            'tenantContextStore'
+        );
+        $binder->bindService(
+            'Espo\\ORM\\TenantIdProvider',
+            'tenantContextStore'
+        );
+
+        $binder->bindService(
+            'Espo\\Core\\Tenant\\EntityOwnershipRegistry',
+            'tenantOwnershipRegistry'
+        );
+
+        $binder->bindService(
+            'Espo\\Core\\Tenant\\TenantResolver',
+            'tenantResolver'
+        );
+
+        $binder->bindService(
+            'Espo\\Core\\Tenant\\PlatformExecutionGateway',
+            'tenantPlatformGateway'
+        );
+
+        $binder->bindService(
+            'Espo\\Core\\Tenant\\ServiceEntitlementChecker',
+            'tenantEntitlementChecker'
+        );
+
+        $binder->bindService(
+            'Espo\\Core\\Tenant\\TenantResourceKey',
+            'tenantResourceKey'
+        );
+        $binder->bindService(
             'Psr\\Container\\ContainerInterface',
             'container'
         );

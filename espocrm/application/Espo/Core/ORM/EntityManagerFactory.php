@@ -34,6 +34,10 @@ use Espo\Core\ORM\QueryComposer\QueryComposerFactory;
 use Espo\Core\InjectableFactory;
 use Espo\Core\Binding\BindingContainerBuilder;
 use Espo\Core\ORM\QueryComposer\Part\FunctionConverterFactory;
+use Espo\Core\Tenant\EntityOwnershipRegistry;
+use Espo\Core\Tenant\TenantContextStore;
+use Espo\Core\Tenant\TenantQueryProcessor;
+use Espo\Core\Tenant\TenantSqlExecutor;
 
 use Espo\Core\Utils\Log;
 use Espo\ORM\Executor\DefaultSqlExecutor;
@@ -46,6 +50,7 @@ use Espo\ORM\Relation\RelationsMap;
 use Espo\ORM\Repository\RepositoryFactory as RepositoryFactoryInterface;
 use Espo\ORM\EntityFactory as EntityFactoryInterface;
 use Espo\ORM\Executor\SqlExecutor;
+use Espo\ORM\Executor\QueryProcessor;
 use Espo\ORM\Value\ValueFactoryFactory as ValueFactoryFactoryInterface;
 use Espo\ORM\Value\AttributeExtractorFactory as AttributeExtractorFactoryInterface;
 use Espo\ORM\PDO\PDOProvider;
@@ -63,6 +68,8 @@ class EntityManagerFactory
         private DatabaseParamsFactory $databaseParamsFactory,
         private ConfigDataProvider $configDataProvider,
         private Log $log,
+        private TenantContextStore $tenantContextStore,
+        private EntityOwnershipRegistry $tenantOwnershipRegistry,
     ) {}
 
     public function create(): EntityManager
@@ -132,11 +139,19 @@ class EntityManagerFactory
                 ->build()
         );
 
-        $sqlExecutor = new DefaultSqlExecutor(
+        $baseSqlExecutor = new DefaultSqlExecutor(
             $pdoProvider,
             $this->log,
             $this->configDataProvider->logSql(),
             $this->configDataProvider->logSqlFailed()
+        );
+
+        $sqlExecutor = new TenantSqlExecutor($baseSqlExecutor, $this->tenantContextStore);
+
+        $queryProcessor = new TenantQueryProcessor(
+            $this->tenantContextStore,
+            $this->tenantOwnershipRegistry,
+            $metadata,
         );
 
         $binding = BindingContainerBuilder::create()
@@ -151,6 +166,7 @@ class EntityManagerFactory
             ->bindInstance(PDOProvider::class, $pdoProvider)
             ->bindInstance(FunctionConverterFactoryInterface::class, $functionConverterFactory)
             ->bindInstance(SqlExecutor::class, $sqlExecutor)
+            ->bindInstance(QueryProcessor::class, $queryProcessor)
             ->bindInstance(RelationsMap::class, $relationsMap)
             ->build();
 

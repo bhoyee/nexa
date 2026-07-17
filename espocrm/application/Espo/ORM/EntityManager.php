@@ -33,6 +33,7 @@ use Espo\ORM\Defs\Defs;
 use Espo\ORM\Executor\DefaultQueryExecutor;
 use Espo\ORM\Executor\DefaultSqlExecutor;
 use Espo\ORM\Executor\QueryExecutor;
+use Espo\ORM\Executor\QueryProcessor;
 use Espo\ORM\Executor\SqlExecutor;
 use Espo\ORM\QueryComposer\QueryComposer;
 use Espo\ORM\QueryComposer\QueryComposerFactory;
@@ -96,6 +97,7 @@ class EntityManager
         private ?MapperFactory $mapperFactory = null,
         ?QueryExecutor $queryExecutor = null,
         ?SqlExecutor $sqlExecutor = null,
+        ?QueryProcessor $queryProcessor = null,
     ) {
         if (!$this->databaseParams->getPlatform()) {
             throw new RuntimeException("No 'platform' parameter.");
@@ -114,7 +116,7 @@ class EntityManager
 
         $this->sqlExecutor = $sqlExecutor ?? new DefaultSqlExecutor($this->pdoProvider);
         $this->queryExecutor = $queryExecutor ??
-            new DefaultQueryExecutor($this->sqlExecutor, $this->getQueryComposer());
+            new DefaultQueryExecutor($this->sqlExecutor, $this->getQueryComposer(), $queryProcessor);
         $this->queryBuilder = new QueryBuilder();
         $this->collectionFactory = new CollectionFactory($this);
         $this->transactionManager = new TransactionManager($this->pdoProvider->get(), $this->queryComposer);
