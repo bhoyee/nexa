@@ -9,7 +9,7 @@
         },
         "userName": {
             "type": "varchar",
-            "maxLength": 50,
+            "maxLength": 190,
             "required": true,
             "view": "views/user/fields/user-name",
             "tooltip": true,

@@ -1,0 +1,20 @@
+[
+    {
+        "route": "/Nexa/signup",
+        "method": "post",
+        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostSignup",
+        "noAuth": true
+    },
+    {
+        "route": "/Nexa/signup/verify",
+        "method": "post",
+        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostVerify",
+        "noAuth": true
+    },
+    {
+        "route": "/Nexa/signup/resend",
+        "method": "post",
+        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostResend",
+        "noAuth": true
+    }
+]

@@ -8,8 +8,8 @@
     <title>Nexa CRM | Customer growth, connected</title>
     <link rel="icon" type="image/png" href="/landing/assets/favicon.png">
     <link rel="stylesheet" href="/client/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/landing/styles.css">
-    <script src="/landing/script.js" defer></script>
+    <link rel="stylesheet" href="/landing/styles.css?v=20260717-3">
+    <script src="/landing/script.js?v=20260717-3" defer></script>
 </head>
 <body>
 <header class="site-header" data-header>
@@ -17,25 +17,26 @@
         <a class="brand" href="/" aria-label="Nexa CRM home"><span class="brand-mark" aria-hidden="true">N</span><span>Nexa CRM</span></a>
         <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle><span class="fas fa-bars" aria-hidden="true"></span></button>
         <nav class="site-nav" aria-label="Primary navigation" data-nav>
-            <a href="#platform">Platform</a><a href="#automation">Automation</a><a href="#integrations">Integrations</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a class="mobile-nav-login" href="/?login=1&amp;source=landing">Sign in</a>
+            <a href="#platform">Product</a><a href="#capabilities">Capabilities</a><a href="#automation">Automation</a><a href="#integrations">Integrations</a><a href="#pricing">Pricing</a><a class="mobile-nav-login" href="/?login=1&amp;source=landing">Sign in</a>
         </nav>
-        <div class="nav-actions"><a class="nav-login" href="/?login=1&amp;source=landing">Sign in</a><a class="button button-small button-coral" href="#pricing">Choose a plan</a></div>
+        <div class="nav-actions"><a class="nav-login" href="/?login=1&amp;source=landing">Sign in</a><a class="button button-small button-coral" href="?signup=growth" data-signup-plan="growth">Start free</a></div>
     </div>
 </header>
 <main>
     <section class="hero" aria-labelledby="hero-title">
         <div class="hero-content">
-            <p class="eyebrow">Sales, marketing and service in one workspace</p>
+            <p class="eyebrow">One customer platform. Every team connected.</p>
             <h1 id="hero-title">Nexa CRM</h1>
-            <p class="hero-lead">Turn customer signals into coordinated action. Give every team one clear view of the relationship, from first visit to long-term growth.</p>
-            <div class="hero-actions"><a class="button button-coral" href="#pricing">Explore plans <span class="fas fa-arrow-right" aria-hidden="true"></span></a><a class="button button-ghost" href="/?login=1&amp;source=landing">Open your workspace</a></div>
-            <ul class="hero-proof" aria-label="Platform highlights"><li><span class="fas fa-check" aria-hidden="true"></span>No per-user complexity</li><li><span class="fas fa-check" aria-hidden="true"></span>Self-hosted control</li><li><span class="fas fa-check" aria-hidden="true"></span>Built for custom workflows</li></ul>
+            <p class="hero-statement">Grow better with every customer conversation.</p>
+            <p class="hero-lead">Unify sales, marketing, service, automation and intelligence around one trusted customer view, then give every team the context to act.</p>
+            <div class="hero-actions"><a class="button button-coral" href="?signup=growth" data-signup-plan="growth">Start free <span class="fas fa-arrow-right" aria-hidden="true"></span></a><a class="button button-outline" href="#capabilities">Explore 89 capabilities</a></div>
+            <ul class="hero-proof" aria-label="Trial highlights"><li><span class="fas fa-check" aria-hidden="true"></span>14-day trial</li><li><span class="fas fa-check" aria-hidden="true"></span>No card required</li><li><span class="fas fa-check" aria-hidden="true"></span>Tenant-isolated by design</li></ul>
         </div>
         <a class="hero-scroll" href="#outcomes" aria-label="Continue to platform overview"><span class="fas fa-arrow-down" aria-hidden="true"></span></a>
     </section>
 
     <section class="outcome-strip" id="outcomes" aria-label="Platform outcomes">
-        <div class="section-shell outcome-grid"><div><strong>360&deg;</strong><span>customer context</span></div><div><strong>1</strong><span>connected workspace</span></div><div><strong>300</strong><span>team-ready workflows</span></div><div><strong>50+</strong><span>integration pathways</span></div></div>
+        <div class="section-shell outcome-grid"><div><strong>89</strong><span>planned capabilities</span></div><div><strong>1</strong><span>shared customer view</span></div><div><strong>14 days</strong><span>to explore free</span></div><div><strong>24/7</strong><span>connected operations</span></div></div>
     </section>
 
     <section class="section platform" id="platform">
@@ -52,6 +53,24 @@
         </div>
     </section>
 
+    <section class="section capability-directory" id="capabilities" aria-labelledby="capabilities-title">
+        <div class="section-shell">
+            <div class="capability-intro">
+                <div><p class="eyebrow dark">The complete product scope</p><h2 id="capabilities-title"><span data-capability-total>89</span> capabilities, designed as one platform</h2></div>
+                <p>The Nexa roadmap brings 86 customer-facing requirements together with three SaaS foundations. Explore how the complete product is organized across every customer team.</p>
+            </div>
+            <div class="capability-browser">
+                <div class="capability-tabs" role="tablist" aria-label="Capability groups" data-capability-tabs></div>
+                <div class="capability-panel" id="capability-panel" role="tabpanel" tabindex="0" data-capability-panel>
+                    <div class="capability-panel-heading">
+                        <span class="capability-panel-icon" data-capability-icon aria-hidden="true"></span>
+                        <div><p><span data-capability-count></span> capabilities</p><h3 data-capability-title></h3><span data-capability-summary></span></div>
+                    </div>
+                    <ul class="capability-list" data-capability-list></ul>
+                </div>
+            </div>
+        </div>
+    </section>
     <section class="section automation" id="automation">
         <div class="section-shell automation-layout">
             <div class="automation-copy"><p class="eyebrow">Automation that keeps its context</p><h2>From a customer signal to the next best action</h2><p>Nexa connects behavioral events, CRM properties and channel activity so teams can automate without losing the human story behind the record.</p>
@@ -99,6 +118,58 @@
 
     <section class="closing-cta"><div class="section-shell"><p class="eyebrow">One customer story. Every team aligned.</p><h2>Build your next stage of growth on Nexa CRM.</h2><div><a class="button button-coral" href="#pricing">View pricing</a><a class="button button-ghost" href="/?login=1&amp;source=landing">Sign in</a></div></div></section>
 </main>
-<footer class="site-footer"><div class="section-shell footer-grid"><div><a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true">N</span><span>Nexa CRM</span></a><p>Connected customer operations for teams that intend to grow with clarity.</p></div><div><strong>Platform</strong><a href="#platform">CRM</a><a href="#automation">Automation</a><a href="#integrations">Integrations</a></div><div><strong>Company</strong><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="mailto:sales@nexa.local">Contact</a></div><div><strong>Workspace</strong><a href="/?login=1&amp;source=landing">Sign in</a><a href="mailto:support@nexa.local">Support</a></div></div><div class="section-shell footer-bottom"><span>&copy; 2026 Nexa CRM</span><span>Built on EspoCRM open-source software.</span></div></footer>
+<footer class="site-footer">
+    <div class="section-shell footer-main">
+        <div class="footer-pitch">
+            <a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true">N</span><span>Nexa CRM</span></a>
+            <h2>Turn customer momentum into measurable growth.</h2>
+            <p>One connected platform for the people building your pipeline, relationships and customer experience.</p>
+            <a class="button button-coral" href="?signup=growth" data-signup-plan="growth">Start free <span class="fas fa-arrow-right" aria-hidden="true"></span></a>
+        </div>
+        <div class="footer-links">
+            <div><strong>Product</strong><a href="#platform">Platform</a><a href="#capabilities">89 capabilities</a><a href="#automation">Automation</a><a href="#pricing">Pricing</a></div>
+            <div><strong>Teams</strong><a href="#platform">Sales</a><a href="#platform">Marketing</a><a href="#platform">Service</a><a href="#platform">Operations</a></div>
+            <div><strong>Connect</strong><a href="#integrations">Integrations</a><a href="#integrations">Developer API</a><a href="mailto:support@nexa.local">Support</a><a href="mailto:sales@nexa.local">Contact</a></div>
+            <div><strong>Workspace</strong><a href="/?login=1&amp;source=landing">Sign in</a><a href="?signup=launch" data-signup-plan="launch">Create workspace</a><a href="#faq">FAQ</a></div>
+        </div>
+    </div>
+    <div class="section-shell footer-bottom"><span>&copy; 2026 Nexa CRM. All rights reserved.</span><span>Built on EspoCRM open-source software.</span></div>
+</footer>
+<dialog class="signup-dialog" data-signup-dialog aria-labelledby="signup-title">
+    <div class="signup-shell">
+        <button class="dialog-close" type="button" data-signup-close aria-label="Close signup"><span class="fas fa-times" aria-hidden="true"></span></button>
+        <div class="signup-intro">
+            <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">N</span><span>Nexa CRM</span></a>
+            <p class="eyebrow">Your workspace, ready in minutes</p>
+            <h2 id="signup-title">Start your free trial</h2>
+            <p>Create a secure workspace for your team. No card required.</p>
+            <ul><li><span class="fas fa-check" aria-hidden="true"></span>Private tenant workspace</li><li><span class="fas fa-check" aria-hidden="true"></span>Email-verified administrator</li><li><span class="fas fa-check" aria-hidden="true"></span>Plan limits applied automatically</li></ul>
+        </div>
+        <div class="signup-content">
+            <form class="signup-form" data-signup-form novalidate>
+                <div class="form-message" data-form-message role="alert" hidden></div>
+                <label>Plan<select name="plan" required><option value="launch">Launch</option><option value="growth">Growth</option><option value="scale">Scale</option></select></label>
+                <label class="field-wide">Company name<input name="company" type="text" minlength="2" maxlength="120" autocomplete="organization" required><small data-error-for="company"></small></label>
+                <label>First name<input name="firstName" type="text" minlength="2" maxlength="100" autocomplete="given-name" required><small data-error-for="firstName"></small></label>
+                <label>Last name<input name="lastName" type="text" minlength="2" maxlength="100" autocomplete="family-name" required><small data-error-for="lastName"></small></label>
+                <label class="field-wide">Work email<input name="email" type="email" maxlength="190" autocomplete="email" required><small data-error-for="email"></small></label>
+                <label>Password<input name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><small data-error-for="password"></small></label>
+                <label>Confirm password<input name="confirmPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><small data-error-for="confirmPassword"></small></label>
+                <input class="honeypot" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <label class="terms field-wide"><input name="terms" type="checkbox" required><span>I agree to the terms of service and privacy policy.</span><small data-error-for="terms"></small></label>
+                <button class="button button-coral field-wide signup-submit" type="submit"><span>Create my workspace</span><span class="fas fa-arrow-right" aria-hidden="true"></span></button>
+                <p class="signin-link field-wide">Already have a workspace? <a href="/?login=1&amp;source=landing">Sign in</a></p>
+            </form>
+            <section class="signup-state" data-signup-pending hidden>
+                <span class="state-icon"><span class="fas fa-envelope" aria-hidden="true"></span></span><p class="eyebrow dark">Check your inbox</p><h3>Verify your email</h3><p>We sent an activation link to <strong data-pending-email></strong>. It expires in 24 hours.</p>
+                <a class="button button-coral local-verification" data-local-verification hidden>Open local verification link</a>
+                <button class="text-button" type="button" data-resend>Resend verification email</button><p class="state-note" data-resend-message role="status"></p>
+            </section>
+            <section class="signup-state" data-signup-verifying hidden><span class="state-icon loading"><span class="fas fa-circle-notch fa-spin" aria-hidden="true"></span></span><h3>Activating your workspace</h3><p>We are confirming your email and applying your plan.</p></section>
+            <section class="signup-state" data-signup-success hidden><span class="state-icon success"><span class="fas fa-check" aria-hidden="true"></span></span><p class="eyebrow dark">Workspace active</p><h3>Welcome to Nexa CRM</h3><p>Your tenant is ready. Sign in with the email and password you just created.</p><a class="button button-coral" href="/?login=1&amp;source=signup">Continue to sign in</a></section>
+            <section class="signup-state" data-signup-error hidden><span class="state-icon error"><span class="fas fa-exclamation" aria-hidden="true"></span></span><h3>We could not verify this link</h3><p data-verification-error></p><button class="button button-dark" type="button" data-back-to-signup>Back to signup</button></section>
+        </div>
+    </div>
+</dialog>
 </body>
 </html>
