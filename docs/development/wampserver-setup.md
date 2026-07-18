@@ -44,6 +44,22 @@ ESPOCRM_SITE_URL=http://nexa.local
 The ignored `.env` stores the database password, local bootstrap administrator,
 and separate Tenant A and Tenant B demo credentials. Never commit it.
 
+For real signup verification delivery, add provider-issued SMTP values:
+
+```dotenv
+SMTP_HOST=smtp.provider.example
+SMTP_PORT=587
+SMTP_SECURITY=TLS
+SMTP_AUTH=true
+SMTP_USERNAME=provider-user
+SMTP_PASSWORD=provider-password
+SMTP_FROM_EMAIL=verified-sender@example.com
+SMTP_FROM_NAME=Nexa CRM
+```
+
+The From address or domain must be verified by the selected provider. Leave
+`SMTP_HOST` empty when local delivery is intentionally disabled.
+
 ## 2. Select MariaDB 10.11
 
 Use the WampServer tray menu to activate MariaDB 10.11, or run a separate
@@ -160,6 +176,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 `
 
 This command uses the installed application's database connection and `.env` to:
 
+- validate and apply SMTP settings when `SMTP_HOST` is configured;
 - load development seeds in dependency order;
 - provision both demo tenant administrators;
 - create tenant-scoped accounts, contacts, leads, opportunities, tasks and meetings;
@@ -170,6 +187,15 @@ This command uses the installed application's database connection and `.env` to:
 
 Both tenants sign in through <http://nexa.local/?login=1>. Use the
 `DEMO_TENANT_A_ADMIN_*` or `DEMO_TENANT_B_ADMIN_*` values from `.env`.
+
+Reapply SMTP settings after editing `.env`:
+
+```powershell
+& $php scripts/dev/configure-smtp.php --env=.env
+```
+
+The command never prints the SMTP password. Send a test message from
+Administration > Outbound Emails after configuration.
 
 ## 8. Configure Scheduled Jobs
 
