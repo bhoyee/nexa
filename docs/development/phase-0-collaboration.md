@@ -85,27 +85,25 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 
 ## XAMPP Developer
 
-1. Clone the same repository and point an Apache virtual host to `espocrm/`.
-2. Use PHP 8.2 with the same required extensions.
-3. Run MariaDB 10.11 or connect PHP to the project database container.
-4. Create a personal `.env` from `.env.example`.
-5. Configure the local `espocrm` shared database.
-6. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local -ClientPath <path-to-mariadb.exe> -IncludeDevelopmentSeeds`.
-7. Run `scripts/dev/provision-demo-tenants.ps1 -Mode Local -PhpPath <path-to-php.exe>` to load both demo workspaces and their CRM fixtures.
-8. Run `php rebuild.php`, `php clear_cache.php` and the same smoke tests.
+1. Clone the same repository and run `scripts/dev/setup.ps1 -SkipStart` with XAMPP PHP 8.2 on `PATH`.
+2. Set the local site URL and generated credentials in the ignored `.env`.
+3. Create an empty MariaDB 10.11 `espocrm` database and application user.
+4. Run `scripts/dev/initialize-local-database.ps1 -ClientPath <path-to-mariadb.exe>` before opening the browser installer.
+5. Configure the Apache virtual host, complete every browser installer page and use the bootstrap administrator values from `.env`.
+6. Run `scripts/dev/complete-local-setup.ps1 -PhpPath <path-to-php.exe>` to install both demo workspaces, CRM fixtures and all checks.
+7. Follow [XAMPP Development Setup](xampp-setup.md) for the complete procedure and acceptance checks.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.
 
 ## WampServer Developer
 
-1. Clone the same organization repository under `C:\wamp64\www\nexa`.
-2. Select PHP 8.2.x and enable the required extensions.
-3. Use MariaDB 10.11 and an independent local `espocrm` database.
-4. Complete the browser installation at the configured local virtual host.
-5. Run `scripts/dev/apply-shared-schema.ps1 -Mode Local` with the MariaDB 10.11 client.
-6. Run `scripts/dev/provision-demo-tenants.ps1 -Mode Local -PhpPath <path-to-php.exe>`.
-7. Run rebuild, clear cache and repository verification.
-8. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure.
+1. Clone the same organization repository under `C:\wamp64\www\nexa` and run `scripts/dev/setup.ps1 -SkipStart`.
+2. Select PHP 8.2.x, enable the required extensions and configure the ignored `.env`.
+3. Create an empty MariaDB 10.11 `espocrm` database and application user.
+4. Run `scripts/dev/initialize-local-database.ps1 -ClientPath <path-to-mariadb.exe>` before opening the browser installer.
+5. Configure the virtual host and complete every browser installer page with the bootstrap administrator values from `.env`.
+6. Run `scripts/dev/complete-local-setup.ps1 -PhpPath <path-to-php.exe>` to install demo tenants, fixtures and run all checks.
+7. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure and acceptance checks.
 
 Do not copy WampServer database files, another developer's database, or Docker volumes into the local installation.
 

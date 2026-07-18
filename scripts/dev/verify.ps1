@@ -19,13 +19,15 @@ $required = @(
     '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
     'docs/development/delivery-management.md', 'docs/development/wampserver-setup.md',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
+    'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
+    'scripts/dev/install-development-seeds.php', 'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
     'database/shared/migrations/0003_enforce_tenant_runtime.sql', 'database/shared/migrations/0004_tenant_qualified_user_identity.sql',
     'database/shared/migrations/0005_self_service_tenant_signup.sql',
     'database/shared/seeds/0002_two_tenant_isolation.sql', 'espocrm/bin/provision-demo-tenants.php',
     'database/shared/table-ownership-manifest.json', 'espocrm/application/Espo/Resources/tenant-table-ownership.json',
-    'tests/tenant/TenantRuntimeTest.php',
+    'tests/tenant/TenantRuntimeTest.php', 'tests/tenant/InstallationBootstrapTest.php',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
     'tests/signup/SignupValidatorTest.php',
@@ -42,6 +44,20 @@ $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root 'espocrm\custom'), (Joi
 foreach ($file in $jsonFiles) {
     try { Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json | Out-Null; Pass "JSON $($file.Name)" }
     catch { Fail "Invalid JSON: $($file.FullName)" }
+}
+
+$powerShellFiles = Get-ChildItem -LiteralPath (Join-Path $root 'scripts\dev') -Filter '*.ps1' -File
+foreach ($file in $powerShellFiles) {
+    $tokens = $null
+    $parseErrors = $null
+    [void] [System.Management.Automation.Language.Parser]::ParseFile(
+        $file.FullName,
+        [ref] $tokens,
+        [ref] $parseErrors
+    )
+
+    if ($parseErrors.Count -eq 0) { Pass "PowerShell $($file.Name)" }
+    else { Fail "PowerShell syntax: $($file.FullName): $($parseErrors[0].Message)" }
 }
 
 $ownershipManifest = Join-Path $root 'database\shared\table-ownership-manifest.json'
@@ -69,6 +85,8 @@ $phpRoots = @(
 )
 $phpFiles = Get-ChildItem -LiteralPath $phpRoots -Filter '*.php' -File -Recurse -ErrorAction SilentlyContinue
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-tenants.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
 if ($php) {
     foreach ($file in $phpFiles) {
         & php -l $file.FullName *> $null
@@ -81,6 +99,8 @@ if ($php) {
 if ($php) {
     & php (Join-Path $root 'tests\tenant\TenantRuntimeTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Tenant runtime isolation suite' } else { Fail 'Tenant runtime isolation suite failed.' }
+    & php (Join-Path $root 'tests\tenant\InstallationBootstrapTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'Installation bootstrap suite' } else { Fail 'Installation bootstrap suite failed.' }
     & php (Join-Path $root 'tests\signup\SignupValidatorTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Signup validation suite' } else { Fail 'Signup validation suite failed.' }
 }

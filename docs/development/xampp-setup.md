@@ -2,72 +2,147 @@
 
 ## Purpose
 
-This guide gives a designated Nexa team member a repeatable Windows environment using XAMPP Apache/PHP and MariaDB 10.11. It produces the same application release, Nexa custom code and database definitions as the Docker workflow while keeping local credentials and records independent.
+This guide creates a complete Nexa development environment on Windows using
+XAMPP Apache/PHP 8.2 and MariaDB 10.11. A successful setup contains the full
+tracked application, all 150 current database tables, all migrations, the local
+bootstrap administrator, two demo tenants, and tenant-scoped demo CRM records.
+
+No application archive or EspoCRM download is required. Git supplies the exact
+application and Nexa code used by the team.
 
 ## Required Software
 
 - Git for Windows
 - PowerShell 5.1 or later
 - XAMPP with PHP 8.2
-- MariaDB 10.11
+- MariaDB 10.11 ([Windows MSI archive](https://archive.mariadb.org/mariadb-10.11.16/winx64-packages/mariadb-10.11.16-winx64.msi))
 
-Required PHP extensions are `curl`, `json`, `mbstring`, `openssl`, `pdo_mysql` and `zip`.
+Use the separate MariaDB 10.11 service on port `3306` and keep XAMPP MySQL
+stopped. XAMPP's bundled MariaDB 10.4 is not the project database baseline.
 
-No application archive or official-website download is required after cloning. Do not use XAMPP MariaDB 10.4 as the compatibility baseline.
+Enable these PHP extensions in `C:\xampp\php\php.ini`:
 
-## Installation
+```ini
+extension=curl
+extension=gd
+extension=mbstring
+extension=mysqli
+extension=openssl
+extension=pdo_mysql
+extension=zip
+```
 
-### Clone
+Use these minimum local installer limits, then restart Apache:
+
+```ini
+max_execution_time=180
+max_input_time=180
+```
+
+## 1. Clone And Prepare
 
 ```powershell
 Set-Location C:\xampp\htdocs
 git clone https://github.com/NaxoCRM-Team/nexa.git
 Set-Location nexa
-```
 
-### Prepare Files
-
-Run:
-
-```powershell
 $env:Path = "C:\xampp\php;$env:Path"
-powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 `
-  -SkipStart
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 -SkipStart
 ```
 
-The complete application tree and Nexa changes are already in the clone. The command creates local environment settings and must report that version 9.1.9 and the required extensions pass. Update `ESPOCRM_SITE_URL` in the generated `.env` to `http://nexa.local`.
+The setup command verifies the tracked application and creates an ignored
+`.env` with random local credentials. Set this value in `.env`:
 
-Local `data/` configuration, caches, logs, temporary files, uploads and credentials remain untracked. `bootstrap-espocrm.ps1` verifies the complete tracked codebase; missing application files must be restored from Git or by cloning again.
+```text
+ESPOCRM_SITE_URL=http://nexa.local
+```
 
-### Create Database
+Never commit `.env`. It contains:
 
-Start the MariaDB 10.11 service and connect as its administrator:
+- `DB_PASSWORD`: local `espocrm` database-user password.
+- `ADMIN_USERNAME` and `ADMIN_PASSWORD`: local bootstrap administrator.
+- `DEMO_TENANT_A_ADMIN_*`: Tenant A development login.
+- `DEMO_TENANT_B_ADMIN_*`: Tenant B development login.
+
+## 2. Start MariaDB 10.11
+
+Install the MariaDB MSI with **Database instance**, **Install as service** and
+**Enable networking** selected. Locate and verify its client:
 
 ```powershell
-& 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' -u root -p
+$candidates = @(
+    'C:\Program Files\MariaDB 10.11\bin\mariadb.exe',
+    'C:\Program Files\MariaDB 10.11\bin\mysql.exe'
+)
+$mariadb = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $mariadb) { throw 'MariaDB 10.11 is not installed.' }
+
+& $mariadb --version
+Get-Service -Name MariaDB
 ```
 
-Use the generated `DB_PASSWORD` value:
+The version must contain `10.11` and the `MariaDB` service must be running.
+
+## 3. Create The Empty Database
+
+Connect with the root password selected during MariaDB installation:
+
+```powershell
+& $mariadb -u root -p
+```
+
+Use the generated `DB_PASSWORD` from `.env` in place of `<DB_PASSWORD>`:
 
 ```sql
-CREATE DATABASE espocrm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'espocrm'@'localhost' IDENTIFIED BY '<DB_PASSWORD>';
+CREATE DATABASE espocrm
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'espocrm'@'localhost' IDENTIFIED BY '<DB_PASSWORD>';
+CREATE USER IF NOT EXISTS 'espocrm'@'127.0.0.1' IDENTIFIED BY '<DB_PASSWORD>';
 GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'localhost';
+GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'127.0.0.1';
 FLUSH PRIVILEGES;
 ```
 
-If the database or user already exists, stop and determine whether it belongs to an earlier local installation. Do not delete an unknown database.
+The database must be empty. Do not delete or reuse a database until its contents
+and ownership are known.
 
-### Configure Apache
+## 4. Initialize All Tables
 
-Enable `mod_rewrite` and virtual hosts in `C:\xampp\apache\conf\httpd.conf`:
+Run this once before opening the browser installer:
+
+```powershell
+Set-Location C:\xampp\htdocs\nexa
+powershell -ExecutionPolicy Bypass -File scripts/dev/initialize-local-database.ps1 `
+  -ClientPath $mariadb
+```
+
+The command reads `DB_PASSWORD` from the ignored `.env`, loads the pinned base
+schema, applies every migration in order, verifies migration checksums, and
+registers `nexa.local` for the seeded local tenant. It refuses to initialize a
+non-empty database.
+
+Expected result at this stage:
+
+- 150 database tables
+- 141 `tenant_id` columns
+- 138 `service_id` columns
+- 5 applied migrations
+
+## 5. Configure Apache
+
+Confirm these lines are enabled in `C:\xampp\apache\conf\httpd.conf`:
 
 ```apache
 LoadModule rewrite_module modules/mod_rewrite.so
 Include conf/extra/httpd-vhosts.conf
 ```
 
-Add to `C:\xampp\apache\conf\extra\httpd-vhosts.conf`:
+Do not add `ClearModuleList` or `AddModule mod_rewrite.c`; those belong to old
+Apache versions and are not used by Apache 2.4.
+
+Add this block to `C:\xampp\apache\conf\extra\httpd-vhosts.conf`:
 
 ```apache
 <VirtualHost *:80>
@@ -82,32 +157,70 @@ Add to `C:\xampp\apache\conf\extra\httpd-vhosts.conf`:
 </VirtualHost>
 ```
 
-Add `127.0.0.1 nexa.local` to the Windows hosts file as Administrator. Start Apache and confirm <http://nexa.local/install> loads.
+Add this entry to `C:\Windows\System32\drivers\etc\hosts` as Administrator:
 
-### Install Application
+```text
+127.0.0.1 nexa.local
+```
 
-Use database host `127.0.0.1`, database `espocrm`, user `espocrm` and the generated `DB_PASSWORD`. Use the generated `ADMIN_USERNAME` and `ADMIN_PASSWORD` for the local administrator.
+Start Apache from XAMPP and keep XAMPP MySQL stopped. Check Apache before
+continuing:
 
-After browser installation, apply the shared schema before rebuilding. The command prompts for the `espocrm` database user's password:
+```powershell
+& 'C:\xampp\apache\bin\httpd.exe' -t
+& 'C:\xampp\apache\bin\httpd.exe' -M | Select-String rewrite_module
+```
+
+## 6. Complete The Browser Installer
+
+Open <http://nexa.local/install/> and use:
+
+| Installer setting | Value |
+|---|---|
+| Database platform | MySQL/MariaDB |
+| Host | `127.0.0.1` |
+| Port | `3306` |
+| Database | `espocrm` |
+| Database user | `espocrm` |
+| Database password | `DB_PASSWORD` from `.env` |
+| Administrator username | `ADMIN_USERNAME` from `.env` |
+| Administrator password | `ADMIN_PASSWORD` from `.env` |
+
+The requested administrator is required to finish the underlying framework. In
+Nexa it is the **local bootstrap administrator** assigned to the seeded local
+workspace. It is not a customer tenant administrator. Customer tenant admins are
+created through signup or tenant provisioning.
+
+Complete every installer page until the success page appears. Do not close the
+browser immediately after entering the administrator password.
+
+## 7. Install Demo Tenants And Verify
+
+Run one command after the browser installer succeeds:
 
 ```powershell
 Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
-  -Mode Local `
-  -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' `
-  -Database espocrm `
-  -User espocrm `
-  -IncludeDevelopmentSeeds
-
-Set-Location C:\xampp\htdocs\nexa\espocrm
-& 'C:\xampp\php\php.exe' rebuild.php
-& 'C:\xampp\php\php.exe' clear_cache.php
-
-Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
+powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 `
+  -PhpPath 'C:\xampp\php\php.exe'
 ```
 
-## Scheduled Jobs
+The command uses the installed application's database connection and the
+ignored `.env`. It performs all remaining work:
+
+- loads development catalog and tenant seeds in order;
+- creates or refreshes two separate demo tenant administrators;
+- adds accounts, contacts, leads, opportunities, tasks and meetings per tenant;
+- rebuilds the application and clears cache;
+- checks table, tenant-column, service-column and migration counts;
+- proves both demo tenants have administrators and CRM data;
+- runs repository verification.
+
+Both demo accounts sign in through <http://nexa.local/?login=1>. Use the
+`DEMO_TENANT_A_ADMIN_*` or `DEMO_TENANT_B_ADMIN_*` values from `.env`. The
+submitted login identity selects the tenant; separate login domains are not
+required.
+
+## 8. Configure Scheduled Jobs
 
 Create a Windows Task Scheduler task that runs every minute:
 
@@ -117,27 +230,18 @@ Arguments: C:\xampp\htdocs\nexa\espocrm\cron.php
 Start in: C:\xampp\htdocs\nexa\espocrm
 ```
 
-Run the task once manually and inspect `espocrm/data/logs/` if it fails. Logs are local runtime data and must not be committed.
+Run the task manually once and inspect `espocrm/data/logs/` if it fails.
 
-## Database Collaboration
-
-- Each developer maintains a separate local `espocrm` database.
-- Never exchange full database dumps for daily synchronization.
-- Espo entity structure moves through custom metadata and rebuild.
-- Nexa schema changes move through immutable files under `database/`.
-- Approved test records move through synthetic seed files.
-- Real names, emails, credentials and customer records must never appear in fixtures.
-
-## Updating a Local Checkout
+## Updating A Checkout
 
 ```powershell
+Set-Location C:\xampp\htdocs\nexa
 git switch main
 git pull --ff-only
 
 powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
   -Mode Local `
-  -ClientPath 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' `
-  -Database espocrm `
+  -ClientPath $mariadb `
   -User espocrm
 
 Set-Location espocrm
@@ -148,39 +252,55 @@ Set-Location ..
 powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
 ```
 
-Read each pull request for migration and backfill instructions before applying it locally.
+Do not use `-InitializeBaseSchema` when updating an existing database.
 
 ## Common Problems
 
-### Blank Page
+### API Is Unavailable
 
-- Confirm Apache `mod_rewrite` is enabled.
-- Confirm the virtual host has `AllowOverride All`.
-- Inspect Apache error logs and `espocrm/data/logs/`.
-- Run rebuild and clear cache again.
+Run `httpd.exe -t` and confirm `rewrite_module` is listed. If `/api/v1/` returns
+HTTP `401`, rewriting and tenant routing are working; the installer accepts
+`200` or `401`. A `403` normally means `nexa.local` was not registered, so rerun
+Step 4 only on a fresh database or inspect `nexa_tenant_domain` on an existing
+installation.
 
-### Database Connection Fails
+### Blank Installer Page
 
-- Confirm MariaDB 10.11 is running.
-- Confirm XAMPP MySQL is not competing for the same port.
-- Confirm host, port, database, user and password.
-- Test with the MariaDB CLI using the same application user.
+Inspect the newest file under `espocrm/data/logs/`. Confirm Step 4 completed
+before the browser installer and that the final success page was reached. Run
+`verify-local-install.php --before-demo` to check completion:
 
-### PHP Extension Missing
+```powershell
+& 'C:\xampp\php\php.exe' scripts/dev/verify-local-install.php --before-demo
+```
 
-Enable the extension in `C:\xampp\php\php.ini`, restart Apache and rerun `scripts/dev/check-environment.ps1`.
+### MariaDB Will Not Start
 
-### Local Data Needs Reset
+Only one database server can use port `3306`. Keep XAMPP MySQL stopped while the
+MariaDB 10.11 Windows service is running.
 
-Do not drop databases casually. Confirm the database name and create a backup when records matter. A destructive reset must be intentional and affects only that developer's local environment.
+### phpMyAdmin Cannot Connect
+
+phpMyAdmin must target the running MariaDB 10.11 server and use cookie
+authentication or valid MariaDB credentials. This does not affect Nexa when the
+application connection itself is valid.
+
+### Missing PHP Extensions Or Limits
+
+Edit `C:\xampp\php\php.ini`, restart Apache, and rerun:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
+```
 
 ## Acceptance Check
 
-The XAMPP environment is ready when:
+The environment is complete only when:
 
-- `http://nexa.local` loads and login succeeds.
-- Accounts, Contacts, Leads and Opportunities open.
-- Rebuild and cache clearing complete without errors.
-- The scheduled job runs.
-- `scripts/dev/verify.ps1` passes.
-- `git status --short` contains no generated or secret files.
+- <http://nexa.local/?login=1> loads;
+- `complete-local-setup.ps1` finishes successfully;
+- the verifier reports at least 150 tables, 141 tenant columns, 138 service
+  columns and all migrations;
+- both demo accounts authenticate through the same login page;
+- demo CRM records are visible only inside their assigned tenant;
+- scheduled jobs run without errors.

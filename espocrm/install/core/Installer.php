@@ -34,6 +34,10 @@ use Espo\Core\DataManager;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\InjectableFactory;
 use Espo\Core\ORM\DatabaseParamsFactory;
+use Espo\Core\Tenant\EntityOwnershipRegistry;
+use Espo\Core\Tenant\PlatformExecutionGateway;
+use Espo\Core\Tenant\TenantContext;
+use Espo\Core\Tenant\TenantContextStore;
 use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\Database\Dbal\ConnectionFactoryFactory;
 use Espo\Core\Utils\Id\RecordIdGenerator;
@@ -430,13 +434,15 @@ class Installer
      */
     public function rebuild(): void
     {
-        try {
-            $this->app->getContainer()->getByClass(DataManager::class)->rebuild();
-        } catch (Exception) {
-            $this->auth();
+        $this->runAsInstallationTenant(function (): void {
+            try {
+                $this->app->getContainer()->getByClass(DataManager::class)->rebuild();
+            } catch (Exception) {
+                $this->auth();
 
-            $this->app->getContainer()->getByClass(DataManager::class)->rebuild();
-        }
+                $this->app->getContainer()->getByClass(DataManager::class)->rebuild();
+            }
+        });
     }
 
     public function savePreferences(array $rawPreferences)
@@ -469,6 +475,12 @@ class Installer
 
     private function createRecord(string $entityType, array $data): void
     {
+        // Installer-created tenant records belong to the seeded local tenant;
+        // platform reference tables remain unscoped.
+        if ($this->getContainer()->getByClass(EntityOwnershipRegistry::class)->isTenantEntity($entityType)) {
+            $data['tenantId'] ??= TenantContext::LEGACY_LOCAL_ID;
+        }
+
         $id = $data['id'] ?? null;
 
         $entity = null;
@@ -525,6 +537,13 @@ class Installer
 
     public function createUser(string $userName, string $password): bool
     {
+        return $this->runAsInstallationPlatform(
+            fn (): bool => $this->createUserAsPlatform($userName, $password)
+        );
+    }
+
+    private function createUserAsPlatform(string $userName, string $password): bool
+    {
         $this->auth();
 
         $password = $this->getPasswordHash()->hash($password);
@@ -578,9 +597,11 @@ class Installer
 
     public function setSuccess(): void
     {
-        $this->auth();
-        $this->createRecords();
-        $this->executeFinalScript();
+        $this->runAsInstallationPlatform(function (): void {
+            $this->auth();
+            $this->createRecords();
+            $this->executeFinalScript();
+        });
 
         $installerConfig = $this->getInstallerConfig();
         $installerConfig->set('isInstalled', true);
@@ -589,6 +610,33 @@ class Installer
         $configWriter = $this->createConfigWriter();
         $configWriter->set('isInstalled', true);
         $configWriter->save();
+    }
+
+    /**
+     * Rebuild actions create tenant-owned framework records. A trusted local
+     * context lets the ORM supply their ownership automatically.
+     */
+    private function runAsInstallationTenant(callable $callback): mixed
+    {
+        $context = new TenantContext(
+            TenantContext::LEGACY_LOCAL_ID,
+            'legacy-local',
+            'base-installation',
+            'Legacy Local Tenant',
+        );
+
+        return $this->getContainer()->getByClass(TenantContextStore::class)->runWith($context, $callback);
+    }
+
+    /**
+     * Installer writes are intentionally unscoped because the tenant registry
+     * is created only after Espo's base schema is available.
+     */
+    private function runAsInstallationPlatform(callable $callback): mixed
+    {
+        return $this->getContainer()
+            ->getByClass(PlatformExecutionGateway::class)
+            ->run('Espo base installation', $callback);
     }
 
     /**
@@ -746,6 +794,7 @@ class Installer
         $this->getEntityManager()->createEntity(Job::ENTITY_TYPE, [
             'name' => 'Dummy',
             'scheduledJobId' => $scheduledJob->getId(),
+            'tenantId' => TenantContext::LEGACY_LOCAL_ID,
         ]);
     }
 
