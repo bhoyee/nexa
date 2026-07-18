@@ -80,6 +80,15 @@ class Application
         try {
             $run = fn () => $runnerRunner->run($className, $params);
 
+            // The base schema and tenant registry do not exist during the
+            // browser installer. Tenant enforcement starts as soon as the
+            // installer marks the application as installed.
+            if (!$this->isInstalled()) {
+                $run();
+
+                return;
+            }
+
             if (PHP_SAPI === 'cli') {
                 if (str_ends_with($className, '\\Cron') || str_ends_with($className, '\\Job')) {
                     $this->container->getByClass(PlatformExecutionGateway::class)

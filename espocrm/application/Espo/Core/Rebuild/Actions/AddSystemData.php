@@ -30,23 +30,27 @@
 namespace Espo\Core\Rebuild\Actions;
 
 use Espo\Core\Rebuild\RebuildAction;
+use Espo\Core\Tenant\PlatformExecutionGateway;
 use Espo\Entities\SystemData;
 use Espo\ORM\EntityManager;
 
 class AddSystemData implements RebuildAction
 {
     public function __construct(
-        private EntityManager $entityManager
+        private EntityManager $entityManager,
+        private PlatformExecutionGateway $platformExecutionGateway,
     ) {}
 
     public function process(): void
     {
-        $entity = $this->entityManager->getEntityById(SystemData::ENTITY_TYPE, SystemData::ONLY_ID);
+        $this->platformExecutionGateway->run('Rebuild global system data', function (): void {
+            $entity = $this->entityManager->getEntityById(SystemData::ENTITY_TYPE, SystemData::ONLY_ID);
 
-        if ($entity) {
-            return;
-        }
+            if ($entity) {
+                return;
+            }
 
-        $this->entityManager->createEntity(SystemData::ENTITY_TYPE, ['id' => SystemData::ONLY_ID]);
+            $this->entityManager->createEntity(SystemData::ENTITY_TYPE, ['id' => SystemData::ONLY_ID]);
+        });
     }
 }
