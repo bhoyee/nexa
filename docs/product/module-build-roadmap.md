@@ -99,6 +99,8 @@ The working agreement and exit checklist are maintained in [Phase 0 Collaboratio
 - Add feature flags, shared audit-event API, error contracts and background-job conventions.
 - Inventory every Espo screen and give it an explicit retain/redesign/extend/retire status.
 
+Sprint 04 completes the remaining shared experience through issues #43-#46. M02 owns login, signup, verification, forgotten-password, password-reset and configured social-provider UI states. M04 supplies the secure SSO, MFA, social identity and account-linking contracts in Phase 2; provider buttons must not appear until their provider is configured.
+
 **Exit gate:** Nexa no longer feels like a renamed login page; common desktop and mobile workflows consistently use the Nexa shell.
 
 ### Phase 2 - SaaS, Identity and Security Foundation
@@ -110,6 +112,8 @@ The working agreement and exit checklist are maintained in [Phase 0 Collaboratio
 - Add tenant admin versus platform operator roles.
 - Deliver permission sets, teams, hierarchy, SSO hooks, field restrictions and audited impersonation.
 - Establish secrets, encryption, audit logging, retention and tenant export/deletion workflows.
+
+Delivery is split across Sprints 05-07: tenant lifecycle, entitlements and role boundaries first; identity, permissions, metering and billing contracts second; secrets, auditing, impersonation and data-lifecycle controls third. Issue #38 then executes the automated isolation exit suite. Sprint issues remain unassigned until a developer starts them.
 
 **Exit gate:** Automated tests prove that one tenant cannot read, change, search, export or process another tenant's data.
 
@@ -270,12 +274,12 @@ A module or feature is not complete until it has:
 
 ## Immediate Backlog
 
-1. Close Phase 0 through clean Docker and native Windows validation, shared-schema fixture parity, repository/release verification and removal of local PHP timeouts.
-2. Complete the screen inventory for all existing application routes and administration pages.
-3. Add tenant-scoped clean-install and upgrade smoke tests for core CRM records.
-4. Define and verify the M01 module, API, event, queue, error and audit conventions.
-5. Deliver the M02 design foundations and responsive application shell through sprint-sized issues #25-#28.
-6. Add acceptance criteria, source strategy and release assignment to `feature-inventory.md` as each module enters discovery.
+1. Complete the Phase 1 shared product experience through issues #43-#46.
+2. Deliver the Phase 2 tenant control plane through issues #35-#37.
+3. Deliver permissions, identity-provider, usage and billing contracts through issues #39, #40, #47 and #48.
+4. Deliver security, audit, impersonation and data-lifecycle controls through issues #49-#51.
+5. Pass the Phase 2 isolation and lifecycle gate in issue #38.
+6. Add acceptance criteria, source strategy and release assignment to `feature-inventory.md` as each later module enters discovery.
 7. Deliver R1 before beginning marketing-email or automation implementation.
 
 The shared-schema tenancy strategy and trusted tenant runtime are accepted and implemented through ADR-0002, issues #19 and #21, and PRs #20 and #24. They are no longer open product decisions.
