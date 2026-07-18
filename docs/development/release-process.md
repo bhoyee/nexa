@@ -33,6 +33,8 @@ Pushing a matching tag runs `.github/workflows/release.yml`. The workflow verifi
 
 Published release tags are immutable. Correct a bad release with a new patch or prerelease version instead of moving or replacing its tag.
 
+The current organisation settings and prerelease evidence are recorded in [Phase 0 Repository and Release Verification](phase-0-release-verification.md).
+
 ## Tag Ruleset
 
 Configure a GitHub tag ruleset targeting `v*` that blocks tag updates and deletion. Limit bypass permission to the repository owner. The application-baseline tag remains outside this product-release pattern.

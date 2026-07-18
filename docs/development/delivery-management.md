@@ -59,6 +59,8 @@ Labels describe repository-level classification that is useful outside the Proje
 - `area:*`: frontend, backend, database, security, infrastructure, integration, automation or analytics.
 - `status:blocked`: an external dependency prevents progress.
 - `status:needs-decision`: an architecture or product decision is required.
+- `status:ready`: acceptance criteria and dependencies are complete and the issue may be picked up.
+- `sprint:*`, `module:*`, `priority:*`, `size:*` and `release:*` mirror delivery fields when an issue must remain understandable outside the private Project.
 - `duplicate`, `invalid`, `question` and `wontfix`: issue-triage outcomes.
 
 Priority and Workstream are Project fields, not labels. Phase is a milestone, and Sprint is an iteration.
@@ -69,11 +71,11 @@ Sprints run for two weeks. During planning:
 
 1. Confirm the sprint goal and available capacity.
 2. Select only Ready issues from the active phase.
-3. Assign an owner, module, priority, workstream, size, release and sprint.
+3. Set module, priority, workstream, size, release and sprint. Ready issues remain unassigned.
 4. Split any item that cannot satisfy the Definition of Done inside the sprint.
 5. Limit each developer to one major In Progress issue at a time.
 
-During delivery, move work from Ready to In Progress and then In Review when its pull request opens. Move it to Done only after required checks, review, documentation and acceptance evidence are complete.
+During delivery, a developer assigns an issue to themselves when moving it from Ready to In Progress, then moves it to In Review when its pull request opens. Move it to Done only after required checks, review, documentation and acceptance evidence are complete.
 
 At sprint close, review completed outcomes, return unfinished work to Ready or deliberately schedule it, and record process improvements. Do not silently carry incomplete work into the next sprint.
 
@@ -83,15 +85,10 @@ The Project is the live source for item status and assignment. This section reco
 
 | Sprint | Dates | Goal | Committed scope |
 |---|---|---|---|
-| Sprint 01 | 20 July-2 August 2026 | Close the R0 engineering baseline and prepare the complete product screen map | #8 clean Docker clone, #9 clean XAMPP clone, #10 shared-schema parity, #13 repository and release verification, #14 screen inventory, #29 local PHP timeout removal |
-| Sprint 02 | 3-16 August 2026 | Establish platform, test and visual contracts for Phase 1 | #11 tenant-scoped CRM smoke tests, #16 M01 module conventions, #25 M02 design tokens and component foundations |
-| Sprint 03 | 17-30 August 2026 | Deliver and protect the responsive Nexa application shell | #26 desktop shell and navigation, #27 tablet/mobile shell, #28 accessibility and visual-regression gates |
+| Foundation closeout | Through 19 July 2026 | Complete Phase 0 and Phase 1 engineering and visual foundations | #11, #13-#16 and #25-#29 |
+| Sprint 04 | 31 August-13 September 2026 | Establish the Phase 2 tenant lifecycle, entitlement and authorization contracts | #35 tenant lifecycle, #36 entitlements and usage, #37 authorization boundary, #38 Phase 2 acceptance suite |
 
-Phase 0 targets 2 August 2026. Phase 1 targets 30 August 2026. Later iterations remain capacity placeholders until their phase backlog has acceptance criteria, dependencies and sprint-sized issues. Do not fill all future sprints merely to make the roadmap look complete.
-
-Issue #15 is the M02 delivery umbrella and is not itself a sprint commitment. Its implementation is delivered through #25-#28.
-
-Sprint 01 may include the Phase 1 screen inventory because it is discovery work that does not depend on unfinished runtime changes. Phase 1 implementation remains gated by the Phase 0 exit criteria.
+Issue #34 is the Phase 2 delivery umbrella and is not itself a sprint commitment. Issues #39-#41 remain unassigned Ready backlog and are scheduled only after Sprint 04 capacity and dependencies are reviewed.
 
 ## Issue Readiness
 
@@ -101,6 +98,6 @@ An issue is Ready only when it has:
 - a phase milestone, module, priority, workstream, size and release;
 - identified dependencies and tenant/security implications;
 - database, responsive UI and documentation expectations where applicable;
-- an assignee with enough capacity to complete it.
+- no assignee while it waits in Ready; the developer who starts it assigns themselves.
 
 Every implementation branch references its issue, and every pull request uses `Closes #<issue>` when the change completes that issue.

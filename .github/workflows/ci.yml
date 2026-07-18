@@ -49,6 +49,12 @@ jobs:
           --health-retries=10
     steps:
       - uses: actions/checkout@v4
+      - name: Configure PHP 8.2 for database smoke tests
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
       - name: Install MariaDB client
         run: sudo apt-get update && sudo apt-get install --yes mariadb-client
       - name: Load pinned EspoCRM schema fixture
@@ -93,3 +99,47 @@ jobs:
           test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test --execute='SELECT COUNT(*) FROM account WHERE tenant_id = "30000000-0000-4000-8000-000000000001" AND name = "Shared Business Name"')" = "1"
           test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test --execute='SELECT COUNT(*) FROM account WHERE tenant_id = "30000000-0000-4000-8000-000000000002" AND name = "Shared Business Name"')" = "1"
           test "$(mariadb --skip-column-names --host=127.0.0.1 --port=3306 --user=root --password=ci_root_password nexa_shared_test --execute='SELECT COUNT(*) FROM user WHERE user_name = "shared-admin" AND tenant_id IN ("30000000-0000-4000-8000-000000000001", "30000000-0000-4000-8000-000000000002")')" = "2"
+      - name: Run tenant CRM database smoke tests
+        env:
+          NEXA_TEST_DB_HOST: 127.0.0.1
+          NEXA_TEST_DB_NAME: nexa_shared_test
+          NEXA_TEST_DB_USER: root
+          NEXA_TEST_DB_PASSWORD: ci_root_password
+        run: php tests/tenant/CrmDatabaseSmokeTest.php
+      - name: Prove upgrade migration preserves existing CRM records
+        run: |
+          mariadb --host=127.0.0.1 --user=root --password=ci_root_password --execute='DROP DATABASE IF EXISTS nexa_upgrade_test; CREATE DATABASE nexa_upgrade_test CHARACTER SET utf8mb4;'
+          mariadb --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test < database/shared/testing/0000_espocrm_9_1_9_schema.sql
+          mariadb --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test <<'SQL'
+          INSERT INTO account (id, name, deleted) VALUES ('upgradeaccount001', 'Existing account', 0);
+          INSERT INTO contact (id, first_name, last_name, deleted) VALUES ('upgradecontact001', 'Existing', 'Contact', 0);
+          INSERT INTO lead (id, first_name, last_name, deleted) VALUES ('upgradelead000001', 'Existing', 'Lead', 0);
+          INSERT INTO opportunity (id, name, deleted) VALUES ('upgradeopport001', 'Existing deal', 0);
+          SQL
+          for migration in database/shared/migrations/*.sql; do
+            mariadb --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test < "$migration"
+          done
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test --execute='SELECT COUNT(*) FROM account WHERE tenant_id = "00000000-0000-4000-8000-000000000001"')" = "1"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test --execute='SELECT COUNT(*) FROM contact WHERE tenant_id = "00000000-0000-4000-8000-000000000001"')" = "1"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test --execute='SELECT COUNT(*) FROM lead WHERE tenant_id = "00000000-0000-4000-8000-000000000001"')" = "1"
+          test "$(mariadb --skip-column-names --host=127.0.0.1 --user=root --password=ci_root_password nexa_upgrade_test --execute='SELECT COUNT(*) FROM opportunity WHERE tenant_id = "00000000-0000-4000-8000-000000000001"')" = "1"
+
+  browser-quality:
+    name: Shell accessibility and visual validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:shell
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shell-browser-evidence
+          path: test-results
+          retention-days: 14

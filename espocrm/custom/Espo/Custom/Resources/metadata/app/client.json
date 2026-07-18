@@ -2,6 +2,7 @@
     "cssList": [
         "__APPEND__",
         "client/custom/css/modern-login.css",
+        "client/custom/css/nexa-design-system.css",
         "client/custom/css/tenant-workspace.css"
     ],
     "scriptList": [
