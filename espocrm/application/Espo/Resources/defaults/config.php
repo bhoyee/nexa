@@ -183,7 +183,8 @@ return [
     'emailNotificationsDelay' => 30,
     'emailMessageMaxSize' => 10,
     'emailRecipientAddressMaxCount' => 100,
-    'notificationsCheckInterval' => 10,
+    // Avoid overlapping idle polls on local and moderate-latency tenant workspaces.
+    'notificationsCheckInterval' => 30,
     'popupNotificationsCheckInterval' => 15,
     'maxEmailAccountCount' => 2,
     'followCreatedEntities' => false,

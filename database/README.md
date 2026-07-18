@@ -12,3 +12,9 @@ Migration `0001` creates migration tracking plus the Nexa tenant, domain, plan, 
 Espo entity definitions normally belong in `espocrm/custom/` and are applied by Espo rebuild. Cross-cutting tenant columns, composite indexes, constraints and data backfills require explicit SQL migrations because they change existing core tables.
 
 Migration files are immutable after merge. Git stores schema and synthetic fixtures only; never commit database dumps, MariaDB data files, credentials or customer data. See [Shared-Schema SaaS Data Architecture](../docs/architecture/saas-data-architecture.md).
+
+## Migration Recovery and Diagnostics
+
+Back up the database before applying a release migration. If a migration fails, stop application writes, keep the failed database for diagnosis, and inspect `nexa_schema_migration` plus the MariaDB error output to identify the last completed file. Do not edit or mark a migration as complete manually.
+
+For a clean environment, drop the incomplete local database and rerun `initialize-local-database.ps1`. For an upgrade containing valuable data, restore the pre-migration backup, correct the migration on a new branch, and rerun the complete migration chain against a copy before retrying production. `CrmDatabaseSmokeTest.php` rolls its synthetic CRUD data back and can be run safely against a migrated local database.

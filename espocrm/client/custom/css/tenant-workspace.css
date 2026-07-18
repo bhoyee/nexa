@@ -1,3 +1,21 @@
+.nexa-side-navigation {
+    background: #f6f8fa;
+}
+
+body.nexa-side-navigation #navbar {
+    background: #17202a;
+    border-color: #253341;
+}
+
+body.nexa-side-navigation #navbar .navbar-brand {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+body.nexa-side-navigation #main {
+    min-height: calc(100dvh - var(--nexa-header-height, 56px));
+}
+
 .nexa-tenant-identity {
     align-items: center;
     align-self: center;
@@ -54,6 +72,18 @@
 }
 
 @media (max-width: 767px) {
+    body.nexa-side-navigation #navbar .navbar-body {
+        background: #17202a;
+        box-shadow: 10px 12px 28px rgba(16, 24, 40, 0.24);
+        max-width: min(88vw, 320px);
+        overscroll-behavior: contain;
+    }
+
+    body.nexa-side-navigation #navbar .navbar-toggle {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
     .nexa-tenant-identity {
         height: 32px;
         margin-right: 6px;
@@ -122,6 +152,17 @@ body.nexa-side-navigation #navbar .nexa-planned-module-link:hover,
 body.nexa-side-navigation #navbar .nexa-planned-module-link:focus {
     opacity: 0.82;
     text-decoration: none;
+}
+
+body.nexa-side-navigation #navbar a:focus-visible,
+body.nexa-side-navigation #navbar button:focus-visible {
+    outline-color: #84adff;
+}
+
+@media (min-width: 768px) {
+    body.nexa-side-navigation #navbar .navbar-body > ul.tabs {
+        max-height: calc(100dvh - 112px);
+    }
 }
 
 body.nexa-side-navigation #navbar .nexa-planned-module-indicator {

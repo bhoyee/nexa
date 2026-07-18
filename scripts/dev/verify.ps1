@@ -17,7 +17,10 @@ function Pass([string] $message) {
 $required = @(
     '.env.example', '.gitattributes', '.gitignore', '.github/CODEOWNERS',
     '.github/workflows/release.yml', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'VERSION',
+    'docs/architecture/module-conventions.md', 'docs/product/screen-inventory.md',
     'docs/development/delivery-management.md', 'docs/development/wampserver-setup.md',
+    'docs/development/windows-performance.md', 'docs/development/design-system.md',
+    'docs/development/phase-0-release-verification.md', 'package.json', 'package-lock.json', 'playwright.config.js',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
     'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
@@ -29,10 +32,15 @@ $required = @(
     'database/shared/seeds/0002_two_tenant_isolation.sql', 'espocrm/bin/provision-demo-tenants.php',
     'database/shared/table-ownership-manifest.json', 'espocrm/application/Espo/Resources/tenant-table-ownership.json',
     'tests/tenant/TenantRuntimeTest.php', 'tests/tenant/InstallationBootstrapTest.php',
+    'tests/tenant/CrmDatabaseSmokeTest.php', 'tests/architecture/ModuleConventionTest.php',
+    'tests/browser/shell.spec.js', 'tests/browser/fixtures/login.html', 'tests/browser/fixtures/shell.html',
+    'tests/browser/fixtures/components.html',
+    'tests/browser/fixtures/dialog.html',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
     'tests/signup/SignupValidatorTest.php', 'tests/signup/SmtpEnvironmentTest.php',
     'espocrm/client/custom/tenant-workspace.js', 'espocrm/client/custom/css/tenant-workspace.css',
+    'espocrm/client/custom/css/nexa-design-system.css',
     'espocrm/custom/Espo/Custom/Tools/App/AppParams/TenantIdentity.php',
     'espocrm/install/entry.php', 'espocrm/html/main.html', 'espocrm/public/index.php',
     'espocrm/public/landing/index.html', 'espocrm/public/landing/styles.css', 'espocrm/vendor/autoload.php'
@@ -89,6 +97,8 @@ $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-smtp.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\tenant\CrmDatabaseSmokeTest.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
 if ($php) {
     foreach ($file in $phpFiles) {
         & php -l $file.FullName *> $null
@@ -107,6 +117,8 @@ if ($php) {
     if ($LASTEXITCODE -eq 0) { Pass 'Signup validation suite' } else { Fail 'Signup validation suite failed.' }
     & php (Join-Path $root 'tests\signup\SmtpEnvironmentTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'SMTP environment suite' } else { Fail 'SMTP environment suite failed.' }
+    & php (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'Module convention suite' } else { Fail 'Module convention suite failed.' }
 }
 
 $tracked = & git -C $root ls-files

@@ -116,6 +116,37 @@ require(['views/site/navbar'], NavbarView => {
         try {
             document.body.classList.toggle('nexa-side-navigation', this.isSide());
 
+            const navigation = this.element?.querySelector('.navbar-body');
+            const toggle = this.element?.querySelector('.navbar-toggle');
+            const main = document.querySelector('#main');
+
+            this.element?.setAttribute('aria-label', 'Primary application navigation');
+            navigation?.setAttribute('aria-label', 'Workspace modules');
+            main?.setAttribute('role', 'main');
+
+            if (toggle && navigation) {
+                toggle.setAttribute('aria-label', 'Open workspace navigation');
+                toggle.setAttribute('aria-controls', navigation.id || 'nexa-workspace-navigation');
+                navigation.id ||= 'nexa-workspace-navigation';
+
+                toggle.addEventListener('click', () => window.setTimeout(() => {
+                    const isOpen = navigation.classList.contains('in');
+                    toggle.setAttribute('aria-expanded', String(isOpen));
+                    toggle.setAttribute('aria-label', `${isOpen ? 'Close' : 'Open'} workspace navigation`);
+                    if (isOpen) {
+                        navigation.querySelector('a:not([aria-disabled="true"])')?.focus();
+                    }
+                }, 0));
+
+                navigation.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && navigation.classList.contains('in')) {
+                        event.preventDefault();
+                        toggle.click();
+                        toggle.focus();
+                    }
+                });
+            }
+
             this.element
                 ?.querySelectorAll('.nexa-planned-module-link')
                 .forEach(link => {
