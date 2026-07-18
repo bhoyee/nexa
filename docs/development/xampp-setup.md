@@ -64,6 +64,23 @@ Never commit `.env`. It contains:
 - `DEMO_TENANT_A_ADMIN_*`: Tenant A development login.
 - `DEMO_TENANT_B_ADMIN_*`: Tenant B development login.
 
+For real signup email delivery, also configure:
+
+```dotenv
+SMTP_HOST=smtp.provider.example
+SMTP_PORT=587
+SMTP_SECURITY=TLS
+SMTP_AUTH=true
+SMTP_USERNAME=provider-user
+SMTP_PASSWORD=provider-password
+SMTP_FROM_EMAIL=verified-sender@example.com
+SMTP_FROM_NAME=Nexa CRM
+```
+
+Use credentials issued by the selected transactional email provider. The From
+address or domain must be verified with that provider. Leave `SMTP_HOST` empty
+when local email delivery is intentionally disabled.
+
 ## 2. Start MariaDB 10.11
 
 Install the MariaDB MSI with **Database instance**, **Install as service** and
@@ -207,6 +224,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 `
 The command uses the installed application's database connection and the
 ignored `.env`. It performs all remaining work:
 
+- validates and applies SMTP settings when `SMTP_HOST` is configured;
 - loads development catalog and tenant seeds in order;
 - creates or refreshes two separate demo tenant administrators;
 - adds accounts, contacts, leads, opportunities, tasks and meetings per tenant;
@@ -219,6 +237,15 @@ Both demo accounts sign in through <http://nexa.local/?login=1>. Use the
 `DEMO_TENANT_A_ADMIN_*` or `DEMO_TENANT_B_ADMIN_*` values from `.env`. The
 submitted login identity selects the tenant; separate login domains are not
 required.
+
+Reapply SMTP settings after changing `.env`:
+
+```powershell
+& 'C:\xampp\php\php.exe' scripts/dev/configure-smtp.php --env=.env
+```
+
+The command never prints the SMTP password. Use Administration > Outbound
+Emails to send a test message after configuration.
 
 ## 8. Configure Scheduled Jobs
 

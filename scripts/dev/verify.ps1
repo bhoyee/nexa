@@ -20,7 +20,8 @@ $required = @(
     'docs/development/delivery-management.md', 'docs/development/wampserver-setup.md',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
-    'scripts/dev/install-development-seeds.php', 'scripts/dev/verify-local-install.php',
+    'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
+    'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
     'database/shared/migrations/0003_enforce_tenant_runtime.sql', 'database/shared/migrations/0004_tenant_qualified_user_identity.sql',
@@ -30,7 +31,7 @@ $required = @(
     'tests/tenant/TenantRuntimeTest.php', 'tests/tenant/InstallationBootstrapTest.php',
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
-    'tests/signup/SignupValidatorTest.php',
+    'tests/signup/SignupValidatorTest.php', 'tests/signup/SmtpEnvironmentTest.php',
     'espocrm/client/custom/tenant-workspace.js', 'espocrm/client/custom/css/tenant-workspace.css',
     'espocrm/custom/Espo/Custom/Tools/App/AppParams/TenantIdentity.php',
     'espocrm/install/entry.php', 'espocrm/html/main.html', 'espocrm/public/index.php',
@@ -87,6 +88,7 @@ $phpFiles = Get-ChildItem -LiteralPath $phpRoots -Filter '*.php' -File -Recurse 
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-tenants.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-smtp.php')
 if ($php) {
     foreach ($file in $phpFiles) {
         & php -l $file.FullName *> $null
@@ -103,6 +105,8 @@ if ($php) {
     if ($LASTEXITCODE -eq 0) { Pass 'Installation bootstrap suite' } else { Fail 'Installation bootstrap suite failed.' }
     & php (Join-Path $root 'tests\signup\SignupValidatorTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Signup validation suite' } else { Fail 'Signup validation suite failed.' }
+    & php (Join-Path $root 'tests\signup\SmtpEnvironmentTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'SMTP environment suite' } else { Fail 'SMTP environment suite failed.' }
 }
 
 $tracked = & git -C $root ls-files

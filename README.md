@@ -257,6 +257,35 @@ WampServer follows the same tested sequence: clone and generate `.env`, create a
 
 See [WampServer Development Setup](docs/development/wampserver-setup.md) for the complete virtual-host, database, migration, scheduled-job and update workflow.
 
+## Signup Email And SMTP
+
+Self-service signup activates a workspace through one secure email verification
+link. SMTP credentials stay in the ignored `.env`; `.env.example` documents the
+required contract without containing secrets.
+
+```dotenv
+SMTP_HOST=smtp.provider.example
+SMTP_PORT=587
+SMTP_SECURITY=TLS
+SMTP_AUTH=true
+SMTP_USERNAME=provider-user
+SMTP_PASSWORD=provider-password
+SMTP_FROM_EMAIL=verified-sender@example.com
+SMTP_FROM_NAME=Nexa CRM
+```
+
+Docker maps these values into the system mail configuration. Apply changes with
+`docker compose up -d --force-recreate espocrm daemon`. XAMPP and WampServer
+apply them during `complete-local-setup.ps1`, or on demand with:
+
+```powershell
+& <path-to-php.exe> scripts/dev/configure-smtp.php --env=.env
+```
+
+When `SMTP_HOST` is empty, the configurator leaves system mail unchanged. The
+localhost-only verification URL fallback may be used for development, but
+`NEXA_SIGNUP_EXPOSE_VERIFICATION_URL` must be `false` outside local environments.
+
 ## Repository Structure
 
 ```text
@@ -365,6 +394,7 @@ Existing installations receive forward migrations through `apply-shared-schema.p
 - `scripts/dev/initialize-local-database.ps1`: creates the complete schema and applies every migration to a fresh local database.
 - `scripts/dev/apply-shared-schema.ps1`: applies checksum-tracked forward migrations through Docker or a local MariaDB client.
 - `scripts/dev/complete-local-setup.ps1`: installs development seeds, provisions demo tenants, rebuilds and verifies a local installation.
+- `scripts/dev/configure-smtp.php`: validates `.env` SMTP settings and applies them through Espo's system configuration writer.
 - `scripts/dev/install-development-seeds.php`: loads ordered development fixtures using the installed application's database connection.
 - `scripts/dev/provision-demo-tenants.ps1`: creates or refreshes login-ready administrators and tenant-scoped CRM fixtures for both synthetic tenants.
 - `scripts/dev/verify-local-install.php`: validates schema counts, migrations, demo administrators and tenant-scoped records.

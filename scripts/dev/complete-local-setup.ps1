@@ -17,6 +17,9 @@ if ($LASTEXITCODE -ne 0) {
     throw 'The browser installation is incomplete. Finish it before loading demo data.'
 }
 
+& $PhpPath (Join-Path $PSScriptRoot 'configure-smtp.php') "--env=$EnvironmentFile"
+if ($LASTEXITCODE -ne 0) { throw 'System SMTP configuration failed.' }
+
 & $PhpPath (Join-Path $PSScriptRoot 'install-development-seeds.php')
 if ($LASTEXITCODE -ne 0) { throw 'Development seed installation failed.' }
 
