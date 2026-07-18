@@ -85,10 +85,15 @@ The Project is the live source for item status and assignment. This section reco
 
 | Sprint | Dates | Goal | Committed scope |
 |---|---|---|---|
-| Foundation closeout | Through 19 July 2026 | Complete Phase 0 and Phase 1 engineering and visual foundations | #11, #13-#16 and #25-#29 |
-| Sprint 04 | 31 August-13 September 2026 | Establish the Phase 2 tenant lifecycle, entitlement and authorization contracts | #35 tenant lifecycle, #36 entitlements and usage, #37 authorization boundary, #38 Phase 2 acceptance suite |
+| Foundation closeout | Through 19 July 2026 | Complete the engineering baseline, module conventions, design tokens and initial responsive shell | #11, #13-#16 and #25-#29 |
+| Sprint 04 | 31 August-13 September 2026 | Complete the shared Phase 1 product experience | #43 authentication and signup, #44 navigation and search, #45 tenant home and dashboards, #46 common CRM list and record workflows |
+| Sprint 05 | 14-27 September 2026 | Establish the Phase 2 tenant and entitlement control plane | #35 tenant lifecycle and provisioning, #36 plans/entitlements/quotas, #37 tenant-admin and platform-operator boundary |
+| Sprint 06 | 28 September-11 October 2026 | Deliver identity, authorization, metering and billing contracts | #39 permissions/teams/field restrictions, #40 SSO/MFA/social identity contracts, #47 usage ledger, #48 billing boundary |
+| Sprint 07 | 12-25 October 2026 | Complete the security and tenant-isolation release gate | #49 secrets/encryption, #50 audit and impersonation, #51 retention/export/deletion, #38 Phase 2 acceptance suite |
 
-Issue #34 is the Phase 2 delivery umbrella and is not itself a sprint commitment. Issues #39-#41 remain unassigned Ready backlog and are scheduled only after Sprint 04 capacity and dependencies are reviewed.
+Issues #15, #34 and #41 are delivery umbrellas and are not sprint commitments. Every committed issue above remains unassigned while it is Ready. A developer assigns an issue to themselves only when they start it.
+
+Phase 1 owns the responsive authentication experience, including login, signup, email-code verification, forgotten-password and password-reset screens. Phase 2 issue #40 owns the secure SSO, MFA and social identity-provider contracts behind those screens. Social sign-in and signup controls are shown only when a provider is configured.
 
 ## Issue Readiness
 
