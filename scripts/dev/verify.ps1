@@ -131,21 +131,38 @@ if (-not ($tracked -contains '.env')) { Pass '.env is not tracked' }
 
 $shareablePaths = & git -C $root ls-files --cached --others --exclude-standard
 $textExtensions = @('.css', '.env', '.example', '.html', '.ini', '.js', '.json', '.md', '.php', '.ps1', '.sh', '.sql', '.txt', '.xml', '.yaml', '.yml')
-$shareableTextFiles = $shareablePaths |
-    ForEach-Object { Join-Path $root $_ } |
-    Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
 $privateKeyFiles = @()
 # The pinned vendor snapshot is audited at import; scan product and team-owned text on every run.
-$keyMarkerTextFiles = $shareableTextFiles | Where-Object {
-    $_ -notmatch '[\\/]espocrm[\\/]vendor[\\/]'
-}
-if ($keyMarkerTextFiles) {
-    $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
+$ripgrep = Get-Command rg -ErrorAction SilentlyContinue
+if ($ripgrep) {
+    $privateKeyFiles = @(& $ripgrep.Source `
+        --files-with-matches `
+        --hidden `
+        --glob '!.git/**' `
+        --glob '!.qa/**' `
+        --glob '!espocrm/vendor/**' `
+        --glob '!espocrm/data/**' `
+        --glob '!node_modules/**' `
+        'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' `
+        $root)
+    $scanExitCode = $LASTEXITCODE
+    if ($scanExitCode -notin @(0, 1)) { Fail 'Private-key marker scan failed.' }
+    $global:LASTEXITCODE = 0
+} else {
+    $keyMarkerTextFiles = $shareablePaths |
+        Where-Object {
+            $_ -notmatch '(^|[\\/])espocrm[\\/]vendor[\\/]' -and
+            $textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()
+        } |
+        ForEach-Object { Join-Path $root $_ }
+    if ($keyMarkerTextFiles) {
+        $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
+    }
 }
 $keyFileExtensions = @('.key', '.pem', '.p12', '.pfx')
 $keyFiles = $shareablePaths |
-    ForEach-Object { Join-Path $root $_ } |
-    Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
+    Where-Object { $keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant() } |
+    ForEach-Object { Join-Path $root $_ }
 if ($privateKeyFiles -or $keyFiles) { Fail 'A private key or key file exists in a shareable path.' } else { Pass 'No private keys found' }
 
 $migrationNames = Get-ChildItem -LiteralPath (Join-Path $root 'database') -Filter '*.sql' -File -Recurse | Select-Object -ExpandProperty Name
@@ -164,3 +181,4 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host 'Repository verification passed.' -ForegroundColor Green
+exit 0
