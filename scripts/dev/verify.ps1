@@ -130,35 +130,20 @@ foreach ($prohibited in @('.env', '.env.local', 'espocrm/data/config.php', 'espo
 if (-not ($tracked -contains '.env')) { Pass '.env is not tracked' }
 
 $shareablePaths = & git -C $root ls-files --cached --others --exclude-standard
-$textExtensions = @('.css', '.env', '.example', '.html', '.ini', '.js', '.json', '.md', '.php', '.ps1', '.sh', '.sql', '.txt', '.xml', '.yaml', '.yml')
-$privateKeyFiles = @()
-# The pinned vendor snapshot is audited at import; scan product and team-owned text on every run.
-$ripgrep = Get-Command rg -ErrorAction SilentlyContinue
-if ($ripgrep) {
-    $privateKeyFiles = @(& $ripgrep.Source `
-        --files-with-matches `
-        --hidden `
-        --glob '!.git/**' `
-        --glob '!.qa/**' `
-        --glob '!espocrm/vendor/**' `
-        --glob '!espocrm/data/**' `
-        --glob '!node_modules/**' `
-        'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' `
-        $root)
-    $scanExitCode = $LASTEXITCODE
-    if ($scanExitCode -notin @(0, 1)) { Fail 'Private-key marker scan failed.' }
-    $global:LASTEXITCODE = 0
-} else {
-    $keyMarkerTextFiles = $shareablePaths |
-        Where-Object {
-            $_ -notmatch '(^|[\\/])espocrm[\\/]vendor[\\/]' -and
-            $textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()
-        } |
-        ForEach-Object { Join-Path $root $_ }
-    if ($keyMarkerTextFiles) {
-        $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
-    }
-}
+# Scan exactly what Git can share. Runtime files stay ignored and the pinned vendor snapshot is
+# audited at import, leaving product and team-owned files for this fast per-change check.
+$privateKeyFiles = @(& git -C $root grep `
+    --untracked `
+    -l `
+    -I `
+    -E `
+    'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' `
+    -- `
+    . `
+    ':(exclude)espocrm/vendor/**')
+$scanExitCode = $LASTEXITCODE
+if ($scanExitCode -notin @(0, 1)) { Fail 'Private-key marker scan failed.' }
+$global:LASTEXITCODE = 0
 $keyFileExtensions = @('.key', '.pem', '.p12', '.pfx')
 $keyFiles = $shareablePaths |
     Where-Object { $keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant() } |
