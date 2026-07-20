@@ -85,25 +85,23 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 
 ## XAMPP Developer
 
-1. Clone the same repository and run `scripts/dev/setup.ps1 -SkipStart` with XAMPP PHP 8.2 on `PATH`.
-2. Set the local site URL and generated credentials in the ignored `.env`.
-3. Create an empty MariaDB 10.11 `espocrm` database and application user.
-4. Run `scripts/dev/initialize-local-database.ps1 -ClientPath <path-to-mariadb.exe>` before opening the browser installer.
-5. Configure the Apache virtual host, complete every browser installer page and use the bootstrap administrator values from `.env`.
-6. Run `scripts/dev/complete-local-setup.ps1 -PhpPath <path-to-php.exe>` to install both demo workspaces, CRM fixtures and all checks.
-7. Follow [XAMPP Development Setup](xampp-setup.md) for the complete procedure and acceptance checks.
+1. Clone the same repository with XAMPP PHP 8.2 and MariaDB 10.11 available.
+2. Configure the `nexa.local` Apache virtual host and hosts entry.
+3. Run `scripts/dev/setup-native-windows.ps1` with the PHP and MariaDB client paths.
+4. The command creates `.env`, database, application configuration, administrators, demo data and installed marker.
+5. Confirm the shared login loads and `/install` redirects away.
+6. Follow [XAMPP Development Setup](xampp-setup.md) for the complete procedure and acceptance checks.
 
 Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily synchronization.
 
 ## WampServer Developer
 
-1. Clone the same organization repository under `C:\wamp64\www\nexa` and run `scripts/dev/setup.ps1 -SkipStart`.
-2. Select PHP 8.2.x, enable the required extensions and configure the ignored `.env`.
-3. Create an empty MariaDB 10.11 `espocrm` database and application user.
-4. Run `scripts/dev/initialize-local-database.ps1 -ClientPath <path-to-mariadb.exe>` before opening the browser installer.
-5. Configure the virtual host and complete every browser installer page with the bootstrap administrator values from `.env`.
-6. Run `scripts/dev/complete-local-setup.ps1 -PhpPath <path-to-php.exe>` to install demo tenants, fixtures and run all checks.
-7. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure and acceptance checks.
+1. Clone the same organization repository under `C:\wamp64\www\nexa` and select PHP 8.2.x with MariaDB 10.11.
+2. Enable the required extensions and configure the `nexa.local` virtual host.
+3. Run `scripts/dev/setup-native-windows.ps1` with the PHP and MariaDB client paths.
+4. The command creates `.env`, database, application configuration, administrators, demo data and installed marker.
+5. Confirm the shared login loads and `/install` redirects away.
+6. Follow [WampServer Development Setup](wampserver-setup.md) for the complete procedure and acceptance checks.
 
 Do not copy WampServer database files, another developer's database, or Docker volumes into the local installation.
 

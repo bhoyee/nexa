@@ -23,6 +23,7 @@ $required = @(
     'docs/development/phase-0-release-verification.md', 'package.json', 'package-lock.json', 'playwright.config.js',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
+    'scripts/dev/setup-native-windows.ps1', 'scripts/dev/install-native-application.php',
     'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
     'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
@@ -97,6 +98,7 @@ $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-smtp.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-native-application.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\tenant\CrmDatabaseSmokeTest.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
 if ($php) {
@@ -128,22 +130,24 @@ foreach ($prohibited in @('.env', '.env.local', 'espocrm/data/config.php', 'espo
 if (-not ($tracked -contains '.env')) { Pass '.env is not tracked' }
 
 $shareablePaths = & git -C $root ls-files --cached --others --exclude-standard
-$textExtensions = @('.css', '.env', '.example', '.html', '.ini', '.js', '.json', '.md', '.php', '.ps1', '.sh', '.sql', '.txt', '.xml', '.yaml', '.yml')
-$shareableTextFiles = $shareablePaths |
-    ForEach-Object { Join-Path $root $_ } |
-    Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($textExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
-$privateKeyFiles = @()
-# The pinned vendor snapshot is audited at import; scan product and team-owned text on every run.
-$keyMarkerTextFiles = $shareableTextFiles | Where-Object {
-    $_ -notmatch '[\\/]espocrm[\\/]vendor[\\/]'
-}
-if ($keyMarkerTextFiles) {
-    $privateKeyFiles = Select-String -LiteralPath $keyMarkerTextFiles -Pattern 'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' -List
-}
+# Scan exactly what Git can share. Runtime files stay ignored and the pinned vendor snapshot is
+# audited at import, leaving product and team-owned files for this fast per-change check.
+$privateKeyFiles = @(& git -C $root grep `
+    --untracked `
+    -l `
+    -I `
+    -E `
+    'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' `
+    -- `
+    . `
+    ':(exclude)espocrm/vendor/**')
+$scanExitCode = $LASTEXITCODE
+if ($scanExitCode -notin @(0, 1)) { Fail 'Private-key marker scan failed.' }
+$global:LASTEXITCODE = 0
 $keyFileExtensions = @('.key', '.pem', '.p12', '.pfx')
 $keyFiles = $shareablePaths |
-    ForEach-Object { Join-Path $root $_ } |
-    Where-Object { (Test-Path -LiteralPath $_ -PathType Leaf) -and ($keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()) }
+    Where-Object { $keyFileExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant() } |
+    ForEach-Object { Join-Path $root $_ }
 if ($privateKeyFiles -or $keyFiles) { Fail 'A private key or key file exists in a shareable path.' } else { Pass 'No private keys found' }
 
 $migrationNames = Get-ChildItem -LiteralPath (Join-Path $root 'database') -Filter '*.sql' -File -Recurse | Select-Object -ExpandProperty Name
@@ -162,3 +166,4 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host 'Repository verification passed.' -ForegroundColor Green
+exit 0

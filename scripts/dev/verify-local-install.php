@@ -7,14 +7,14 @@ $configPath = $root . '/espocrm/data/config-internal.php';
 $beforeDemo = in_array('--before-demo', $argv, true);
 
 if (!is_file($configPath)) {
-    fwrite(STDERR, "Application configuration is missing. Complete the browser installer first.\n");
+    fwrite(STDERR, "Application configuration is missing. Run setup-native-windows.ps1.\n");
     exit(1);
 }
 
 $config = include $configPath;
 
 if (($config['isInstalled'] ?? false) !== true) {
-    fwrite(STDERR, "The browser installer has not completed.\n");
+    fwrite(STDERR, "Native application installation has not completed.\n");
     exit(1);
 }
 
