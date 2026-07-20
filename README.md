@@ -128,14 +128,9 @@ git clone https://github.com/NaxoCRM-Team/nexa.git
 Set-Location nexa
 
 $env:Path = "C:\xampp\php;$env:Path"
-powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 -SkipStart
 ```
 
-Set `ESPOCRM_SITE_URL=http://nexa.local` in the generated `.env`. Keep the generated database, bootstrap administrator and demo tenant credentials private; never commit `.env`.
-
-### 2. Create The Empty Database
-
-Locate the MariaDB 10.11 client and connect with the root password chosen during its installation:
+Locate the MariaDB 10.11 client:
 
 ```powershell
 $candidates = @(
@@ -148,35 +143,9 @@ if (-not $mariadb) {
 }
 
 & $mariadb --version
-& $mariadb -u root -p
 ```
 
-Create an empty database and local application user. Replace `<DB_PASSWORD>` with `DB_PASSWORD` from `.env`:
-
-```sql
-CREATE DATABASE espocrm
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-CREATE USER IF NOT EXISTS 'espocrm'@'localhost' IDENTIFIED BY '<DB_PASSWORD>';
-CREATE USER IF NOT EXISTS 'espocrm'@'127.0.0.1' IDENTIFIED BY '<DB_PASSWORD>';
-GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'localhost';
-GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'127.0.0.1';
-
-FLUSH PRIVILEGES;
-```
-
-### 3. Initialize Every Table
-
-```powershell
-Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/initialize-local-database.ps1 `
-  -ClientPath $mariadb
-```
-
-Run this once before opening the browser installer. It reads `DB_PASSWORD` from `.env`, loads the complete base schema, applies every migration and refuses to initialize a non-empty database.
-
-### 4. Configure Apache
+### 2. Configure Apache
 
 Open `C:\xampp\apache\conf\httpd.conf` and confirm these lines are enabled:
 
@@ -208,38 +177,25 @@ As Administrator, add this entry to `C:\Windows\System32\drivers\etc\hosts`:
 
 Start Apache from the XAMPP Control Panel. Keep the XAMPP MySQL service stopped when MariaDB 10.11 is running on port 3306.
 
-### 5. Complete Browser Installation
-
-Open <http://nexa.local/install/> and use:
-
-| Installer setting | Value |
-|---|---|
-| Database platform | MySQL/MariaDB |
-| Host | `127.0.0.1` |
-| Port | `3306` |
-| Database | `espocrm` |
-| Database user | `espocrm` |
-| Database password | `DB_PASSWORD` from `.env` |
-| Administrator username | `ADMIN_USERNAME` from `.env` |
-| Administrator password | `ADMIN_PASSWORD` from `.env` |
-
-Use the actual MariaDB port if it differs from `3306`.
-
-The requested administrator is the local bootstrap administrator required to finish the underlying framework. It is not a customer tenant administrator. Complete every page until the installer success page appears.
-
-### 6. Install Demo Tenants And Verify
+### 3. Run The Complete Setup
 
 ```powershell
 Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 `
-  -PhpPath 'C:\xampp\php\php.exe'
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup-native-windows.ps1 `
+  -PhpPath 'C:\xampp\php\php.exe' `
+  -ClientPath $mariadb
 ```
 
-This single command installs the development seeds, provisions two separate demo tenant administrators, creates tenant-scoped CRM records, rebuilds the application and verifies the installation. A successful setup reports at least 150 tables, 141 `tenant_id` columns, 138 `service_id` columns and every tracked migration.
+This command creates `.env`, the database and application user, loads the base
+schema and migrations, generates application configuration, creates the
+bootstrap administrator, provisions both demo tenants and their records,
+rebuilds the application, blocks the browser installer and verifies the login.
+If the generated MariaDB root password is not valid, the command securely
+prompts for the current local root password.
 
 Both demo accounts use <http://nexa.local/?login=1>. Their usernames and passwords are the `DEMO_TENANT_A_ADMIN_*` and `DEMO_TENANT_B_ADMIN_*` values in `.env`; the submitted identity selects the correct tenant.
 
-### 7. Enable Scheduled Jobs
+### 4. Enable Scheduled Jobs
 
 Create a Windows Task Scheduler job that runs the following command every minute:
 
@@ -253,7 +209,10 @@ See [XAMPP Development Setup](docs/development/xampp-setup.md) for PHP settings,
 
 ## WampServer Setup
 
-WampServer follows the same tested sequence: clone and generate `.env`, create an empty MariaDB 10.11 database, run `initialize-local-database.ps1`, configure the virtual host, complete the browser installer, then run `complete-local-setup.ps1`. The completion command installs both demo tenants and their records and verifies the full schema. No separate application download is required.
+WampServer follows the same one-command setup. Clone the repository, configure
+the `nexa.local` virtual host, then run `setup-native-windows.ps1` with the
+WampServer PHP and MariaDB 10.11 executable paths. No application download,
+manual database creation or browser installer is required.
 
 See [WampServer Development Setup](docs/development/wampserver-setup.md) for the complete virtual-host, database, migration, scheduled-job and update workflow.
 
@@ -372,16 +331,13 @@ Prefer established extension points when they keep a change clear, but core file
 
 Each local environment uses one `espocrm` database containing Espo core and Nexa SaaS tables. Schema and safe fixtures move through Git; local records and database volumes do not. Every tenant-owned table is converted through reviewed expand/backfill/enforce migrations rather than shared database dumps.
 
-For a fresh XAMPP or WampServer database, initialize the base schema and every migration before opening the browser installer:
+For a fresh or existing Nexa-managed XAMPP/WampServer environment, run the
+idempotent native bootstrap:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/dev/initialize-local-database.ps1 -ClientPath <path-to-mariadb.exe>
-```
-
-After the browser installer succeeds, install demo data and run all checks:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 -PhpPath <path-to-php.exe>
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup-native-windows.ps1 `
+  -PhpPath <path-to-php.exe> `
+  -ClientPath <path-to-mariadb.exe>
 ```
 
 Existing installations receive forward migrations through `apply-shared-schema.ps1`; never reinitialize a non-empty database.
@@ -389,6 +345,8 @@ Existing installations receive forward migrations through `apply-shared-schema.p
 ### Developer Scripts
 
 - `scripts/dev/setup.ps1`: creates `.env`, validates the tracked codebase and optionally starts Docker.
+- `scripts/dev/setup-native-windows.ps1`: performs the complete non-browser XAMPP/WampServer installation or update.
+- `scripts/dev/install-native-application.php`: generates valid application configuration and completes framework installation from `.env`.
 - `scripts/dev/bootstrap-espocrm.ps1`: verifies that the complete tracked application and pinned version are present.
 - `scripts/dev/check-environment.ps1`: checks PHP, extensions, Git and version baseline.
 - `scripts/dev/initialize-local-database.ps1`: creates the complete schema and applies every migration to a fresh local database.

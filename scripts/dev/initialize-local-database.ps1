@@ -25,4 +25,4 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Local product schema initialization failed.'
 }
 
-Write-Host 'Local database schema is ready for the browser installer.' -ForegroundColor Green
+Write-Host 'Local database schema is ready for native application configuration.' -ForegroundColor Green

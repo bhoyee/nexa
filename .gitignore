@@ -24,6 +24,7 @@ espocrm/data/upload/*
 !espocrm/data/upload/.gitkeep
 espocrm/data/config.php
 espocrm/data/config-internal.php
+espocrm/install/config.php
 
 # Third-party CI fixtures and repository metadata are not runtime dependencies.
 espocrm/vendor/**/.ci/

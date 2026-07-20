@@ -14,7 +14,7 @@ if (-not (Get-Command $PhpPath -ErrorAction SilentlyContinue)) {
 
 & $PhpPath $verifyInstall --before-demo
 if ($LASTEXITCODE -ne 0) {
-    throw 'The browser installation is incomplete. Finish it before loading demo data.'
+    throw 'Application installation is incomplete. Run setup-native-windows.ps1 before loading demo data.'
 }
 
 & $PhpPath (Join-Path $PSScriptRoot 'configure-smtp.php') "--env=$EnvironmentFile"

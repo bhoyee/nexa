@@ -47,7 +47,6 @@ git clone https://github.com/NaxoCRM-Team/nexa.git
 Set-Location nexa
 
 $env:Path = "C:\xampp\php;$env:Path"
-powershell -ExecutionPolicy Bypass -File scripts/dev/setup.ps1 -SkipStart
 ```
 
 The setup command verifies the tracked application and creates an ignored
@@ -100,54 +99,7 @@ Get-Service -Name MariaDB
 
 The version must contain `10.11` and the `MariaDB` service must be running.
 
-## 3. Create The Empty Database
-
-Connect with the root password selected during MariaDB installation:
-
-```powershell
-& $mariadb -u root -p
-```
-
-Use the generated `DB_PASSWORD` from `.env` in place of `<DB_PASSWORD>`:
-
-```sql
-CREATE DATABASE espocrm
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-CREATE USER IF NOT EXISTS 'espocrm'@'localhost' IDENTIFIED BY '<DB_PASSWORD>';
-CREATE USER IF NOT EXISTS 'espocrm'@'127.0.0.1' IDENTIFIED BY '<DB_PASSWORD>';
-GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'localhost';
-GRANT ALL PRIVILEGES ON espocrm.* TO 'espocrm'@'127.0.0.1';
-FLUSH PRIVILEGES;
-```
-
-The database must be empty. Do not delete or reuse a database until its contents
-and ownership are known.
-
-## 4. Initialize All Tables
-
-Run this once before opening the browser installer:
-
-```powershell
-Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/initialize-local-database.ps1 `
-  -ClientPath $mariadb
-```
-
-The command reads `DB_PASSWORD` from the ignored `.env`, loads the pinned base
-schema, applies every migration in order, verifies migration checksums, and
-registers `nexa.local` for the seeded local tenant. It refuses to initialize a
-non-empty database.
-
-Expected result at this stage:
-
-- 150 database tables
-- 141 `tenant_id` columns
-- 138 `service_id` columns
-- 5 applied migrations
-
-## 5. Configure Apache
+## 3. Configure Apache
 
 Confirm these lines are enabled in `C:\xampp\apache\conf\httpd.conf`:
 
@@ -188,50 +140,40 @@ continuing:
 & 'C:\xampp\apache\bin\httpd.exe' -M | Select-String rewrite_module
 ```
 
-## 6. Complete The Browser Installer
+## 4. Run The Complete Setup
 
-Open <http://nexa.local/install/> and use:
-
-| Installer setting | Value |
-|---|---|
-| Database platform | MySQL/MariaDB |
-| Host | `127.0.0.1` |
-| Port | `3306` |
-| Database | `espocrm` |
-| Database user | `espocrm` |
-| Database password | `DB_PASSWORD` from `.env` |
-| Administrator username | `ADMIN_USERNAME` from `.env` |
-| Administrator password | `ADMIN_PASSWORD` from `.env` |
-
-The requested administrator is required to finish the underlying framework. In
-Nexa it is the **local bootstrap administrator** assigned to the seeded local
-workspace. It is not a customer tenant administrator. Customer tenant admins are
-created through signup or tenant provisioning.
-
-Complete every installer page until the success page appears. Do not close the
-browser immediately after entering the administrator password.
-
-## 7. Install Demo Tenants And Verify
-
-Run one command after the browser installer succeeds:
+Run one command from an Administrator PowerShell after MariaDB and Apache are
+running:
 
 ```powershell
 Set-Location C:\xampp\htdocs\nexa
-powershell -ExecutionPolicy Bypass -File scripts/dev/complete-local-setup.ps1 `
-  -PhpPath 'C:\xampp\php\php.exe'
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup-native-windows.ps1 `
+  -PhpPath 'C:\xampp\php\php.exe' `
+  -ClientPath $mariadb
 ```
 
-The command uses the installed application's database connection and the
-ignored `.env`. It performs all remaining work:
+On its first run, the command creates `.env` with random local credentials. If
+the generated `DB_ROOT_PASSWORD` does not match MariaDB, it securely prompts
+for the current root password without storing or printing it.
 
+The command performs the complete installation:
+
+- creates the database and restricted application user;
+- loads the base schema and every migration;
+- generates valid machine-specific application configuration and encryption keys;
+- creates the local bootstrap administrator;
 - validates and applies SMTP settings when `SMTP_HOST` is configured;
 - loads development catalog and tenant seeds in order;
 - creates or refreshes two separate demo tenant administrators;
 - adds accounts, contacts, leads, opportunities, tasks and meetings per tenant;
-- rebuilds the application and clears cache;
-- checks table, tenant-column, service-column and migration counts;
-- proves both demo tenants have administrators and CRM data;
-- runs repository verification.
+- rebuilds and clears application caches;
+- marks the application as installed;
+- verifies the schema, demo data and shared login;
+- proves that `/install` redirects away from the installer.
+
+No browser installation is used. Opening <http://nexa.local> now shows the
+landing or login experience directly. The command can be run again after
+`git pull`; it applies pending migrations and refreshes development fixtures.
 
 Both demo accounts sign in through <http://nexa.local/?login=1>. Use the
 `DEMO_TENANT_A_ADMIN_*` or `DEMO_TENANT_B_ADMIN_*` values from `.env`. The
@@ -247,7 +189,7 @@ Reapply SMTP settings after changing `.env`:
 The command never prints the SMTP password. Use Administration > Outbound
 Emails to send a test message after configuration.
 
-## 8. Configure Scheduled Jobs
+## 5. Configure Scheduled Jobs
 
 Create a Windows Task Scheduler task that runs every minute:
 
@@ -266,20 +208,13 @@ Set-Location C:\xampp\htdocs\nexa
 git switch main
 git pull --ff-only
 
-powershell -ExecutionPolicy Bypass -File scripts/dev/apply-shared-schema.ps1 `
-  -Mode Local `
-  -ClientPath $mariadb `
-  -User espocrm
-
-Set-Location espocrm
-& 'C:\xampp\php\php.exe' rebuild.php
-& 'C:\xampp\php\php.exe' clear_cache.php
-
-Set-Location ..
-powershell -ExecutionPolicy Bypass -File scripts/dev/verify.ps1
+powershell -ExecutionPolicy Bypass -File scripts/dev/setup-native-windows.ps1 `
+  -PhpPath 'C:\xampp\php\php.exe' `
+  -ClientPath $mariadb
 ```
 
-Do not use `-InitializeBaseSchema` when updating an existing database.
+The command detects the installed Nexa database and applies only pending
+migrations before rebuilding and verifying the application.
 
 ## Common Problems
 
@@ -291,11 +226,10 @@ HTTP `401`, rewriting and tenant routing are working; the installer accepts
 Step 4 only on a fresh database or inspect `nexa_tenant_domain` on an existing
 installation.
 
-### Blank Installer Page
+### Native Setup Fails After Database Creation
 
-Inspect the newest file under `espocrm/data/logs/`. Confirm Step 4 completed
-before the browser installer and that the final success page was reached. Run
-`verify-local-install.php --before-demo` to check completion:
+Inspect the newest file under `espocrm/data/logs/`, then run the installation
+verifier to identify an incomplete configuration or schema:
 
 ```powershell
 & 'C:\xampp\php\php.exe' scripts/dev/verify-local-install.php --before-demo
@@ -325,7 +259,8 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 The environment is complete only when:
 
 - <http://nexa.local/?login=1> loads;
-- `complete-local-setup.ps1` finishes successfully;
+- `setup-native-windows.ps1` finishes successfully;
+- <http://nexa.local/install/> redirects away from the installer;
 - the verifier reports at least 150 tables, 141 tenant columns, 138 service
   columns and all migrations;
 - both demo accounts authenticate through the same login page;

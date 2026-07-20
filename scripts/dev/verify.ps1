@@ -23,6 +23,7 @@ $required = @(
     'docs/development/phase-0-release-verification.md', 'package.json', 'package-lock.json', 'playwright.config.js',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
+    'scripts/dev/setup-native-windows.ps1', 'scripts/dev/install-native-application.php',
     'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
     'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
@@ -97,6 +98,7 @@ $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-smtp.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-native-application.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\tenant\CrmDatabaseSmokeTest.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
 if ($php) {
