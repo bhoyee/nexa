@@ -63,6 +63,12 @@ foreach ([
     }
 }
 
+foreach (['DatabaseHost', 'DatabasePort', 'SiteUrl'] as $environmentBackedParameter) {
+    if (!str_contains($nativeSetup, "PSBoundParameters.ContainsKey('{$environmentBackedParameter}')")) {
+        throw new RuntimeException("Native setup must preserve {$environmentBackedParameter} from .env when it is not explicitly overridden.");
+    }
+}
+
 foreach (['saveData', 'rebuild', 'createUser', 'setSuccess'] as $operation) {
     if (!str_contains($nativeInstaller, '->' . $operation . '(')) {
         throw new RuntimeException('Native installer must call Installer::' . $operation . '.');

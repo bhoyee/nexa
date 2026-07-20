@@ -3,10 +3,10 @@ param(
     [string] $PhpPath = 'php',
     [string] $ClientPath = 'mariadb',
     [string] $EnvironmentFile = '.env',
-    [string] $DatabaseHost = '127.0.0.1',
-    [int] $DatabasePort = 3306,
+    [string] $DatabaseHost,
+    [int] $DatabasePort,
     [string] $DatabaseRootUser = 'root',
-    [string] $SiteUrl = 'http://nexa.local',
+    [string] $SiteUrl,
     [switch] $SkipHttpCheck
 )
 
@@ -98,6 +98,17 @@ try {
 
     & (Join-Path $PSScriptRoot 'setup.ps1') -SkipStart
     if ($LASTEXITCODE -ne 0) { throw 'Repository prerequisite setup failed.' }
+
+    $environment = Read-EnvironmentFile $environmentPath
+    if (-not $PSBoundParameters.ContainsKey('DatabaseHost')) {
+        $DatabaseHost = if ($environment['DB_HOST']) { $environment['DB_HOST'] } else { '127.0.0.1' }
+    }
+    if (-not $PSBoundParameters.ContainsKey('DatabasePort')) {
+        $DatabasePort = if ($environment['DB_PORT']) { [int] $environment['DB_PORT'] } else { 3306 }
+    }
+    if (-not $PSBoundParameters.ContainsKey('SiteUrl')) {
+        $SiteUrl = if ($environment['ESPOCRM_SITE_URL']) { $environment['ESPOCRM_SITE_URL'] } else { 'http://nexa.local' }
+    }
 
     Set-EnvironmentValue $environmentPath 'ESPOCRM_SITE_URL' $SiteUrl
     Set-EnvironmentValue $environmentPath 'DB_HOST' $DatabaseHost
