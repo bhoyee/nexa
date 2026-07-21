@@ -3,7 +3,7 @@
 ## Purpose
 
 This guide creates the same complete Nexa development environment as Docker and
-XAMPP while using WampServer Apache/PHP 8.2 and MariaDB 10.11. The repository
+XAMPP while using WampServer Apache/PHP 8.2 and MariaDB 10.11 or 11.x. The repository
 already contains the full application; no separate EspoCRM download is needed.
 
 A completed setup contains all 150 current tables, all tenant and service
@@ -15,7 +15,7 @@ and tenant-scoped demo CRM data.
 - Git for Windows
 - PowerShell 5.1 or later
 - WampServer with Apache and PHP 8.2
-- MariaDB 10.11 available through WampServer or a separate Windows service
+- MariaDB 10.11 or 11.x available through WampServer or a separate Windows service
 
 The Apache PHP version and command-line PHP version must both be 8.2.x. Enable
 `curl`, `gd`, `mbstring`, `mysqli`, `openssl`, `pdo_mysql` and `zip`. Set
@@ -59,21 +59,23 @@ SMTP_FROM_NAME=Nexa CRM
 The From address or domain must be verified by the selected provider. Leave
 `SMTP_HOST` empty when local delivery is intentionally disabled.
 
-## 2. Select MariaDB 10.11
+## 2. Select MariaDB
 
-Use the WampServer tray menu to activate MariaDB 10.11, or run a separate
-MariaDB 10.11 Windows service. Do not let another MySQL/MariaDB service compete
+Use the WampServer tray menu to activate MariaDB 10.11 or 11.x, or run a separate
+supported MariaDB Windows service. Do not let another MySQL/MariaDB service compete
 for the same port.
 
 Locate and verify the client:
 
 ```powershell
 Get-ChildItem C:\wamp64\bin\mariadb -Directory
-$mariadb = 'C:\wamp64\bin\mariadb\mariadb10.11.x\bin\mariadb.exe'
+$mariadb = Get-ChildItem C:\wamp64\bin\mariadb -Filter mariadb.exe -File -Recurse |
+    Sort-Object FullName -Descending |
+    Select-Object -ExpandProperty FullName -First 1
 & $mariadb --version
 ```
 
-The output must report MariaDB 10.11.x.
+The output must report MariaDB 10.11.x or 11.x.
 
 ## 3. Configure Apache
 
@@ -201,7 +203,7 @@ required extensions.
 
 ### Database Connection Fails
 
-Confirm MariaDB 10.11 is running, no other database server owns its port, and
+Confirm a supported MariaDB 10.11/11.x server is running, no other database server owns its port, and
 the `espocrm` user has privileges on the `espocrm` database.
 
 ### Migration Checksum Mismatch

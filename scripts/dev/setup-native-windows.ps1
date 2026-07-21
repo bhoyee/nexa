@@ -18,6 +18,7 @@ $environmentPath = if ([IO.Path]::IsPathRooted($EnvironmentFile)) {
     Join-Path $root $EnvironmentFile
 }
 $previousMysqlPassword = [Environment]::GetEnvironmentVariable('MYSQL_PWD', 'Process')
+. (Join-Path $PSScriptRoot 'mariadb-version-policy.ps1')
 
 function Read-EnvironmentFile([string] $Path) {
     $values = @{}
@@ -129,13 +130,16 @@ try {
     $wampMariaDb = Get-ChildItem 'C:\wamp64\bin\mariadb' -Filter 'mariadb.exe' -File -Recurse -ErrorAction SilentlyContinue |
         Sort-Object FullName -Descending |
         Select-Object -ExpandProperty FullName
+    $installedMariaDb = Get-ChildItem 'C:\Program Files' -Directory -Filter 'MariaDB *' -ErrorAction SilentlyContinue |
+        ForEach-Object { Join-Path $_.FullName 'bin\mariadb.exe' } |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        Sort-Object -Descending
     $script:MariaDbClient = Resolve-Executable $ClientPath (
-        @($wampMariaDb) + @('C:\Program Files\MariaDB 10.11\bin\mariadb.exe')
+        @($wampMariaDb) + @($installedMariaDb)
     )
     $version = (& $script:MariaDbClient --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $version -notmatch 'Distrib 10\.11|\b10\.11\.') {
-        throw "Nexa requires MariaDB 10.11.x. Found: $version"
-    }
+    if ($LASTEXITCODE -ne 0) { throw "Unable to read the MariaDB client version: $version" }
+    Assert-NexaMariaDbVersion $version 'MariaDB client' | Out-Null
 
     $rootPassword = $environment.DB_ROOT_PASSWORD
     $connection = Invoke-RootQuery 'SELECT 1;' $rootPassword
@@ -149,6 +153,9 @@ try {
     if ($connection.ExitCode -ne 0) {
         throw 'Unable to authenticate to MariaDB as the configured root user.'
     }
+    $serverVersion = Invoke-RootQuery 'SELECT VERSION();' $rootPassword
+    if ($serverVersion.ExitCode -ne 0) { throw 'Unable to read the MariaDB server version.' }
+    Assert-NexaMariaDbVersion (($serverVersion.Output | Out-String).Trim()) 'MariaDB server' | Out-Null
 
     $escapedPassword = $environment.DB_PASSWORD.Replace("'", "''")
     $database = $environment.DB_NAME

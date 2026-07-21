@@ -225,7 +225,7 @@ Enterprise physical isolation can later be implemented with a dedicated shared-s
 
 ## Local Development
 
-Each developer runs one independent `espocrm` database through Docker or MariaDB 10.11 used by XAMPP or WampServer. All supported local environments apply the same `database/shared/migrations/` sequence and synthetic seeds. Git synchronizes schema definitions; developers never exchange live dumps for routine collaboration.
+Each developer runs one independent `espocrm` database through Docker or a supported MariaDB 10.11/11.x server used by XAMPP or WampServer. All supported local environments apply the same `database/shared/migrations/` sequence and synthetic seeds. Git synchronizes schema definitions; developers never exchange live dumps for routine collaboration.
 
 Local fixtures include two synthetic tenants and verified domains. Runtime and CI tests use overlapping record criteria so a missing scope is visible.
 

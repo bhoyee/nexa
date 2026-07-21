@@ -7,7 +7,7 @@
 | EspoCRM | 9.1.9 | `.env.example` and `compose.yaml` |
 | EspoCRM container | `espocrm/espocrm:9.1.9` | `compose.yaml` |
 | PHP | 8.2.x | CI and environment checker |
-| MariaDB | 10.11 | `compose.yaml` and CI service |
+| MariaDB | 10.11 baseline; 10.11 or 11.x native | `compose.yaml`, CI service and native compatibility tests |
 | Docker Compose | Compose v2 | Developer tooling |
 | PowerShell | 5.1+ or 7+ | Cross-Windows setup scripts |
 
@@ -39,4 +39,4 @@ A clean clone contains the same application code and user interface for every de
 - `pdo_mysql`
 - `zip`
 
-Docker, XAMPP and WampServer contributors run the same repository checks. XAMPP or WampServer may provide Apache/PHP, but PHP must remain 8.2.x and MariaDB behavior must match 10.11.
+Docker, XAMPP and WampServer contributors run the same repository checks. XAMPP or WampServer may provide Apache/PHP, but PHP must remain 8.2.x. Docker and CI pin MariaDB 10.11; native development supports MariaDB 10.11 and 11.x, with the actual client and server versions validated during setup.

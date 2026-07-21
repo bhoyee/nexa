@@ -72,7 +72,7 @@ Team members should read the documents relevant to their work before modifying s
 |---|---|
 | Application release | 9.1.9 |
 | PHP | 8.2.x |
-| MariaDB | 10.11 |
+| MariaDB | 10.11 Docker/CI baseline; 10.11 or 11.x for native development |
 | Docker Compose | v2 |
 
 Changes to the baseline require an approved pull request that updates local setup, CI and compatibility checks together.
@@ -118,7 +118,7 @@ docker compose down
 
 XAMPP uses the same tracked application, schema, migrations and demo fixtures as Docker. No separate application archive or official-site download is required.
 
-Install Git, PowerShell 5.1 or later, XAMPP with PHP 8.2, and MariaDB 10.11. Enable the PHP extensions and limits listed in the [complete XAMPP guide](docs/development/xampp-setup.md). Run MariaDB 10.11 separately and keep XAMPP MySQL stopped.
+Install Git, PowerShell 5.1 or later, XAMPP with PHP 8.2, and MariaDB 10.11 or 11.x. Enable the PHP extensions and limits listed in the [complete XAMPP guide](docs/development/xampp-setup.md). Run the supported MariaDB server separately and keep XAMPP MySQL stopped.
 
 ### 1. Clone And Prepare
 
@@ -130,16 +130,16 @@ Set-Location nexa
 $env:Path = "C:\xampp\php;$env:Path"
 ```
 
-Locate the MariaDB 10.11 client:
+Locate the newest supported MariaDB client:
 
 ```powershell
-$candidates = @(
-    'C:\Program Files\MariaDB 10.11\bin\mariadb.exe',
-    'C:\Program Files\MariaDB 10.11\bin\mysql.exe'
-)
-$mariadb = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+$mariadb = Get-ChildItem 'C:\Program Files' -Directory -Filter 'MariaDB *' |
+    ForEach-Object { Join-Path $_.FullName 'bin\mariadb.exe' } |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Sort-Object -Descending |
+    Select-Object -First 1
 if (-not $mariadb) {
-    throw 'MariaDB 10.11 is not installed.'
+    throw 'MariaDB 10.11 or 11.x is not installed.'
 }
 
 & $mariadb --version
@@ -175,7 +175,7 @@ As Administrator, add this entry to `C:\Windows\System32\drivers\etc\hosts`:
 127.0.0.1 nexa.local
 ```
 
-Start Apache from the XAMPP Control Panel. Keep the XAMPP MySQL service stopped when MariaDB 10.11 is running on port 3306.
+Start Apache from the XAMPP Control Panel. Keep the XAMPP MySQL service stopped when the supported MariaDB server is running on port 3306.
 
 ### 3. Run The Complete Setup
 
@@ -211,7 +211,7 @@ See [XAMPP Development Setup](docs/development/xampp-setup.md) for PHP settings,
 
 WampServer follows the same one-command setup. Clone the repository, configure
 the `nexa.local` virtual host, then run `setup-native-windows.ps1` with the
-WampServer PHP and MariaDB 10.11 executable paths. No application download,
+WampServer PHP and MariaDB 10.11 or 11.x executable paths. No application download,
 manual database creation or browser installer is required.
 
 See [WampServer Development Setup](docs/development/wampserver-setup.md) for the complete virtual-host, database, migration, scheduled-job and update workflow.

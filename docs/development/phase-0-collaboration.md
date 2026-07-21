@@ -12,10 +12,10 @@ The approved technical direction should follow the [EspoCRM SaaS Architecture Re
 |---|---|---|
 | EspoCRM | 9.1.9 | Pinned; never use `latest` |
 | PHP | 8.2.x initially | Match required extensions |
-| MariaDB | 10.11.x | Docker declares 10.11; XAMPP's 10.4 must not define compatibility |
+| MariaDB | 10.11 baseline; 10.11 or 11.x native | Docker and CI declare 10.11; native setup validates supported client and server versions |
 | Composer | 2.x | Commit lock files for Nexa-owned services |
 
-This machine has XAMPP PHP 8.2.12 and XAMPP MariaDB 10.4.32. The XAMPP developer should run MariaDB 10.11 separately or connect Apache/PHP to the project database container. XAMPP does not require using its bundled database.
+XAMPP's bundled MariaDB 10.4 is below the supported minimum. An XAMPP developer should run MariaDB 10.11 or 11.x separately, or connect Apache/PHP to the project database container. XAMPP does not require using its bundled database.
 
 ## Repository Workflow
 
@@ -85,7 +85,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev/check-environment.ps1
 
 ## XAMPP Developer
 
-1. Clone the same repository with XAMPP PHP 8.2 and MariaDB 10.11 available.
+1. Clone the same repository with XAMPP PHP 8.2 and MariaDB 10.11 or 11.x available.
 2. Configure the `nexa.local` Apache virtual host and hosts entry.
 3. Run `scripts/dev/setup-native-windows.ps1` with the PHP and MariaDB client paths.
 4. The command creates `.env`, database, application configuration, administrators, demo data and installed marker.
@@ -96,7 +96,7 @@ Do not copy Docker volumes into XAMPP or exchange phpMyAdmin exports for daily s
 
 ## WampServer Developer
 
-1. Clone the same organization repository under `C:\wamp64\www\nexa` and select PHP 8.2.x with MariaDB 10.11.
+1. Clone the same organization repository under `C:\wamp64\www\nexa` and select PHP 8.2.x with MariaDB 10.11 or 11.x.
 2. Enable the required extensions and configure the `nexa.local` virtual host.
 3. Run `scripts/dev/setup-native-windows.ps1` with the PHP and MariaDB client paths.
 4. The command creates `.env`, database, application configuration, administrators, demo data and installed marker.
