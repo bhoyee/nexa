@@ -19,6 +19,7 @@ $seedRoot = Join-Path $root 'database\shared\seeds'
 $baseSchema = Join-Path $root 'database\shared\testing\0000_espocrm_9_1_9_schema.sql'
 $localPassword = $null
 $previousMysqlPassword = [Environment]::GetEnvironmentVariable('MYSQL_PWD', 'Process')
+. (Join-Path $PSScriptRoot 'mariadb-version-policy.ps1')
 
 function Read-EnvironmentFile([string] $Path) {
     $values = @{}
@@ -45,14 +46,14 @@ function Resolve-LocalMariaDbClient([string] $RequestedClient) {
     $command = Get-Command $RequestedClient -ErrorAction SilentlyContinue
     if ($command) { return $command.Source }
 
-    $candidates = @(
-        'C:\Program Files\MariaDB 10.11\bin\mariadb.exe',
-        'C:\Program Files\MariaDB 10.11\bin\mysql.exe'
-    )
+    $candidates = Get-ChildItem 'C:\Program Files' -Directory -Filter 'MariaDB *' -ErrorAction SilentlyContinue |
+        ForEach-Object { Join-Path $_.FullName 'bin\mariadb.exe' } |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        Sort-Object -Descending
     $installed = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
     if ($installed) { return $installed }
 
-    throw "MariaDB 10.11 client not found. Install the Windows x64 MSI with a database instance, or pass its executable with -ClientPath. XAMPP's bundled MariaDB 10.4 is not supported."
+    throw "A supported MariaDB client was not found. Install MariaDB 10.11 or 11.x, or pass its executable with -ClientPath. XAMPP's bundled MariaDB 10.4 is not supported."
 }
 
 function Invoke-DockerQuery([string] $Sql) {
@@ -103,9 +104,8 @@ try {
     else {
         $ClientPath = Resolve-LocalMariaDbClient $ClientPath
         $clientVersion = (& $ClientPath --version 2>&1 | Out-String).Trim()
-        if ($LASTEXITCODE -ne 0 -or $clientVersion -notmatch 'Distrib 10\.11|\b10\.11\.') {
-            throw "Unsupported database client: $clientVersion. Nexa local development requires MariaDB 10.11.x."
-        }
+        if ($LASTEXITCODE -ne 0) { throw "Unable to read the MariaDB client version: $clientVersion" }
+        Assert-NexaMariaDbVersion $clientVersion 'MariaDB client' | Out-Null
         Write-Host "Using $ClientPath ($clientVersion)" -ForegroundColor DarkGray
         $environmentPath = if ([IO.Path]::IsPathRooted($EnvironmentFile)) {
             $EnvironmentFile
@@ -127,6 +127,8 @@ try {
         }
 
         $env:MYSQL_PWD = $localPassword
+        $serverVersion = @((Invoke-LocalQuery 'SELECT VERSION();'))[0]
+        Assert-NexaMariaDbVersion $serverVersion 'MariaDB server' | Out-Null
     }
 
     if ($InitializeBaseSchema) {

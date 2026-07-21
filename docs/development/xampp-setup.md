@@ -3,7 +3,7 @@
 ## Purpose
 
 This guide creates a complete Nexa development environment on Windows using
-XAMPP Apache/PHP 8.2 and MariaDB 10.11. A successful setup contains the full
+XAMPP Apache/PHP 8.2 and MariaDB 10.11 or 11.x. A successful setup contains the full
 tracked application, all 150 current database tables, all migrations, the local
 bootstrap administrator, two demo tenants, and tenant-scoped demo CRM records.
 
@@ -15,10 +15,10 @@ application and Nexa code used by the team.
 - Git for Windows
 - PowerShell 5.1 or later
 - XAMPP with PHP 8.2
-- MariaDB 10.11 ([Windows MSI archive](https://archive.mariadb.org/mariadb-10.11.16/winx64-packages/mariadb-10.11.16-winx64.msi))
+- MariaDB 10.11 or 11.x ([official downloads](https://mariadb.org/download/))
 
-Use the separate MariaDB 10.11 service on port `3306` and keep XAMPP MySQL
-stopped. XAMPP's bundled MariaDB 10.4 is not the project database baseline.
+Use a separate supported MariaDB service on port `3306` and keep XAMPP MySQL
+stopped. XAMPP's bundled MariaDB 10.4 is below the supported minimum.
 
 Enable these PHP extensions in `C:\xampp\php\php.ini`:
 
@@ -80,24 +80,24 @@ Use credentials issued by the selected transactional email provider. The From
 address or domain must be verified with that provider. Leave `SMTP_HOST` empty
 when local email delivery is intentionally disabled.
 
-## 2. Start MariaDB 10.11
+## 2. Start MariaDB
 
 Install the MariaDB MSI with **Database instance**, **Install as service** and
 **Enable networking** selected. Locate and verify its client:
 
 ```powershell
-$candidates = @(
-    'C:\Program Files\MariaDB 10.11\bin\mariadb.exe',
-    'C:\Program Files\MariaDB 10.11\bin\mysql.exe'
-)
-$mariadb = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-if (-not $mariadb) { throw 'MariaDB 10.11 is not installed.' }
+$mariadb = Get-ChildItem 'C:\Program Files' -Directory -Filter 'MariaDB *' |
+    ForEach-Object { Join-Path $_.FullName 'bin\mariadb.exe' } |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Sort-Object -Descending |
+    Select-Object -First 1
+if (-not $mariadb) { throw 'MariaDB 10.11 or 11.x is not installed.' }
 
 & $mariadb --version
-Get-Service -Name MariaDB
+Get-Service | Where-Object { $_.DisplayName -match 'MariaDB' }
 ```
 
-The version must contain `10.11` and the `MariaDB` service must be running.
+The version must be `10.11.x` or `11.x`, and the MariaDB service must be running.
 
 ## 3. Configure Apache
 
@@ -238,11 +238,11 @@ verifier to identify an incomplete configuration or schema:
 ### MariaDB Will Not Start
 
 Only one database server can use port `3306`. Keep XAMPP MySQL stopped while the
-MariaDB 10.11 Windows service is running.
+supported MariaDB Windows service is running.
 
 ### phpMyAdmin Cannot Connect
 
-phpMyAdmin must target the running MariaDB 10.11 server and use cookie
+phpMyAdmin must target the running supported MariaDB server and use cookie
 authentication or valid MariaDB credentials. This does not affect Nexa when the
 application connection itself is valid.
 

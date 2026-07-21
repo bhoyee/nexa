@@ -1,6 +1,6 @@
 # Windows Development Performance
 
-Native XAMPP or WampServer is the reference fast path on Windows. It uses PHP 8.2, MariaDB 10.11, the same migrations and the same synthetic tenants as Docker without Windows bind-mount translation.
+Native XAMPP or WampServer is the reference fast path on Windows. It uses PHP 8.2, MariaDB 10.11 or 11.x, the same migrations and the same synthetic tenants as Docker without Windows bind-mount translation. Docker and CI retain MariaDB 10.11 as the reproducible baseline.
 
 ## Reference Check
 

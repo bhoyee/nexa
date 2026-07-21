@@ -23,7 +23,8 @@ $required = @(
     'docs/development/phase-0-release-verification.md', 'package.json', 'package-lock.json', 'playwright.config.js',
     'compose.yaml', 'scripts/dev/apply-shared-schema.ps1', 'scripts/dev/provision-demo-tenants.ps1',
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
-    'scripts/dev/setup-native-windows.ps1', 'scripts/dev/install-native-application.php',
+    'scripts/dev/setup-native-windows.ps1', 'scripts/dev/mariadb-version-policy.ps1',
+    'scripts/dev/install-native-application.php', 'tests/development/MariaDbVersionPolicyTest.ps1',
     'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
     'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
@@ -68,6 +69,13 @@ foreach ($file in $powerShellFiles) {
 
     if ($parseErrors.Count -eq 0) { Pass "PowerShell $($file.Name)" }
     else { Fail "PowerShell syntax: $($file.FullName): $($parseErrors[0].Message)" }
+}
+
+try {
+    & (Join-Path $root 'tests\development\MariaDbVersionPolicyTest.ps1')
+    Pass 'MariaDB version policy suite'
+} catch {
+    Fail "MariaDB version policy suite failed: $($_.Exception.Message)"
 }
 
 $ownershipManifest = Join-Path $root 'database\shared\table-ownership-manifest.json'
