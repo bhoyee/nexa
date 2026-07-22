@@ -65,6 +65,17 @@ $assert(
     str_contains($loginTemplateSource, 'name="email" type="email"'),
     'Password recovery must request only the globally reserved email address.'
 );
+$resetTemplateSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/client/custom/res/templates/password-reset.tpl'
+);
+$assert(
+    str_contains($loginAdapterSource, 'showRecoveryMessage') &&
+    str_contains($loginAdapterSource, 'setTimeout(dismissRecoveryMessage') &&
+    str_contains($loginAdapterSource, 'isError ? 10000 : 7000') &&
+    !str_contains($resetTemplateSource, 'generatePassword') &&
+    !str_contains($resetTemplateSource, 'passwordPreview'),
+    'Recovery notices must auto-dismiss and the reset form must not expose generator tools.'
+);
 $landingSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/public/landing/script.js'
 );
@@ -134,6 +145,15 @@ $assert(
     str_contains($coreRecoverySource, 'expiresIn'),
     'Password recovery must render branded HTML with the configured expiry.'
 );
+$assert(
+    str_contains($coreRecoverySource, 'RESEND_COOLDOWN_SECONDS = 60') &&
+    str_contains($coreRecoverySource, 'replaceExistingRequest($existingRequest, $request)') &&
+    strpos($coreRecoverySource, '$this->send(') <
+        strpos($coreRecoverySource, '$this->replaceExistingRequest(') &&
+    str_contains($authConfigSource, 'PASSWORD_RECOVERY_RESEND_COOLDOWN_SECONDS') &&
+    !str_contains($coreRecoverySource, 'Denied for $userId, already sent.'),
+    'Recovery resend must enforce a configurable cooldown and rotate only after mail is accepted.'
+);
 
 $tenantResolverSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/application/Espo/Core/Tenant/TenantResolver.php'
@@ -141,6 +161,17 @@ $tenantResolverSource = file_get_contents(
 $assert(
     str_contains($tenantResolverSource, 'resolvePasswordChangeRequest'),
     'Shared-domain password reset must resolve tenant from its opaque request ID.'
+);
+$passwordResetActionSource = file_get_contents(
+    dirname(__DIR__, 2) .
+    '/espocrm/application/Espo/Tools/UserSecurity/Api/PostChangePasswordByRequest.php'
+);
+$assert(
+    str_contains($passwordResetActionSource, 'resolvePasswordChangeRequest($requestId)') &&
+    str_contains($passwordResetActionSource, 'tenantContextStore->runWith(') &&
+    strpos($passwordResetActionSource, 'resolvePasswordChangeRequest($requestId)') <
+        strpos($passwordResetActionSource, 'changePasswordByRecovery($requestId, $password)'),
+    'Password reset submission must restore tenant context before changing the password.'
 );
 
 $userFinderSource = file_get_contents(
