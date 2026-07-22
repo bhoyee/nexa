@@ -432,6 +432,8 @@ class RecoveryService
         $link = $siteUrl . '?entryPoint=changePassword&id=' . $requestId;
 
         $data['link'] = $link;
+        $data['expiresIn'] = $this->config->get('passwordRecoveryRequestLifetime') ??
+            self::REQUEST_LIFETIME;
 
         $htmlizer = $this->htmlizerFactory->create(true);
 
@@ -441,6 +443,7 @@ class RecoveryService
         $email
             ->setSubject($subject)
             ->setBody($body)
+            ->setIsHtml(true)
             ->addToAddress($emailAddress);
 
         $email->set([
@@ -469,7 +472,12 @@ class RecoveryService
 
         $sender->send($email);
 
-        $this->lastPasswordRecoveryDate();
+        // The interval record belongs to Espo's internal SMTP fallback. A
+        // configured system sender must not write platform-global state from
+        // within a tenant-scoped password recovery request.
+        if (!$this->emailSender->hasSystemSmtp()) {
+            $this->lastPasswordRecoveryDate();
+        }
     }
 
     /**

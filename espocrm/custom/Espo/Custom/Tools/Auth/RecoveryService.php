@@ -47,7 +47,10 @@ final class RecoveryService
         } catch (Throwable $e) {
             // Recovery responses remain neutral. Operational detail belongs in
             // protected logs and must never become an account-discovery signal.
-            $this->log->warning('Nexa password recovery request was not delivered.', ['exception' => $e]);
+            $this->log->warning(
+                'Nexa password recovery request was not delivered: ' . $e::class . ': ' . $e->getMessage(),
+                ['exception' => $e]
+            );
         } finally {
             $this->applyNeutralDelay($startedAt);
         }
