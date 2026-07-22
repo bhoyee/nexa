@@ -31,6 +31,21 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
         const recoveryPanel = this.element.querySelector('[data-recovery-panel]');
         const recoveryForm = this.element.querySelector('[data-recovery-form]');
         const recoveryMessage = this.element.querySelector('[data-recovery-message]');
+        let recoveryMessageTimer;
+        const dismissRecoveryMessage = () => {
+            window.clearTimeout(recoveryMessageTimer);
+            recoveryMessageTimer = undefined;
+            recoveryMessage.hidden = true;
+            recoveryMessage.textContent = '';
+            recoveryMessage.classList.remove('is-error', 'is-success', 'error');
+        };
+        const showRecoveryMessage = (text, isError) => {
+            dismissRecoveryMessage();
+            recoveryMessage.textContent = text;
+            recoveryMessage.classList.add(isError ? 'is-error' : 'is-success');
+            recoveryMessage.hidden = false;
+            recoveryMessageTimer = window.setTimeout(dismissRecoveryMessage, isError ? 10000 : 7000);
+        };
         const showLoginError = text => {
             const message = this.element.querySelector('[data-login-message]');
             message.textContent = text;
@@ -39,6 +54,7 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
             message.hidden = false;
         };
         const showLogin = () => {
+            dismissRecoveryMessage();
             recoveryPanel.hidden = true;
             loginPanel.hidden = false;
             window.setTimeout(() => this.element.querySelector('#field-userName')?.focus(), 0);
@@ -97,8 +113,7 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
             if (!recoveryForm.reportValidity()) return;
             const submit = recoveryForm.querySelector('[type="submit"]');
             submit.disabled = true;
-            recoveryMessage.hidden = true;
-            recoveryMessage.classList.remove('is-error', 'is-success', 'error');
+            dismissRecoveryMessage();
             try {
                 const response = await fetch('/api/v1/Nexa/auth/recovery', {
                     method: 'POST',
@@ -107,18 +122,13 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
                     body: JSON.stringify(Object.fromEntries(new FormData(recoveryForm))),
                 });
                 const body = await response.json().catch(() => ({}));
-                recoveryMessage.textContent = response.ok
-                    ? body.message
-                    : body.message || 'We could not process the request. Try again.';
-                recoveryMessage.classList.toggle('is-error', !response.ok);
-                recoveryMessage.classList.toggle('is-success', response.ok);
-                recoveryMessage.hidden = false;
+                showRecoveryMessage(
+                    response.ok ? body.message : body.message || 'We could not process the request. Try again.',
+                    !response.ok
+                );
                 if (response.ok) recoveryForm.reset();
             } catch (error) {
-                recoveryMessage.textContent = 'We could not process the request. Try again.';
-                recoveryMessage.classList.remove('is-success');
-                recoveryMessage.classList.add('is-error');
-                recoveryMessage.hidden = false;
+                showRecoveryMessage('We could not process the request. Try again.', true);
             } finally {
                 submit.disabled = false;
             }
