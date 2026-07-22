@@ -162,6 +162,17 @@ $assert(
     str_contains($tenantResolverSource, 'resolvePasswordChangeRequest'),
     'Shared-domain password reset must resolve tenant from its opaque request ID.'
 );
+$passwordResetActionSource = file_get_contents(
+    dirname(__DIR__, 2) .
+    '/espocrm/application/Espo/Tools/UserSecurity/Api/PostChangePasswordByRequest.php'
+);
+$assert(
+    str_contains($passwordResetActionSource, 'resolvePasswordChangeRequest($requestId)') &&
+    str_contains($passwordResetActionSource, 'tenantContextStore->runWith(') &&
+    strpos($passwordResetActionSource, 'resolvePasswordChangeRequest($requestId)') <
+        strpos($passwordResetActionSource, 'changePasswordByRecovery($requestId, $password)'),
+    'Password reset submission must restore tenant context before changing the password.'
+);
 
 $socialSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/SocialAuthService.php'
