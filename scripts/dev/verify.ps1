@@ -32,6 +32,9 @@ $required = @(
     'database/shared/migrations/0003_enforce_tenant_runtime.sql', 'database/shared/migrations/0004_tenant_qualified_user_identity.sql',
     'database/shared/migrations/0005_self_service_tenant_signup.sql', 'database/shared/migrations/0006_social_identity.sql',
     'database/shared/migrations/0007_progressive_signup.sql', 'espocrm/custom/Espo/Custom/Tools/Signup/Api/PostComplete.php',
+    'database/shared/migrations/0008_identity_security.sql', 'packages/sso/composer.lock',
+    'docs/development/identity-provider-testing.md', 'docs/operations/identity-incident-recovery.md',
+    'tests/auth/IdentitySecurityTest.php', 'espocrm/bin/configure-identity-provider.php',
     'database/shared/seeds/0002_two_tenant_isolation.sql', 'espocrm/bin/provision-demo-tenants.php',
     'database/shared/table-ownership-manifest.json', 'espocrm/application/Espo/Resources/tenant-table-ownership.json',
     'tests/tenant/TenantRuntimeTest.php', 'tests/tenant/InstallationBootstrapTest.php',
@@ -105,6 +108,8 @@ $phpRoots = @(
 )
 $phpFiles = Get-ChildItem -LiteralPath $phpRoots -Filter '*.php' -File -Recurse -ErrorAction SilentlyContinue
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-tenants.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\configure-identity-provider.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\auth\IdentitySecurityTest.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\application\Espo\EntryPoints\ChangePassword.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
@@ -133,6 +138,8 @@ if ($php) {
     if ($LASTEXITCODE -eq 0) { Pass 'SMTP environment suite' } else { Fail 'SMTP environment suite failed.' }
     & php (Join-Path $root 'tests\signup\AuthExperienceTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Authentication experience suite' } else { Fail 'Authentication experience suite failed.' }
+    & php (Join-Path $root 'tests\auth\IdentitySecurityTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'Identity security contract suite' } else { Fail 'Identity security contract suite failed.' }
     & php (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Module convention suite' } else { Fail 'Module convention suite failed.' }
 }
@@ -154,7 +161,8 @@ $privateKeyFiles = @(& git -C $root grep `
     'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY' `
     -- `
     . `
-    ':(exclude)espocrm/vendor/**')
+    ':(exclude)espocrm/vendor/**' `
+    ':(exclude)packages/sso/vendor/**')
 $scanExitCode = $LASTEXITCODE
 if ($scanExitCode -notin @(0, 1)) { Fail 'Private-key marker scan failed.' }
 $global:LASTEXITCODE = 0

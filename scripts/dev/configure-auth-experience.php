@@ -69,6 +69,9 @@ $writer->setMultiple([
     'nexaMicrosoftClientSecret' => $environment['NEXA_AUTH_MICROSOFT_CLIENT_SECRET'] ?? '',
     'nexaMicrosoftTenantId' => $environment['NEXA_AUTH_MICROSOFT_TENANT_ID'] ?? 'common',
     'nexaMicrosoftRedirectUri' => $environment['NEXA_AUTH_MICROSOFT_REDIRECT_URI'] ?? '',
+    // The deployment owns this key. ConfigWriter stores it only in the ignored
+    // internal configuration so web requests never need to parse .env.
+    'nexaAuthSecretKey' => $environment['NEXA_AUTH_SECRET_KEY'] ?? '',
     'oidcAuthorizationEndpoint' => 'https://accounts.google.com/o/oauth2/v2/auth',
     'oidcTokenEndpoint' => 'https://oauth2.googleapis.com/token',
     'oidcUserInfoEndpoint' => 'https://openidconnect.googleapis.com/v1/userinfo',

@@ -30,6 +30,35 @@
         "noAuth":  true
     },
     {
+        "route":  "/Nexa/auth/discovery",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetDiscovery",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/sso/:providerId/start",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetSsoStart",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/sso/:providerId/oidc/callback",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetOidcSsoCallback",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/sso/:providerId/saml/acs",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\PostSamlSsoCallback",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/mfa/recovery-codes",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\PostMfaRecoveryCodes"
+    },
+    {
         "route":  "/Nexa/auth/provider/:provider/start",
         "method":  "get",
         "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderStart",

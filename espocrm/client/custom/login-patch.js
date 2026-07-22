@@ -91,9 +91,47 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
         const socialError = new URLSearchParams(location.search).get('socialError');
         if (socialError) {
             showLoginError(socialError === 'social_account_not_linked'
-                ? 'No Nexa account is connected to that Google account. Create a workspace first.'
-                : 'Google sign in was cancelled or could not be completed.');
+                ? 'No Nexa account is connected to that identity. Sign in with your password or contact your workspace administrator.'
+                : 'Identity-provider sign in was cancelled or could not be completed.');
         }
+
+        const ssoToggle = this.element.querySelector('[data-sso-toggle]');
+        const ssoFields = this.element.querySelector('[data-sso-fields]');
+        const ssoEmail = this.element.querySelector('#sso-email');
+        const ssoMessage = this.element.querySelector('[data-sso-message]');
+        const ssoProviders = this.element.querySelector('[data-sso-providers]');
+        ssoToggle?.addEventListener('click', () => {
+            const expanded = ssoToggle.getAttribute('aria-expanded') !== 'true';
+            ssoToggle.setAttribute('aria-expanded', String(expanded));
+            ssoFields.hidden = !expanded;
+            if (expanded) window.setTimeout(() => ssoEmail?.focus(), 0);
+        });
+        this.element.querySelector('[data-sso-discover]')?.addEventListener('click', async () => {
+            if (!ssoEmail?.reportValidity()) return;
+            ssoMessage.hidden = true;
+            ssoProviders.replaceChildren();
+            try {
+                const response = await fetch('/api/v1/Nexa/auth/discovery?email=' + encodeURIComponent(ssoEmail.value), {credentials: 'same-origin'});
+                const body = response.ok ? await response.json() : {providers: []};
+                if (!body.providers?.length) {
+                    ssoMessage.textContent = 'No company sign-in method is configured for this email domain.';
+                    ssoMessage.className = 'modern-recovery-message is-error';
+                    ssoMessage.hidden = false;
+                    return;
+                }
+                body.providers.forEach(provider => {
+                    const link = document.createElement('a');
+                    link.className = 'modern-social-button modern-enterprise-button';
+                    link.href = provider.startUrl + '?intent=login';
+                    link.innerHTML = '<span class="fas fa-building" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
+                    ssoProviders.append(link);
+                });
+            } catch (error) {
+                ssoMessage.textContent = 'Company sign in is temporarily unavailable. Try again.';
+                ssoMessage.className = 'modern-recovery-message is-error';
+                ssoMessage.hidden = false;
+            }
+        });
 
         this.element.querySelector('[data-action="nexaRecovery"]')?.addEventListener('click', event => {
             event.preventDefault();

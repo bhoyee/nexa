@@ -111,6 +111,36 @@
                        "classification":  "tenantOwned",
                        "tenantColumn":  "tenant_id",
                        "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_identity_provider",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_tenant_auth_policy",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_identity_provider_domain",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_identity_link_request",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_mfa_recovery_code",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
                    }
                ],
     "espoCoreConversion":  {
