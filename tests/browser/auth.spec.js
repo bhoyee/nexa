@@ -39,8 +39,7 @@ test('email verification and recovery expose clear neutral states', async ({page
 
     await page.goto(`${fixture}?state=recovery`);
     const recovery = page.locator('[data-state="recovery"]');
-    await recovery.getByLabel('Username').fill('sample-admin');
     await recovery.getByLabel('Email address').fill('sample@example.test');
     await recovery.getByRole('button', {name: 'Send reset instructions'}).click();
-    await expect(page.getByRole('status')).toContainText('If the details match an account');
+    await expect(page.getByRole('status')).toContainText('If the email matches an account');
 });

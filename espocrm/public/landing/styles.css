@@ -316,6 +316,8 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
 .text-button { margin: 18px auto 0; padding: 8px; border: 0; background: transparent; }
 .text-button:disabled { opacity: .55; }
 .state-note { min-height: 20px; margin-top: 8px; font-size: 12px; }
+.state-note.is-success { color: #237a57; }
+.state-note.is-error { color: #a62f2a; font-weight: 650; }
 
 @media (max-width: 760px) {
     .signup-dialog { width: min(620px, calc(100% - 20px)); max-height: calc(100vh - 20px); }
@@ -526,3 +528,13 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
     .signup-form-heading h3 { font-size: 23px; }
     .signup-social { grid-template-columns: 1fr; }
 }
+/* Social signup uses the same recognizable Google Identity treatment as sign in. */
+.signup-social { grid-template-columns: 1fr; }
+.google-auth-icon { width: 18px; height: 18px; display: block; flex: 0 0 18px; }
+.social-auth-button--google {
+    width: 100%; min-height: 48px; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 12px;
+    border: 1px solid #747775; border-radius: 4px; color: #1f1f1f; background: #fff;
+    font-family: Roboto, Arial, sans-serif; font-size: 14px; font-weight: 500; line-height: 20px;
+}
+.social-auth-button--google:hover { border-color: #747775; color: #1f1f1f; background: #f8fafd; box-shadow: 0 1px 2px rgba(60, 64, 67, .3); }
+.social-auth-button--google:focus-visible { border-color: #1a73e8; outline: 2px solid #1a73e8; outline-offset: 2px; box-shadow: none; }

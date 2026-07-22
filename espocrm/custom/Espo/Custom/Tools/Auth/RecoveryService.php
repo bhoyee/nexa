@@ -25,27 +25,23 @@ final class RecoveryService
     ) {}
 
     /** @return array{status:string,message:string} */
-    public function request(string $username, string $email): array
+    public function request(string $email): array
     {
         $startedAt = microtime(true);
-        $username = trim($username);
         $email = strtolower(trim($email));
 
-        if ($username === '' || strlen($username) > 255) {
-            throw new AuthProblem(422, 'validation_failed', 'Enter your username.', ['username' => 'Enter your username.']);
-        }
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || strlen($email) > 190) {
             throw new AuthProblem(422, 'validation_failed', 'Enter a valid email address.', ['email' => 'Enter a valid email address.']);
         }
 
         try {
-            $tenant = $this->resolveTenant($username, $email);
+            $identity = $this->resolveIdentity($email);
 
-            if ($tenant !== null) {
+            if ($identity !== null) {
                 $url = rtrim((string) $this->config->get('siteUrl', ''), '/') . '/?login=1&source=recovery';
                 $this->tenantContextStore->runWith(
-                    $tenant,
-                    fn () => $this->coreRecoveryService->request($email, $username, $url)
+                    $identity['tenant'],
+                    fn () => $this->coreRecoveryService->request($email, $identity['username'], $url)
                 );
             }
         } catch (Throwable $e) {
@@ -58,28 +54,34 @@ final class RecoveryService
 
         return [
             'status' => 'accepted',
-            'message' => 'If the details match an account, password reset instructions will be sent.',
+            'message' => 'If the email matches an account, password reset instructions will be sent.',
         ];
     }
 
-    private function resolveTenant(string $username, string $email): ?TenantContext
+    /** @return array{tenant:TenantContext,username:string}|null */
+    private function resolveIdentity(string $email): ?array
     {
         $statement = $this->entityManager->getPDO()->prepare(
-            'SELECT DISTINCT t.id, t.slug, t.display_name FROM `user` u ' .
+            'SELECT DISTINCT t.id, t.slug, t.display_name, u.user_name FROM `user` u ' .
             'INNER JOIN nexa_tenant t ON t.id = u.tenant_id ' .
             'INNER JOIN entity_email_address eea ON eea.entity_id = u.id AND eea.entity_type = \'User\' AND eea.deleted = 0 AND eea.tenant_id = u.tenant_id ' .
             'INNER JOIN email_address ea ON ea.id = eea.email_address_id AND ea.deleted = 0 AND ea.tenant_id = u.tenant_id ' .
-            'WHERE u.user_name = :username AND ea.`lower` = :email AND u.deleted = 0 AND u.is_active = 1 ' .
+            'WHERE ea.`lower` = :email AND u.deleted = 0 AND u.is_active = 1 ' .
             'AND t.status = :active LIMIT 2'
         );
-        $statement->execute(['username' => $username, 'email' => $email, 'active' => 'active']);
+        $statement->execute(['email' => $email, 'active' => 'active']);
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
+        // Legacy duplicates must not select an arbitrary tenant or disclose that
+        // the email exists. New signup paths reserve owner emails globally.
         if (count($rows) !== 1) {
             return null;
         }
 
-        return new TenantContext($rows[0]['id'], $rows[0]['slug'], 'recovery-identity', $rows[0]['display_name']);
+        return [
+            'tenant' => new TenantContext($rows[0]['id'], $rows[0]['slug'], 'recovery-identity', $rows[0]['display_name']),
+            'username' => $rows[0]['user_name'],
+        ];
     }
 
     private function applyNeutralDelay(float $startedAt): void
