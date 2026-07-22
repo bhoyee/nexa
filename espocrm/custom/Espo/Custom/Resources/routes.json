@@ -24,6 +24,17 @@
         "noAuth": true
     },
     {
+        "route": "/Nexa/auth/provider/:provider/start",
+        "method": "get",
+        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderStart",
+        "noAuth": true
+    },
+    {
+        "route": "/Nexa/auth/provider/:provider/callback",
+        "method": "get",
+        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderCallback",
+        "noAuth": true
+    },    {
         "route": "/Nexa/auth/recovery",
         "method": "post",
         "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\PostRecovery",

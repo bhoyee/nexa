@@ -6,7 +6,7 @@ This guide creates the same complete Nexa development environment as Docker and
 XAMPP while using WampServer Apache/PHP 8.2 and MariaDB 10.11 or 11.x. The repository
 already contains the full application; no separate EspoCRM download is needed.
 
-A completed setup contains all 150 current tables, all tenant and service
+A completed setup contains all 152 current tables, all tenant and service
 columns, every migration, the local bootstrap administrator, two demo tenants,
 and tenant-scoped demo CRM data.
 
@@ -218,7 +218,7 @@ WampServer setup is complete only when:
 - <http://nexa.local/?login=1> loads;
 - `setup-native-windows.ps1` passes;
 - <http://nexa.local/install/> redirects away from the installer;
-- validation reports at least 150 tables, 141 tenant columns, 138 service
+- validation reports at least 152 tables, 142 tenant columns, 138 service
   columns and all migrations;
 - both demo accounts authenticate on the same login page;
 - each tenant sees only its own CRM data;

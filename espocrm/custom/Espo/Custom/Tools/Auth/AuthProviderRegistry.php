@@ -5,8 +5,7 @@ namespace Espo\Custom\Tools\Auth;
 use Espo\Core\Utils\Config;
 
 /**
- * Publishes the non-secret provider metadata needed by authentication screens.
- * OAuth callbacks, state validation and account linking remain owned by M04.
+ * Publishes only providers whose switch and required credentials are present.
  */
 final class AuthProviderRegistry
 {
@@ -28,6 +27,12 @@ final class AuthProviderRegistry
                 $configured[$provider] = filter_var(getenv($environmentKey), FILTER_VALIDATE_BOOL) === true;
             }
         }
+
+        $googleClientId = trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_ID') ?: $this->config->get('oidcClientId', '')));
+        $googleSecret = trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_SECRET') ?: $this->config->get('oidcClientSecret', '')));
+        $configured['google'] = ($configured['google'] ?? false) === true && $googleClientId !== '' && $googleSecret !== '';
+        // Microsoft is published only when its own callback implementation lands.
+        $configured['microsoft'] = false;
 
         return self::normalize($configured);
     }

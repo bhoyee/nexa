@@ -29,6 +29,7 @@
                 <p>Sign in once. We will securely find the right workspace.</p>
             </header>
 
+            <div class="modern-recovery-message" data-login-message role="alert" hidden></div>
             <form id="login-form" class="modern-login-form">
                 <div class="modern-social-providers" data-auth-providers hidden aria-label="Social account sign in"></div>
                 <div class="modern-auth-divider" data-auth-divider hidden><span>or continue with your account</span></div>
@@ -97,4 +98,4 @@
         </div>
     </section>
 </main>
-<footer class="modern-login-footer">&copy; 2026 Nexa CRM</footer>
+<footer class="modern-login-footer">&copy; 2026 Nexa CRM <span aria-hidden="true">&middot;</span> Powered by EspoCRM</footer>

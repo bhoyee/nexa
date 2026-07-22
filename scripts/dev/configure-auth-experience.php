@@ -37,8 +37,6 @@ require_once 'bootstrap.php';
 $enabled = static fn (string $key): bool =>
     filter_var($environment[$key] ?? false, FILTER_VALIDATE_BOOL) === true;
 
-// Provider secrets and callbacks belong to M04. This writes only the public
-// switches consumed by the M02 authentication screens.
 $application = new Application();
 $factory = $application->getContainer()->getByClass(InjectableFactory::class);
 $writer = $factory->create(ConfigWriter::class);
@@ -51,6 +49,17 @@ $writer->setMultiple([
         'google' => $enabled('NEXA_AUTH_GOOGLE_ENABLED'),
         'microsoft' => $enabled('NEXA_AUTH_MICROSOFT_ENABLED'),
     ],
+    // Google is the first M04 provider implementation. Espo's audited OIDC
+    // verifier consumes these settings for signature, audience and expiry checks.
+    'oidcClientId' => $environment['NEXA_AUTH_GOOGLE_CLIENT_ID'] ?? '',
+    'oidcClientSecret' => $environment['NEXA_AUTH_GOOGLE_CLIENT_SECRET'] ?? '',
+    'nexaGoogleRedirectUri' => $environment['NEXA_AUTH_GOOGLE_REDIRECT_URI'] ?? '',
+    'oidcAuthorizationEndpoint' => 'https://accounts.google.com/o/oauth2/v2/auth',
+    'oidcTokenEndpoint' => 'https://oauth2.googleapis.com/token',
+    'oidcUserInfoEndpoint' => 'https://openidconnect.googleapis.com/v1/userinfo',
+    'oidcJwksEndpoint' => 'https://www.googleapis.com/oauth2/v3/certs',
+    'oidcJwtSignatureAlgorithmList' => ['RS256'],
+    'oidcScopes' => ['openid', 'email', 'profile'],
 ]);
 $writer->save();
 

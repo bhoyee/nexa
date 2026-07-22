@@ -178,11 +178,24 @@
                 button.type = 'button';
                 button.className = 'social-auth-button';
                 button.dataset.provider = provider.key;
-                button.textContent = 'Continue with ' + provider.label;
+                button.innerHTML = '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
                 button.addEventListener('click', () => {
                     const target = new URL(provider.startUrl, location.origin);
+                    const company = form.elements.company;
+                    const terms = form.elements.terms;
+                    clearErrors();
+                    if (!company.checkValidity() || !terms.checked) {
+                        company.classList.toggle('invalid', !company.checkValidity());
+                        terms.focus();
+                        formMessage.textContent = 'Enter your company name and accept the terms before continuing with Google.';
+                        formMessage.hidden = false;
+                        return;
+                    }
                     target.searchParams.set('intent', 'signup');
                     target.searchParams.set('plan', selectedPlan);
+                    target.searchParams.set('company', company.value.trim());
+                    target.searchParams.set('terms', '1');
+                    target.searchParams.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
                     location.assign(target);
                 });
                 signupSocial.append(button);

@@ -83,4 +83,22 @@ $assert(
     'Shared-domain password reset must resolve tenant from its opaque request ID.'
 );
 
+$socialSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/SocialAuthService.php'
+);
+$socialMigration = file_get_contents(
+    dirname(__DIR__, 2) . '/database/shared/migrations/0006_social_identity.sql'
+);
+$assert(
+    str_contains($socialSource, 'hash_equals($attempt[\'nonce_hash\']') &&
+    str_contains($socialSource, 'validateSignature') &&
+    str_contains($socialSource, "email_verified') !== true"),
+    'Google sign in must validate nonce, signature and verified email.'
+);
+$assert(
+    str_contains($socialMigration, 'UNIQUE KEY uq_nexa_external_provider_subject') &&
+    str_contains($socialMigration, 'consumed_at'),
+    'Social identity schema must prevent duplicate subjects and OAuth replay.'
+);
+
 fwrite(STDOUT, 'Authentication experience contract suite passed.' . PHP_EOL);

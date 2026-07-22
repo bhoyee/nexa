@@ -81,7 +81,10 @@ final class TenantContextMiddleware implements MiddlewareInterface
         ];
 
         return ($method === 'POST' && in_array($path, $postRoutes, true)) ||
-            ($method === 'GET' && $path === '/api/v1/Nexa/auth/providers');
+            ($method === 'GET' && (
+                $path === '/api/v1/Nexa/auth/providers' ||
+                preg_match('#^/api/v1/Nexa/auth/provider/[a-z0-9_-]+/(start|callback)$#', $path) === 1
+            ));
     }
 
     private function extractLoginIdentifier(ServerRequestInterface $request): ?string

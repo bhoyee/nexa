@@ -36,6 +36,47 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
             loginPanel.hidden = false;
             window.setTimeout(() => this.element.querySelector('#field-userName')?.focus(), 0);
         };
+        // OAuth returns the short-lived Espo token in the URL fragment so it is
+        // never sent in referrers or server access logs.
+        const socialPayload = location.hash.startsWith('#nexa-social=')
+            ? location.hash.slice('#nexa-social='.length)
+            : null;
+        if (socialPayload) {
+            history.replaceState(null, '', location.pathname + location.search);
+            try {
+                const padded = socialPayload.replace(/-/g, '+').replace(/_/g, '/')
+                    .padEnd(Math.ceil(socialPayload.length / 4) * 4, '=');
+                const social = JSON.parse(decodeURIComponent(escape(atob(padded))));
+                const authorization = btoa(social.userName + ':' + social.token);
+                this.disableForm();
+                Espo.Ajax.getRequest('App/user', null, {
+                    login: true,
+                    headers: {
+                        Authorization: 'Basic ' + authorization,
+                        'Espo-Authorization': authorization,
+                        'Espo-Authorization-By-Token': 'true',
+                    },
+                }).then(data => this.triggerLogin(social.userName, data))
+                    .catch(() => {
+                        this.undisableForm();
+                        const message = this.element.querySelector('[data-login-message]');
+                        message.textContent = 'Google sign in could not be completed. Please try again.';
+                        message.hidden = false;
+                    });
+            } catch (error) {
+                const message = this.element.querySelector('[data-login-message]');
+                message.textContent = 'Google sign in could not be completed. Please try again.';
+                message.hidden = false;
+            }
+        }
+        const socialError = new URLSearchParams(location.search).get('socialError');
+        if (socialError) {
+            const message = this.element.querySelector('[data-login-message]');
+            message.textContent = socialError === 'social_account_not_linked'
+                ? 'No Nexa account is connected to that Google account. Create a workspace first.'
+                : 'Google sign in was cancelled or could not be completed.';
+            message.hidden = false;
+        }
 
         this.element.querySelector('[data-action="nexaRecovery"]')?.addEventListener('click', event => {
             event.preventDefault();
@@ -89,7 +130,7 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'modern-social-button';
-                    button.textContent = 'Continue with ' + provider.label;
+                    button.innerHTML = '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
                     button.addEventListener('click', () => {
                         const url = new URL(provider.startUrl, location.origin);
                         url.searchParams.set('intent', 'login');
