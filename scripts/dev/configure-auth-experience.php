@@ -43,6 +43,8 @@ $application = new Application();
 $factory = $application->getContainer()->getByClass(InjectableFactory::class);
 $writer = $factory->create(ConfigWriter::class);
 $writer->setMultiple([
+    // Apply product branding to existing installations as well as clean setups.
+    'applicationName' => ($environment['CRM_NAME'] ?? '') ?: 'Nexa CRM',
     'passwordRecoveryNoExposure' => true,
     'nexaSignupExposeVerificationCode' => $enabled('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE'),
     'nexaPublicAuthProviders' => [

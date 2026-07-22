@@ -46,9 +46,22 @@ $assert(
 $loginAdapterSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/client/custom/login-patch.js'
 );
+$loginTemplateSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/client/custom/res/templates/login-modern.tpl'
+);
 $assert(
     str_contains($loginAdapterSource, 'showForgotPassword: true'),
     'Tenant-aware password recovery must remain reachable when legacy SMTP UI flags are absent.'
+);
+$assert(
+    str_contains($loginTemplateSource, 'Good to see you again') &&
+    str_contains($loginTemplateSource, 'modern-login-proof'),
+    'The primary sign-in view must render the distinct Nexa authentication experience.'
+);
+$assert(
+    str_contains($authConfigSource, "'applicationName'") &&
+    str_contains($authConfigSource, "'CRM_NAME'"),
+    'Existing installations must receive product branding from the shared environment contract.'
 );
 $assert(
     str_contains($signupSource, 'strtolower($email)') && str_contains($signupSource, '$code'),

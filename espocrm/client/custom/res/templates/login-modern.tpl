@@ -2,27 +2,31 @@
     <section class="modern-login-visual" aria-label="A bright collaborative workspace">
         <div class="modern-login-brand">
             <span class="modern-login-mark" aria-hidden="true">N</span>
-            <span class="modern-login-brand-name">{{applicationName}}</span>
+            <span class="modern-login-brand-name">Nexa CRM</span>
         </div>
 
         <div class="modern-login-visual-copy">
-            <p class="modern-login-kicker">Customer relationships, made clear</p>
-            <h2>Keep every conversation moving forward.</h2>
-            <p>A focused workspace for the people, opportunities, and moments that matter.</p>
+            <p class="modern-login-kicker">One customer workspace</p>
+            <h2>Turn every customer signal into your next best action.</h2>
+            <p>Sales, marketing and service teams move together in one secure workspace.</p>
+            <div class="modern-login-proof" aria-label="Workspace highlights">
+                <span><strong>89</strong> connected capabilities</span>
+                <span><strong>24/7</strong> customer context</span>
+            </div>
         </div>
     </section>
 
     <section class="modern-login-auth">
         <div class="modern-login-mobile-brand">
             <span class="modern-login-mark" aria-hidden="true">N</span>
-            <span class="modern-login-brand-name">{{applicationName}}</span>
+            <span class="modern-login-brand-name">Nexa CRM</span>
         </div>
 
         <div id="login" class="modern-login-panel">
             <header class="modern-login-header">
-                <p class="modern-login-eyebrow">Secure workspace</p>
-                <h1>Welcome back</h1>
-                <p>Sign in to continue to {{applicationName}}.</p>
+                <p class="modern-login-eyebrow">Your Nexa workspace</p>
+                <h1>Good to see you again</h1>
+                <p>Sign in once. We will securely find the right workspace.</p>
             </header>
 
             <form id="login-form" class="modern-login-form">
@@ -70,15 +74,15 @@
             </form>
 
             <p class="modern-create-account">New to Nexa? <a href="/?signup=growth">Create an account</a></p>
-            <p class="modern-login-security"><span class="fas fa-shield-alt" aria-hidden="true"></span>Protected access to your customer workspace</p>
+            <p class="modern-login-security"><span class="fas fa-shield-alt" aria-hidden="true"></span>Tenant-aware sign in protected by Nexa</p>
         </div>
 
         <div class="modern-login-panel modern-recovery-panel" data-recovery-panel hidden>
             <button class="modern-back-button" type="button" data-recovery-back><span class="fas fa-arrow-left" aria-hidden="true"></span> Back to sign in</button>
             <header class="modern-login-header">
-                <p class="modern-login-eyebrow">Account recovery</p>
-                <h1>Reset your password</h1>
-                <p>Enter the username and email used for your workspace.</p>
+                <p class="modern-login-eyebrow">Secure account recovery</p>
+                <h1>Let us get you back in</h1>
+                <p>Enter the username and email connected to your workspace.</p>
             </header>
             <form class="modern-login-form" data-recovery-form novalidate>
                 <div class="modern-recovery-message" data-recovery-message role="status" aria-live="polite" hidden></div>
@@ -95,4 +99,4 @@
         </div>
     </section>
 </main>
-<footer>{{{footer}}}</footer>
+<footer class="modern-login-footer">&copy; 2026 Nexa CRM</footer>
