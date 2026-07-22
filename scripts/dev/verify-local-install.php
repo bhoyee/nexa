@@ -39,7 +39,7 @@ $pdo = new PDO(
 
 $scalar = static fn (string $sql): int => (int) $pdo->query($sql)->fetchColumn();
 $minimums = [
-    'tables' => [$scalar('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()'), 152],
+    'tables' => [$scalar('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()'), 153],
     'tenant columns' => [$scalar("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND column_name = 'tenant_id'"), 142],
     'service columns' => [$scalar("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND column_name = 'service_id'"), 138],
 ];
