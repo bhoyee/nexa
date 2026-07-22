@@ -94,6 +94,18 @@
                        "classification":  "platformGlobal",
                        "tenantColumn":  null,
                        "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_social_auth_attempt",
+                       "classification":  "platformGlobal",
+                       "tenantColumn":  null,
+                       "serviceScope":  "none"
+                   },
+                   {
+                       "name":  "nexa_external_identity",
+                       "classification":  "tenantOwned",
+                       "tenantColumn":  "tenant_id",
+                       "serviceScope":  "none"
                    }
                ],
     "espoCoreConversion":  {
