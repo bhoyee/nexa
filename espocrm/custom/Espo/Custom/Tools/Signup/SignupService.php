@@ -279,7 +279,11 @@ final class SignupService
     {
         // This escape hatch exists only for local development without SMTP.
         // Both an explicit flag and a localhost site URL are required.
-        if (filter_var(getenv('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE') ?: false, FILTER_VALIDATE_BOOL) !== true) {
+        $environmentEnabled = filter_var(
+            getenv('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE') ?: false,
+            FILTER_VALIDATE_BOOL
+        ) === true;
+        if (!$environmentEnabled && $this->config->get('nexaSignupExposeVerificationCode') !== true) {
             return false;
         }
         $host = strtolower((string) parse_url((string) $this->config->get('siteUrl', ''), PHP_URL_HOST));
