@@ -65,6 +65,17 @@ $assert(
     str_contains($loginTemplateSource, 'name="email" type="email"'),
     'Password recovery must request only the globally reserved email address.'
 );
+$resetTemplateSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/client/custom/res/templates/password-reset.tpl'
+);
+$assert(
+    str_contains($loginAdapterSource, 'showRecoveryMessage') &&
+    str_contains($loginAdapterSource, 'setTimeout(dismissRecoveryMessage') &&
+    str_contains($loginAdapterSource, 'isError ? 10000 : 7000') &&
+    !str_contains($resetTemplateSource, 'generatePassword') &&
+    !str_contains($resetTemplateSource, 'passwordPreview'),
+    'Recovery notices must auto-dismiss and the reset form must not expose generator tools.'
+);
 $landingSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/public/landing/script.js'
 );

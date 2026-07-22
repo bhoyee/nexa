@@ -10,7 +10,6 @@
             <header><p class="modern-login-eyebrow">Final step</p><h2>Reset your password</h2><p>Your reset session is protected and can only be used once.</p></header>
             <div class="form-group"><label>{{translate 'newPassword' category='fields' scope='User'}}</label><div class="field" data-name="password">{{{password}}}</div></div>
             <div class="form-group"><label>{{translate 'newPasswordConfirm' category='fields' scope='User'}}</label><div class="field" data-name="passwordConfirm">{{{passwordConfirm}}}</div></div>
-            <div class="reset-password-tools"><div class="field" data-name="generatePassword">{{{generatePassword}}}</div><div class="field" data-name="passwordPreview">{{{passwordPreview}}}</div></div>
             <button type="button" class="btn btn-primary btn-submit modern-submit" id="btn-submit">{{translate 'Submit'}}</button>
             </div>
             {{else}}
