@@ -263,17 +263,47 @@ class Sender
     {
         $systemAccount = $this->accountProvider->getSystem();
 
-        if (!$systemAccount) {
+        if ($systemAccount) {
+            $smtpParams = $systemAccount->getSmtpParams();
+
+            if ($smtpParams) {
+                $this->applySmtp($smtpParams->toArray());
+
+                return;
+            }
+        }
+
+        // Nexa's shared transactional sender is generated from the ignored
+        // local .env file and must not be duplicated into every tenant row.
+        $server = $this->config->get('smtpServer');
+        $port = $this->config->get('smtpPort');
+
+        if (!is_string($server) || $server === '' || !is_int($port)) {
             throw new NoSmtp("No system SMTP settings.");
         }
 
-        $smtpParams = $systemAccount->getSmtpParams();
+        $auth = (bool) $this->config->get('smtpAuth');
+        $username = $this->config->get('smtpUsername');
+        $password = $this->config->get('smtpPassword');
 
-        if (!$smtpParams) {
-            throw new NoSmtp("No system SMTP settings.");
+        if (
+            $auth &&
+            (!is_string($username) || $username === '' ||
+                !is_string($password) || $password === '')
+        ) {
+            throw new NoSmtp("Incomplete system SMTP authentication settings.");
         }
 
-        $this->applySmtp($smtpParams->toArray());
+        $this->applySmtp([
+            'server' => $server,
+            'port' => $port,
+            'auth' => $auth,
+            'username' => $auth ? $username : null,
+            'password' => $auth ? $password : null,
+            'security' => $this->config->get('smtpSecurity'),
+            'fromAddress' => $this->config->get('outboundEmailFromAddress'),
+            'fromName' => $this->config->get('outboundEmailFromName'),
+        ]);
     }
 
     /**

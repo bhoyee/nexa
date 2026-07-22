@@ -469,7 +469,12 @@ class RecoveryService
 
         $sender->send($email);
 
-        $this->lastPasswordRecoveryDate();
+        // The interval record belongs to Espo's internal SMTP fallback. A
+        // configured system sender must not write platform-global state from
+        // within a tenant-scoped password recovery request.
+        if (!$this->emailSender->hasSystemSmtp()) {
+            $this->lastPasswordRecoveryDate();
+        }
     }
 
     /**
