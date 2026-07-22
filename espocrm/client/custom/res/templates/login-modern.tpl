@@ -66,9 +66,7 @@
                 {{/if}}
 
                 <div class="cell modern-login-actions" data-name="submit">
-                    {{#if showForgotPassword}}
-                    <a role="button" class="modern-login-forgot" data-action="nexaRecovery" tabindex="4">{{translate 'Forgot Password?' scope='User'}}</a>
-                    {{/if}}
+                    <button type="button" class="modern-login-forgot" data-action="nexaRecovery" tabindex="4">Forgot password?</button>
                     <button type="submit" class="btn btn-primary" id="btn-login" tabindex="3">{{logInText}} <span class="fas fa-arrow-right" aria-hidden="true"></span></button>
                 </div>
             </form>

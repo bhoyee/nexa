@@ -246,7 +246,10 @@ body.modern-login-page #main { min-height: 100vh; }
 
 .modern-login-forgot {
     align-self: flex-end;
+    padding: 4px 0;
+    border: 0;
     color: #0f766e;
+    background: transparent;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
