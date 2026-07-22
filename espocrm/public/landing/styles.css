@@ -474,3 +474,55 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
     .footer-pitch h2 { font-size: 30px; }
     .footer-links { grid-template-columns: 1fr 1fr; gap: 38px 24px; overflow: visible; }
 }
+
+/* Auth v2 makes account creation a clear Nexa onboarding flow. */
+.signup-dialog { width: min(1060px, calc(100% - 32px)); max-height: min(860px, calc(100vh - 32px)); border: 1px solid #cddadd; background: #f2f6f7; box-shadow: 0 28px 80px rgba(8, 28, 34, .32); }
+.signup-dialog::backdrop { background: rgba(7, 25, 30, .7); }
+.signup-shell { min-height: 710px; grid-template-columns: minmax(310px, .86fr) minmax(0, 1.34fr); border-top: 5px solid #e87961; }
+.signup-intro { padding: 42px 40px; background: #123d47; }
+.signup-intro .brand { margin-bottom: 62px; }
+.signup-intro .brand-mark { color: #8d2f22; background: #fff; }
+.signup-intro h2 { max-width: 330px; margin-bottom: 16px; font-size: 40px; line-height: 1.08; }
+.signup-intro > p:not(.eyebrow) { max-width: 330px; color: #d3e2e5; line-height: 1.65; }
+.signup-steps { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #52727a; border-bottom: 1px solid #52727a; }
+.signup-steps span { padding: 13px 4px; color: #a9c1c6; font-size: 11px; font-weight: 700; text-align: center; }
+.signup-steps .active { color: #fff; background: #1a5968; }
+.signup-intro ul { margin-top: 28px; padding-top: 18px; border-top: 0; }
+.signup-content { padding: 42px 52px 36px; align-items: flex-start; background: #fff; }
+.signup-form-heading { margin-bottom: 2px; }
+.signup-form-heading .eyebrow { margin-bottom: 7px; color: #16758a; }
+.signup-form-heading h3 { margin: 0 0 7px; color: #172f35; font-size: 26px; line-height: 1.2; }
+.signup-form-heading > p:last-child { margin: 0; color: #62757a; font-size: 13px; font-weight: 500; }
+.signup-form { gap: 15px 18px; }
+.signup-form input:not([type="checkbox"]), .signup-form select { height: 49px; border-color: #c5d2d6; border-radius: 7px; background: #f8fafb; }
+.signup-form input:focus, .signup-form select:focus { border-color: #16758a; background: #fff; box-shadow: 0 0 0 3px rgba(22,117,138,.13); }
+.signup-social { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.social-auth-button { min-height: 48px; border-color: #c5d2d6; background: #f8fafb; }
+.signup-state .eyebrow { color: #16758a; }
+.state-icon { color: #116b7c; background: #e5f2f4; }
+
+@media (max-width: 800px) {
+    .signup-dialog { width: min(660px, calc(100% - 20px)); max-height: calc(100vh - 20px); }
+    .signup-shell { display: block; min-height: 0; }
+    .signup-intro { padding: 28px 30px 24px; }
+    .signup-intro .brand { margin-bottom: 28px; }
+    .signup-intro h2 { max-width: 470px; font-size: 31px; }
+    .signup-steps { max-width: 480px; margin-top: 22px; }
+    .signup-intro ul { display: none; }
+    .signup-content { min-height: 520px; padding: 32px 30px 38px; }
+    .dialog-close { color: #fff; border-color: #5c7880; background: #123d47; }
+}
+
+@media (max-width: 560px) {
+    .signup-dialog { width: 100%; max-width: none; height: 100vh; max-height: 100vh; border: 0; }
+    .signup-shell { border-top-width: 4px; }
+    .signup-intro { padding: 22px 64px 20px 20px; }
+    .signup-intro .brand { margin-bottom: 22px; }
+    .signup-intro h2 { font-size: 27px; }
+    .signup-intro > p:not(.eyebrow) { font-size: 13px; }
+    .signup-steps { display: none; }
+    .signup-content { min-height: 0; padding: 24px 20px 34px; }
+    .signup-form { grid-template-columns: 1fr; gap: 12px; }
+    .signup-form-heading h3 { font-size: 23px; }
+    .signup-social { grid-template-columns: 1fr; }
+}
