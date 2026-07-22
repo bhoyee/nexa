@@ -34,7 +34,20 @@ final class AuthProviderRegistry
         // Microsoft is published only when its own callback implementation lands.
         $configured['microsoft'] = false;
 
-        return self::normalize($configured);
+        $providers = self::normalize($configured);
+        $redirectUri = trim((string) (getenv('NEXA_AUTH_GOOGLE_REDIRECT_URI') ?: $this->config->get('nexaGoogleRedirectUri', '')));
+        $redirect = $redirectUri !== '' ? parse_url($redirectUri) : false;
+        if (is_array($redirect) && isset($redirect['scheme'], $redirect['host'])) {
+            $origin = $redirect['scheme'] . '://' . $redirect['host'] . (isset($redirect['port']) ? ':' . $redirect['port'] : '');
+            foreach ($providers as &$provider) {
+                if ($provider['key'] === 'google') {
+                    $provider['startUrl'] = $origin . '/api/v1/Nexa/auth/provider/google/start';
+                }
+            }
+            unset($provider);
+        }
+
+        return $providers;
     }
 
     /**
