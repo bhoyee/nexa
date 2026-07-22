@@ -4,7 +4,7 @@
 
 This guide creates a complete Nexa development environment on Windows using
 XAMPP Apache/PHP 8.2 and MariaDB 10.11 or 11.x. A successful setup contains the full
-tracked application, all 150 current database tables, all migrations, the local
+tracked application, all 152 current database tables, all migrations, the local
 bootstrap administrator, two demo tenants, and tenant-scoped demo CRM records.
 
 No application archive or EspoCRM download is required. Git supplies the exact
@@ -261,7 +261,7 @@ The environment is complete only when:
 - <http://nexa.local/?login=1> loads;
 - `setup-native-windows.ps1` finishes successfully;
 - <http://nexa.local/install/> redirects away from the installer;
-- the verifier reports at least 150 tables, 141 tenant columns, 138 service
+- the verifier reports at least 152 tables, 142 tenant columns, 138 service
   columns and all migrations;
 - both demo accounts authenticate through the same login page;
 - demo CRM records are visible only inside their assigned tenant;
