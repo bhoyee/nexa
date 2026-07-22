@@ -94,6 +94,11 @@
                        "classification":  "platformGlobal",
                        "tenantColumn":  null,
                        "serviceScope":  "none"
+                   },                   {
+                       "name":  "nexa_signup_attempt",
+                       "classification":  "platformGlobal",
+                       "tenantColumn":  null,
+                       "serviceScope":  "none"
                    },
                    {
                        "name":  "nexa_social_auth_attempt",

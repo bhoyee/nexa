@@ -16,43 +16,60 @@ function expectSignup(bool $condition, string $message): void
 }
 
 $validator = new SignupValidator();
-$valid = (object) [
+$start = $validator->validateStart((object) [
+    'email' => '  OWNER@EXAMPLE.TEST ',
+    'plan' => 'Growth',
+]);
+expectSignup($start['email'] === 'owner@example.test', 'Email should be globally comparable.');
+expectSignup($start['plan'] === 'growth', 'Plan should be normalized at signup start.');
+
+$emailCompletion = (object) [
     'plan' => 'Growth',
     'company' => 'Acme Revenue Ltd',
     'firstName' => 'Ada',
     'lastName' => 'Lovelace',
-    'email' => '  OWNER@EXAMPLE.TEST ',
     'password' => 'A-strong-password-2026',
     'confirmPassword' => 'A-strong-password-2026',
     'timezone' => 'Europe/London',
     'terms' => true,
     'website' => '',
 ];
-
-$data = $validator->validate($valid);
-expectSignup($data['plan'] === 'growth', 'Plan should be normalized.');
-expectSignup($data['email'] === 'owner@example.test', 'Email should be globally comparable.');
+$data = $validator->validateCompletion($emailCompletion, 'email');
+expectSignup($data['plan'] === 'growth', 'Completion plan should be normalized.');
 expectSignup($data['timezone'] === 'Europe/London', 'Valid timezone should be retained.');
 
-$invalid = clone $valid;
-$invalid->email = 'not-an-email';
+$socialCompletion = (object) [
+    'plan' => 'launch',
+    'company' => 'Analytical Engines Ltd',
+    'timezone' => 'Invalid/Timezone',
+    'terms' => true,
+];
+$social = $validator->validateCompletion($socialCompletion, 'social', [
+    'firstName' => 'Ada',
+    'lastName' => 'Lovelace',
+]);
+expectSignup($social['firstName'] === 'Ada', 'Social identity names should supply completion defaults.');
+expectSignup($social['timezone'] === 'UTC', 'Invalid timezone should fall back to UTC.');
+
+try {
+    $validator->validateStart((object) ['email' => 'not-an-email']);
+    throw new RuntimeException('Invalid signup start should fail.');
+} catch (SignupProblem $e) {
+    expectSignup($e->status === 422, 'Invalid signup start should return 422.');
+    expectSignup(isset($e->fields['email']), 'Email error is missing.');
+}
+
+$invalid = clone $emailCompletion;
 $invalid->password = 'weak';
 $invalid->confirmPassword = 'different';
 $invalid->terms = false;
-
 try {
-    $validator->validate($invalid);
-    throw new RuntimeException('Invalid signup should fail.');
+    $validator->validateCompletion($invalid, 'email');
+    throw new RuntimeException('Invalid signup completion should fail.');
 } catch (SignupProblem $e) {
-    expectSignup($e->status === 422, 'Invalid signup should return 422.');
-    expectSignup(isset($e->fields['email']), 'Email error is missing.');
     expectSignup(isset($e->fields['password']), 'Password error is missing.');
     expectSignup(isset($e->fields['confirmPassword']), 'Confirmation error is missing.');
     expectSignup(isset($e->fields['terms']), 'Terms error is missing.');
 }
-
-$timezoneFallback = clone $valid;
-$timezoneFallback->timezone = 'Invalid/Timezone';
-expectSignup($validator->validate($timezoneFallback)['timezone'] === 'UTC', 'Invalid timezone should fall back to UTC.');
 
 echo "Signup validator tests passed.\n";

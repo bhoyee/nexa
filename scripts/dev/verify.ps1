@@ -31,6 +31,7 @@ $required = @(
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
     'database/shared/migrations/0003_enforce_tenant_runtime.sql', 'database/shared/migrations/0004_tenant_qualified_user_identity.sql',
     'database/shared/migrations/0005_self_service_tenant_signup.sql', 'database/shared/migrations/0006_social_identity.sql',
+    'database/shared/migrations/0007_progressive_signup.sql', 'espocrm/custom/Espo/Custom/Tools/Signup/Api/PostComplete.php',
     'database/shared/seeds/0002_two_tenant_isolation.sql', 'espocrm/bin/provision-demo-tenants.php',
     'database/shared/table-ownership-manifest.json', 'espocrm/application/Espo/Resources/tenant-table-ownership.json',
     'tests/tenant/TenantRuntimeTest.php', 'tests/tenant/InstallationBootstrapTest.php',

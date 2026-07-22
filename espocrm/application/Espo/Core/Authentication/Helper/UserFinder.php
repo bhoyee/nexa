@@ -41,19 +41,30 @@ class UserFinder
 
     public function find(string $username): ?User
     {
+        $identity = filter_var($username, FILTER_VALIDATE_EMAIL)
+            ? ['OR' => [
+                ['userName' => $username],
+                ['emailAddress' => strtolower($username)],
+            ]]
+            : ['userName' => $username];
+
         return $this->entityManager
             ->getRDBRepositoryByClass(User::class)
-            ->where([
-                'userName' => $username,
-                'type!=' => [User::TYPE_API, User::TYPE_SYSTEM],
-            ])
+            ->where($identity)
+            ->where(['type!=' => [User::TYPE_API, User::TYPE_SYSTEM]])
             ->findOne();
     }
 
     public function findByIdAndHash(string $username, string $id, ?string $hash): ?User
     {
+        $identity = filter_var($username, FILTER_VALIDATE_EMAIL)
+            ? ['OR' => [
+                ['userName' => $username],
+                ['emailAddress' => strtolower($username)],
+            ]]
+            : ['userName' => $username];
+
         $where = [
-            'userName' => $username,
             'id' => $id,
             'type!=' => [User::TYPE_API, User::TYPE_SYSTEM],
         ];
@@ -64,6 +75,7 @@ class UserFinder
 
         return $this->entityManager
             ->getRDBRepositoryByClass(User::class)
+            ->where($identity)
             ->where($where)
             ->findOne();
     }

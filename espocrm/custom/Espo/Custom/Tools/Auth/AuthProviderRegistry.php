@@ -28,26 +28,24 @@ final class AuthProviderRegistry
             }
         }
 
-        $googleClientId = trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_ID') ?: $this->config->get('oidcClientId', '')));
-        $googleSecret = trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_SECRET') ?: $this->config->get('oidcClientSecret', '')));
-        $configured['google'] = ($configured['google'] ?? false) === true && $googleClientId !== '' && $googleSecret !== '';
-        // Microsoft is published only when its own callback implementation lands.
-        $configured['microsoft'] = false;
+        foreach (['google', 'microsoft'] as $provider) {
+            $prefix = 'NEXA_AUTH_' . strtoupper($provider);
+            $clientId = trim((string) getenv($prefix . '_CLIENT_ID'));
+            $secret = trim((string) getenv($prefix . '_CLIENT_SECRET'));
 
-        $providers = self::normalize($configured);
-        $redirectUri = trim((string) (getenv('NEXA_AUTH_GOOGLE_REDIRECT_URI') ?: $this->config->get('nexaGoogleRedirectUri', '')));
-        $redirect = $redirectUri !== '' ? parse_url($redirectUri) : false;
-        if (is_array($redirect) && isset($redirect['scheme'], $redirect['host'])) {
-            $origin = $redirect['scheme'] . '://' . $redirect['host'] . (isset($redirect['port']) ? ':' . $redirect['port'] : '');
-            foreach ($providers as &$provider) {
-                if ($provider['key'] === 'google') {
-                    $provider['startUrl'] = $origin . '/api/v1/Nexa/auth/provider/google/start';
-                }
+            if ($provider === 'google') {
+                $clientId = $clientId ?: trim((string) $this->config->get('oidcClientId', ''));
+                $secret = $secret ?: trim((string) $this->config->get('oidcClientSecret', ''));
+            } else {
+                $clientId = $clientId ?: trim((string) $this->config->get('nexaMicrosoftClientId', ''));
+                $secret = $secret ?: trim((string) $this->config->get('nexaMicrosoftClientSecret', ''));
             }
-            unset($provider);
+
+            $configured[$provider] = ($configured[$provider] ?? false) === true &&
+                $clientId !== '' && $secret !== '';
         }
 
-        return $providers;
+        return self::normalize($configured);
     }
 
     /**

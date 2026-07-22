@@ -8,6 +8,7 @@ use Espo\Core\Api\Response;
 use Espo\Custom\Tools\Signup\SignupService;
 use Throwable;
 
+/** Starts email signup without creating tenant-owned records. */
 final class PostSignup implements Action
 {
     public function __construct(
@@ -19,9 +20,13 @@ final class PostSignup implements Action
     {
         try {
             $this->support->assertJsonRequest($request);
+
             return $this->support->success(
-                $this->service->register($request->getParsedBody(), $this->support->fingerprint($request)),
-                202
+                $this->service->startEmail(
+                    $request->getParsedBody(),
+                    $this->support->fingerprint($request),
+                ),
+                202,
             );
         } catch (Throwable $e) {
             return $this->support->problem($e);

@@ -40,6 +40,17 @@
         <header><h1>Create your workspace</h1><p>Start a secure 14-day trial. No card required.</p></header>
         <form data-signup><label>Plan<select name="plan"><option value="launch">Launch</option><option value="growth">Growth</option><option value="scale">Scale</option></select></label><label>Company<input name="company" autocomplete="organization" required></label><label>Work email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><button type="submit">Create workspace</button></form>
     </section>
+    <section data-state="signup-method" hidden>
+        <header><h1>Create your account</h1><p>Use a work identity you can access.</p></header>
+        <div class="social" data-signup-social hidden><button class="secondary" type="button">Continue with Google</button></div>
+        <div class="divider" data-signup-social-divider hidden>or</div>
+        <form data-progressive-start><label>Work email<input name="email" type="email" autocomplete="email" placeholder="name@company.com" required></label><button type="submit">Continue with email</button></form>
+        <div class="links"><a href="?state=login">Already have a workspace? Sign in</a></div>
+    </section>
+    <section data-state="signup-profile" hidden>
+        <header><h1>Tell us about your team</h1><p>Add your profile and workspace details.</p></header>
+        <form data-progressive-profile><label>Plan<select name="plan"><option value="launch">Launch</option><option value="growth">Growth</option><option value="scale">Scale</option></select></label><label>Company name<input name="company" autocomplete="organization" required></label><label>First name<input name="firstName" autocomplete="given-name" required></label><label>Last name<input name="lastName" autocomplete="family-name" required></label><label>Password<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><button type="submit">Continue</button></form>
+    </section>
     <section class="state" data-state="verify" hidden><div class="icon" aria-hidden="true">8</div><header><h1>Enter your verification code</h1><p>We sent an eight-digit code to j***@example.test. It expires in 15 minutes.</p></header><form data-verify><label>Verification code<input class="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required></label><button type="submit">Verify and continue</button><button class="secondary" type="button">Send a new code</button></form></section>
     <section data-state="recovery" hidden><header><h1>Reset your password</h1><p>Enter the email address connected to your account.</p></header><form data-recovery><label>Email address<input name="email" type="email" autocomplete="email" required></label><button type="submit">Send reset instructions</button></form></section>
     <section data-state="reset" hidden><header><h1>Choose a new password</h1><p>Your reset session is protected and can only be used once.</p></header><form><label>New password<input type="password" autocomplete="new-password" required></label><label>Confirm password<input type="password" autocomplete="new-password" required></label><button type="submit">Update password</button></form></section>
@@ -52,12 +63,17 @@
     const state = params.get('state') || 'login';
     document.querySelectorAll('[data-state]').forEach(panel => panel.hidden = panel.dataset.state !== state);
     const plan = params.get('plan');
-    const planField = document.querySelector('[data-signup] [name="plan"]');
-    if (planField && ['launch', 'growth', 'scale'].includes(plan)) planField.value = plan;
-    if (params.get('provider') === 'google') {
+    const planFields = document.querySelectorAll('[data-signup] [name="plan"], [data-progressive-profile] [name="plan"]');
+    if (['launch', 'growth', 'scale'].includes(plan)) planFields.forEach(field => field.value = plan);    if (params.get('provider') === 'google') {
         document.querySelector('[data-social]').hidden = false;
         document.querySelector('[data-social-divider]').hidden = false;
     }
+    if (params.get('provider') === 'google' && state === 'signup-method') {
+        document.querySelector('[data-signup-social]').hidden = false;
+        document.querySelector('[data-signup-social-divider]').hidden = false;
+    }
+    document.querySelector('[data-progressive-start]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=signup-profile&plan=' + (params.get('plan') || 'growth'); });
+    document.querySelector('[data-progressive-profile]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=verify'; });
     document.querySelector('[data-signup]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=verify'; });
     document.querySelector('[data-verify]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=success'; });
     document.querySelector('[data-recovery]')?.addEventListener('submit', event => { event.preventDefault(); event.currentTarget.innerHTML = '<div class="message" role="status">If the email matches an account, password reset instructions will be sent.</div>'; });

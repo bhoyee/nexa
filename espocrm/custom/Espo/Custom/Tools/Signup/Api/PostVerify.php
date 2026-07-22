@@ -9,6 +9,7 @@ use Espo\Custom\Tools\Signup\SignupProblem;
 use Espo\Custom\Tools\Signup\SignupService;
 use Throwable;
 
+/** Verifies the email proof and atomically provisions the workspace. */
 final class PostVerify implements Action
 {
     public function __construct(
@@ -21,13 +22,23 @@ final class PostVerify implements Action
         try {
             $this->support->assertJsonRequest($request);
             $body = $request->getParsedBody();
-            $email = trim((string) ($body->email ?? ''));
+            $token = trim((string) ($body->attemptToken ?? ''));
             $code = trim((string) ($body->code ?? ''));
-            if ($email === '' || $code === '') {
-                throw new SignupProblem(422, 'validation_failed', 'Email and verification code are required.');
+
+            if ($token === '' || $code === '') {
+                throw new SignupProblem(
+                    422,
+                    'validation_failed',
+                    'Signup session and verification code are required.',
+                );
             }
+
             return $this->support->success(
-                $this->service->verify($email, $code, $this->support->fingerprint($request))
+                $this->service->verify(
+                    $token,
+                    $code,
+                    $this->support->fingerprint($request),
+                ),
             );
         } catch (Throwable $e) {
             return $this->support->problem($e);

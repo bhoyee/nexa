@@ -174,11 +174,42 @@ $assert(
     'Password reset submission must restore tenant context before changing the password.'
 );
 
+$userFinderSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/application/Espo/Core/Authentication/Helper/UserFinder.php'
+);
+$assert(
+    str_contains($tenantResolverSource, 'entity_email_address') &&
+    str_contains($tenantResolverSource, 'ea.lower = :email') &&
+    str_contains($userFinderSource, 'FILTER_VALIDATE_EMAIL') &&
+    str_contains($userFinderSource, '[\'emailAddress\' => strtolower($username)]'),
+    'Login identity must resolve the same tenant user by unique email or username.'
+);
+$providerRegistrySource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/AuthProviderRegistry.php'
+);
+$microsoftValidatorSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/MicrosoftIdTokenValidator.php'
+);
+$assert(
+    !str_contains($providerRegistrySource, '$configured[\'microsoft\'] = false') &&
+    str_contains($providerRegistrySource, "'_CLIENT_SECRET'") &&
+    str_contains($microsoftValidatorSource, "get('tid')") &&
+    str_contains($microsoftValidatorSource, 'getAud()') &&
+    str_contains($microsoftValidatorSource, 'nonceHash') &&
+    str_contains($microsoftValidatorSource, 'new Rsa(\'RS256\', $keys)'),
+    'Microsoft provider must require credentials and validate tenant, audience, nonce and signature.'
+);
 $socialSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/SocialAuthService.php'
 );
 $socialMigration = file_get_contents(
     dirname(__DIR__, 2) . '/database/shared/migrations/0006_social_identity.sql'
+);
+$progressiveMigration = file_get_contents(
+    dirname(__DIR__, 2) . '/database/shared/migrations/0007_progressive_signup.sql'
+);
+$landingMarkup = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/public/landing/index.html'
 );
 $assert(
     str_contains($socialSource, 'hash_equals($attempt[\'nonce_hash\']') &&
@@ -190,6 +221,29 @@ $assert(
     str_contains($socialMigration, 'UNIQUE KEY uq_nexa_external_provider_subject') &&
     str_contains($socialMigration, 'consumed_at'),
     'Social identity schema must prevent duplicate subjects and OAuth replay.'
+);
+
+$assert(
+    str_contains($socialSource, 'private SignupService $signupService') &&
+    str_contains($socialSource, 'beginSocial(') &&
+    !str_contains($socialSource, 'private function signup(') &&
+    str_contains($socialSource, '#nexa-onboarding='),
+    'New social identities must resume onboarding instead of provisioning in the OAuth callback.'
+);
+$assert(
+    str_contains($progressiveMigration, 'CREATE TABLE IF NOT EXISTS nexa_signup_attempt') &&
+    str_contains($progressiveMigration, 'public_token_hash') &&
+    str_contains($signupSource, "!== 'ready'") &&
+    str_contains($signupSource, 'email_verified_at'),
+    'Progressive signup must persist opaque attempts and provision only a verified ready identity.'
+);
+$assert(
+    str_contains($landingMarkup, 'data-signup-method') &&
+    str_contains($landingMarkup, 'data-email-start') &&
+    str_contains($landingMarkup, 'data-email-fields') &&
+    str_contains($landingSource, "api('/complete'") &&
+    str_contains($landingSource, "api('/verify'"),
+    'Landing signup must separate identity, workspace profile and verification states.'
 );
 
 fwrite(STDOUT, 'Authentication experience contract suite passed.' . PHP_EOL);
