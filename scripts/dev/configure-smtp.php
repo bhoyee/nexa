@@ -1,6 +1,7 @@
 <?php
 
 use Espo\Core\Application;
+use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Config\ConfigWriter;
 use Espo\Custom\Tools\Signup\SmtpEnvironment;
 
@@ -25,7 +26,8 @@ try {
     }
 
     $application = new Application();
-    $writer = $application->getContainer()->getByClass(ConfigWriter::class);
+    $factory = $application->getContainer()->getByClass(InjectableFactory::class);
+    $writer = $factory->create(ConfigWriter::class);
     $writer->setMultiple($settings);
     $writer->save();
 
