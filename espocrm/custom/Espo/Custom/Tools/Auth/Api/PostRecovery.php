@@ -24,10 +24,9 @@ final class PostRecovery implements Action
             $this->support->assertJsonRequest($request);
             $input = $request->getParsedBody();
 
-            return ResponseComposer::json($this->service->request(
-                (string) ($input->username ?? ''),
-                (string) ($input->email ?? '')
-            ))->setStatus(202);
+            return ResponseComposer::json(
+                $this->service->request((string) ($input->email ?? ''))
+            )->setStatus(202);
         } catch (AuthProblem $e) {
             return ResponseComposer::json([
                 'error' => $e->error,
@@ -37,7 +36,7 @@ final class PostRecovery implements Action
         } catch (Throwable $e) {
             return ResponseComposer::json([
                 'status' => 'accepted',
-                'message' => 'If the details match an account, password reset instructions will be sent.',
+                'message' => 'If the email matches an account, password reset instructions will be sent.',
             ])->setStatus(202);
         }
     }

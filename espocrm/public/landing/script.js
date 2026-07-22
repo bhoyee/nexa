@@ -176,9 +176,11 @@
             providers.forEach(provider => {
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = 'social-auth-button';
+                button.className = 'social-auth-button social-auth-button--' + provider.key;
                 button.dataset.provider = provider.key;
-                button.innerHTML = '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
+                button.innerHTML = provider.key === 'google'
+                    ? '<img class="google-auth-icon" src="/client/custom/img/google-g.svg" alt=""><span>Continue with Google</span>'
+                    : '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
                 button.addEventListener('click', () => {
                     const target = new URL(provider.startUrl, location.origin);
                     const company = form.elements.company;
@@ -304,15 +306,18 @@
     document.querySelector('[data-resend]')?.addEventListener('click', async event => {
         const message = document.querySelector('[data-resend-message]');
         event.currentTarget.disabled = true;
+        message.classList.remove('is-error', 'is-success');
         try {
             const result = await api('/resend', {email: signupEmail});
             message.textContent = result.message;
+            message.classList.add('is-success');
             if (result.verificationCode) {
                 localCode.textContent = 'Local verification code: ' + result.verificationCode;
                 localCode.hidden = false;
             }
         } catch (error) {
             message.textContent = error.message;
+            message.classList.add('is-error');
         } finally {
             event.currentTarget.disabled = false;
         }

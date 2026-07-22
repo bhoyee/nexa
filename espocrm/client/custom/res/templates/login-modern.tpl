@@ -1,9 +1,9 @@
 <main class="modern-login-shell">
     <section class="modern-login-visual" aria-label="A bright collaborative workspace">
-        <div class="modern-login-brand">
+        <a class="modern-login-brand" href="/" aria-label="Nexa CRM home">
             <span class="modern-login-mark" aria-hidden="true">N</span>
             <span class="modern-login-brand-name">Nexa CRM</span>
-        </div>
+        </a>
 
         <div class="modern-login-visual-copy">
             <p class="modern-login-kicker">One customer workspace</p>
@@ -17,10 +17,10 @@
     </section>
 
     <section class="modern-login-auth">
-        <div class="modern-login-mobile-brand">
+        <a class="modern-login-mobile-brand" href="/" aria-label="Nexa CRM home">
             <span class="modern-login-mark" aria-hidden="true">N</span>
             <span class="modern-login-brand-name">Nexa CRM</span>
-        </div>
+        </a>
 
         <div id="login" class="modern-login-panel">
             <header class="modern-login-header">
@@ -81,14 +81,11 @@
             <header class="modern-login-header">
                 <p class="modern-login-eyebrow">Secure account recovery</p>
                 <h1>Let us get you back in</h1>
-                <p>Enter the username and email connected to your workspace.</p>
+                <p>Enter the email address connected to your account.</p>
             </header>
             <form class="modern-login-form" data-recovery-form novalidate>
                 <div class="modern-recovery-message" data-recovery-message role="status" aria-live="polite" hidden></div>
-                <div class="form-group">
-                    <label for="recovery-username">Username</label>
-                    <div class="modern-login-input"><span class="far fa-user" aria-hidden="true"></span><input class="form-control" id="recovery-username" name="username" autocomplete="username" maxlength="255" required></div>
-                </div>
+
                 <div class="form-group">
                     <label for="recovery-email">Email address</label>
                     <div class="modern-login-input"><span class="far fa-envelope" aria-hidden="true"></span><input class="form-control" id="recovery-email" name="email" type="email" autocomplete="email" maxlength="190" required></div>

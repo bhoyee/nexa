@@ -31,6 +31,13 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
         const recoveryPanel = this.element.querySelector('[data-recovery-panel]');
         const recoveryForm = this.element.querySelector('[data-recovery-form]');
         const recoveryMessage = this.element.querySelector('[data-recovery-message]');
+        const showLoginError = text => {
+            const message = this.element.querySelector('[data-login-message]');
+            message.textContent = text;
+            message.classList.remove('is-success');
+            message.classList.add('is-error');
+            message.hidden = false;
+        };
         const showLogin = () => {
             recoveryPanel.hidden = true;
             loginPanel.hidden = false;
@@ -59,36 +66,30 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
                 }).then(data => this.triggerLogin(social.userName, data))
                     .catch(() => {
                         this.undisableForm();
-                        const message = this.element.querySelector('[data-login-message]');
-                        message.textContent = 'Google sign in could not be completed. Please try again.';
-                        message.hidden = false;
+                        showLoginError('Google sign in could not be completed. Please try again.');
                     });
             } catch (error) {
-                const message = this.element.querySelector('[data-login-message]');
-                message.textContent = 'Google sign in could not be completed. Please try again.';
-                message.hidden = false;
+                showLoginError('Google sign in could not be completed. Please try again.');
             }
         }
         const socialError = new URLSearchParams(location.search).get('socialError');
         if (socialError) {
-            const message = this.element.querySelector('[data-login-message]');
-            message.textContent = socialError === 'social_account_not_linked'
+            showLoginError(socialError === 'social_account_not_linked'
                 ? 'No Nexa account is connected to that Google account. Create a workspace first.'
-                : 'Google sign in was cancelled or could not be completed.';
-            message.hidden = false;
+                : 'Google sign in was cancelled or could not be completed.');
         }
 
         this.element.querySelector('[data-action="nexaRecovery"]')?.addEventListener('click', event => {
             event.preventDefault();
             loginPanel.hidden = true;
             recoveryPanel.hidden = false;
-            window.setTimeout(() => recoveryForm.elements.username.focus(), 0);
+            window.setTimeout(() => recoveryForm.elements.email.focus(), 0);
         });
         this.element.querySelector('[data-recovery-back]')?.addEventListener('click', showLogin);
         if (new URLSearchParams(location.search).get('recovery') === '1') {
             loginPanel.hidden = true;
             recoveryPanel.hidden = false;
-            window.setTimeout(() => recoveryForm.elements.username.focus(), 0);
+            window.setTimeout(() => recoveryForm.elements.email.focus(), 0);
         }
 
         recoveryForm?.addEventListener('submit', async event => {
@@ -97,6 +98,7 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
             const submit = recoveryForm.querySelector('[type="submit"]');
             submit.disabled = true;
             recoveryMessage.hidden = true;
+            recoveryMessage.classList.remove('is-error', 'is-success', 'error');
             try {
                 const response = await fetch('/api/v1/Nexa/auth/recovery', {
                     method: 'POST',
@@ -108,12 +110,14 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
                 recoveryMessage.textContent = response.ok
                     ? body.message
                     : body.message || 'We could not process the request. Try again.';
-                recoveryMessage.classList.toggle('error', !response.ok);
+                recoveryMessage.classList.toggle('is-error', !response.ok);
+                recoveryMessage.classList.toggle('is-success', response.ok);
                 recoveryMessage.hidden = false;
                 if (response.ok) recoveryForm.reset();
             } catch (error) {
                 recoveryMessage.textContent = 'We could not process the request. Try again.';
-                recoveryMessage.classList.add('error');
+                recoveryMessage.classList.remove('is-success');
+                recoveryMessage.classList.add('is-error');
                 recoveryMessage.hidden = false;
             } finally {
                 submit.disabled = false;
@@ -129,8 +133,10 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
                 providers.forEach(provider => {
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'modern-social-button';
-                    button.innerHTML = '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
+                    button.className = 'modern-social-button modern-social-button--' + provider.key;
+                    button.innerHTML = provider.key === 'google'
+                        ? '<img class="google-auth-icon" src="/client/custom/img/google-g.svg" alt=""><span>Continue with Google</span>'
+                        : '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
                     button.addEventListener('click', () => {
                         const url = new URL(provider.startUrl, location.origin);
                         url.searchParams.set('intent', 'login');

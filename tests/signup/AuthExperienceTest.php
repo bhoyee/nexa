@@ -56,8 +56,37 @@ $assert(
 $assert(
     str_contains($loginTemplateSource, 'Good to see you again') &&
     str_contains($loginTemplateSource, 'modern-login-proof') &&
-    str_contains($loginTemplateSource, 'type="button" class="modern-login-forgot"'),
+    str_contains($loginTemplateSource, 'type="button" class="modern-login-forgot"') &&
+    str_contains($loginTemplateSource, 'href="/" aria-label="Nexa CRM home"'),
     'The primary sign-in view must render the distinct Nexa authentication experience.'
+);
+$assert(
+    !str_contains($loginTemplateSource, 'recovery-username') &&
+    str_contains($loginTemplateSource, 'name="email" type="email"'),
+    'Password recovery must request only the globally reserved email address.'
+);
+$landingSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/public/landing/script.js'
+);
+$loginCssSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/client/custom/css/modern-login.css'
+);
+$landingCssSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/public/landing/styles.css'
+);
+$assert(
+    str_contains($loginAdapterSource, '/client/custom/img/google-g.svg') &&
+    str_contains($landingSource, '/client/custom/img/google-g.svg') &&
+    str_contains($loginCssSource, '.modern-social-button--google') &&
+    str_contains($landingCssSource, '.social-auth-button--google'),
+    'Google sign in and signup must share recognizable provider branding.'
+);
+$assert(
+    str_contains($loginAdapterSource, "classList.add('is-error')") &&
+    str_contains($loginCssSource, '.modern-recovery-message.is-error') &&
+    str_contains($landingSource, "message.classList.add('is-error')") &&
+    str_contains($landingCssSource, '.state-note.is-error'),
+    'Authentication failures must use the danger feedback treatment.'
 );
 $assert(
     str_contains($authConfigSource, "'applicationName'") &&
@@ -72,8 +101,13 @@ $assert(
 $recoverySource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/custom/Espo/Custom/Tools/Auth/RecoveryService.php'
 );
-$assert(str_contains($recoverySource, 'If the details match an account'), 'Recovery response must be neutral.');
+$assert(str_contains($recoverySource, 'If the email matches an account'), 'Recovery response must be neutral.');
 $assert(str_contains($recoverySource, 'count($rows) !== 1'), 'Recovery must require one unambiguous tenant identity.');
+$assert(
+    str_contains($recoverySource, 'resolveIdentity(string $email)') &&
+    !str_contains($recoverySource, ':username'),
+    'Recovery must resolve the tenant from the globally reserved email without requesting a username.'
+);
 
 $tenantResolverSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/application/Espo/Core/Tenant/TenantResolver.php'

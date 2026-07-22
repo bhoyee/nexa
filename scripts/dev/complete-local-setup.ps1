@@ -39,6 +39,10 @@ try {
 
     & $PhpPath clear_cache.php
     if ($LASTEXITCODE -ne 0) { throw 'Application cache clearing failed.' }
+
+    # Frontend extension files use appTimestamp for browser cache invalidation.
+    & $PhpPath command.php update-app-timestamp
+    if ($LASTEXITCODE -ne 0) { throw 'Application asset timestamp update failed.' }
 }
 finally {
     Pop-Location
