@@ -43,6 +43,13 @@ $assert(
     str_contains($authConfigSource, 'InjectableFactory::class'),
     'Native auth configuration must create ConfigWriter through Espo injectable services.'
 );
+$loginAdapterSource = file_get_contents(
+    dirname(__DIR__, 2) . '/espocrm/client/custom/login-patch.js'
+);
+$assert(
+    str_contains($loginAdapterSource, 'showForgotPassword: true'),
+    'Tenant-aware password recovery must remain reachable when legacy SMTP UI flags are absent.'
+);
 $assert(
     str_contains($signupSource, 'strtolower($email)') && str_contains($signupSource, '$code'),
     'Code digests must be bound to email.'
