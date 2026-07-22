@@ -36,6 +36,13 @@ $assert(
     str_contains($signupSource, 'nexaSignupExposeVerificationCode'),
     'Native setup must expose local verification codes through application configuration.'
 );
+$authConfigSource = file_get_contents(
+    dirname(__DIR__, 2) . '/scripts/dev/configure-auth-experience.php'
+);
+$assert(
+    str_contains($authConfigSource, 'InjectableFactory::class'),
+    'Native auth configuration must create ConfigWriter through Espo injectable services.'
+);
 $assert(
     str_contains($signupSource, 'strtolower($email)') && str_contains($signupSource, '$code'),
     'Code digests must be bound to email.'

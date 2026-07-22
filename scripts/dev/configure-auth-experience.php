@@ -1,6 +1,7 @@
 <?php
 
 use Espo\Core\Application;
+use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Config\ConfigWriter;
 
 $root = dirname(__DIR__, 2);
@@ -39,7 +40,8 @@ $enabled = static fn (string $key): bool =>
 // Provider secrets and callbacks belong to M04. This writes only the public
 // switches consumed by the M02 authentication screens.
 $application = new Application();
-$writer = $application->getContainer()->getByClass(ConfigWriter::class);
+$factory = $application->getContainer()->getByClass(InjectableFactory::class);
+$writer = $factory->create(ConfigWriter::class);
 $writer->setMultiple([
     'passwordRecoveryNoExposure' => true,
     'nexaSignupExposeVerificationCode' => $enabled('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE'),
