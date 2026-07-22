@@ -1,0 +1,8 @@
+{
+    "params": {
+        "nexaMicrosoftClientId": {"level": "admin"},
+        "nexaMicrosoftClientSecret": {"level": "internal"},
+        "nexaMicrosoftTenantId": {"level": "admin"},
+        "nexaMicrosoftRedirectUri": {"level": "admin"}
+    }
+}

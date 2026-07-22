@@ -1,43 +1,50 @@
 [
     {
-        "route": "/Nexa/signup",
-        "method": "post",
-        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostSignup",
-        "noAuth": true
+        "route":  "/Nexa/signup",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Signup\\Api\\PostSignup",
+        "noAuth":  true
     },
     {
-        "route": "/Nexa/signup/verify",
-        "method": "post",
-        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostVerify",
-        "noAuth": true
+        "route":  "/Nexa/signup/complete",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Signup\\Api\\PostComplete",
+        "noAuth":  true
     },
     {
-        "route": "/Nexa/signup/resend",
-        "method": "post",
-        "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostResend",
-        "noAuth": true
+        "route":  "/Nexa/signup/verify",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Signup\\Api\\PostVerify",
+        "noAuth":  true
     },
     {
-        "route": "/Nexa/auth/providers",
-        "method": "get",
-        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviders",
-        "noAuth": true
+        "route":  "/Nexa/signup/resend",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Signup\\Api\\PostResend",
+        "noAuth":  true
     },
     {
-        "route": "/Nexa/auth/provider/:provider/start",
-        "method": "get",
-        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderStart",
-        "noAuth": true
+        "route":  "/Nexa/auth/providers",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetProviders",
+        "noAuth":  true
     },
     {
-        "route": "/Nexa/auth/provider/:provider/callback",
-        "method": "get",
-        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderCallback",
-        "noAuth": true
-    },    {
-        "route": "/Nexa/auth/recovery",
-        "method": "post",
-        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\PostRecovery",
-        "noAuth": true
+        "route":  "/Nexa/auth/provider/:provider/start",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderStart",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/provider/:provider/callback",
+        "method":  "get",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\GetProviderCallback",
+        "noAuth":  true
+    },
+    {
+        "route":  "/Nexa/auth/recovery",
+        "method":  "post",
+        "actionClassName":  "Espo\\Custom\\Tools\\Auth\\Api\\PostRecovery",
+        "noAuth":  true
     }
 ]

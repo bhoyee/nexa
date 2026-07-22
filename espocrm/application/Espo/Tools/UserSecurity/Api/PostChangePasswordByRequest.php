@@ -34,6 +34,9 @@ use Espo\Core\Api\Request;
 use Espo\Core\Api\Response;
 use Espo\Core\Api\ResponseComposer;
 use Espo\Core\Exceptions\BadRequest;
+use Espo\Core\Exceptions\NotFound;
+use Espo\Core\Tenant\TenantContextStore;
+use Espo\Core\Tenant\TenantResolver;
 use Espo\Tools\UserSecurity\Password\Service;
 
 /**
@@ -41,7 +44,11 @@ use Espo\Tools\UserSecurity\Password\Service;
  */
 class PostChangePasswordByRequest implements Action
 {
-    public function __construct(private Service $service) {}
+    public function __construct(
+        private Service $service,
+        private TenantResolver $tenantResolver,
+        private TenantContextStore $tenantContextStore,
+    ) {}
 
     public function process(Request $request): Response
     {
@@ -54,7 +61,19 @@ class PostChangePasswordByRequest implements Action
             throw new BadRequest();
         }
 
-        $url = $this->service->changePasswordByRecovery($requestId, $password);
+        // A reset request is submitted on the shared login domain, where the
+        // host cannot identify its tenant. Resolve the opaque single-use token
+        // before any tenant-scoped request, user or password write is made.
+        $tenant = $this->tenantResolver->resolvePasswordChangeRequest($requestId);
+
+        if ($tenant === null) {
+            throw new NotFound("Password recovery: Request not found by id.");
+        }
+
+        $url = $this->tenantContextStore->runWith(
+            $tenant,
+            fn () => $this->service->changePasswordByRecovery($requestId, $password)
+        );
 
         return ResponseComposer::json(['url' => $url]);
     }

@@ -141,6 +141,9 @@
         selectCapabilityGroup(capabilityCatalog[0]);
     }
     const dialog = document.querySelector('[data-signup-dialog]');
+    const methodView = document.querySelector('[data-signup-method]');
+    const emailStart = document.querySelector('[data-email-start]');
+    const methodMessage = document.querySelector('[data-method-message]');
     const form = document.querySelector('[data-signup-form]');
     const formMessage = document.querySelector('[data-form-message]');
     const pending = document.querySelector('[data-signup-pending]');
@@ -151,67 +154,116 @@
     const localCode = document.querySelector('[data-local-code]');
     const signupSocial = document.querySelector('[data-signup-social]');
     const signupDivider = document.querySelector('[data-signup-divider]');
-    const stateViews = [form, pending, verifying, success, verificationError];
-    let signupEmail = '';
+    const emailFields = document.querySelector('[data-email-fields]');
+    const socialIdentity = document.querySelector('[data-social-identity]');
+    const stateViews = [methodView, form, pending, verifying, success, verificationError];
     let selectedPlan = 'growth';
+    let attemptToken = '';
+    let signupMethod = 'email';
 
-    const showState = target => stateViews.forEach(view => {
-        if (view) view.hidden = view !== target;
+    const setStep = step => document.querySelectorAll('[data-signup-step]').forEach(item => {
+        item.classList.toggle('active', item.dataset.signupStep === step);
     });
 
-    // The dialog is a small state machine: form, pending verification,
-    // verifying, active, or error. Only one state is visible at a time.
+    const showState = (target, step = 'method') => {
+        stateViews.forEach(view => {
+            if (view) view.hidden = view !== target;
+        });
+        setStep(step);
+    };
+
+    const setEmailFields = enabled => {
+        emailFields.hidden = !enabled;
+        emailFields.querySelectorAll('input').forEach(input => {
+            input.required = enabled;
+            input.disabled = !enabled;
+        });
+        socialIdentity.hidden = enabled;
+    };
+
     const openDialog = (plan = 'growth') => {
-        selectedPlan = plan;
-        form.elements.plan.value = plan;
-        showState(form);
+        selectedPlan = plans.some(item => item.key === plan) ? plan : 'growth';
+        form.elements.plan.value = selectedPlan;
+        attemptToken = '';
+        signupMethod = 'email';
+        showState(methodView, 'method');
+        if (!dialog.open) dialog.showModal();
+        window.setTimeout(() => emailStart.elements.email.focus(), 50);
+    };
+
+    const showProfile = (method, token, plan = 'growth') => {
+        signupMethod = method;
+        attemptToken = token;
+        selectedPlan = plans.some(item => item.key === plan) ? plan : 'growth';
+        form.elements.plan.value = selectedPlan;
+        setEmailFields(method === 'email');
+        document.querySelector('[data-profile-help]').textContent = method === 'social'
+            ? 'Your identity is verified. Name your company and confirm your plan.'
+            : 'Add your name, company, password and selected plan.';
+        showState(form, 'profile');
         if (!dialog.open) dialog.showModal();
         window.setTimeout(() => form.elements.company.focus(), 50);
+    };
+
+    const api = async (path, payload) => {
+        const response = await fetch(`/api/v1/Nexa/signup${path}`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw Object.assign(new Error(body.message || 'Something went wrong.'), {body});
+        return body;
+    };
+
+    const setLoading = (button, loading) => {
+        button.disabled = loading;
+        button.classList.toggle('loading', loading);
+        button.setAttribute('aria-busy', String(loading));
+    };
+
+    const clearErrors = () => {
+        formMessage.hidden = true;
+        form.querySelectorAll('[data-error-for]').forEach(error => error.textContent = '');
+        form.querySelectorAll('.invalid').forEach(field => field.classList.remove('invalid'));
+    };
+
+    const displayFieldErrors = error => {
+        formMessage.textContent = error.message;
+        formMessage.hidden = false;
+        Object.entries(error.body?.fields || {}).forEach(([name, message]) => {
+            const field = form.elements[name];
+            if (field) field.classList.add('invalid');
+            const target = form.querySelector(`[data-error-for="${name}"]`);
+            if (target) target.textContent = message;
+        });
     };
 
     fetch('/api/v1/Nexa/auth/providers', {credentials: 'same-origin'})
         .then(response => response.ok ? response.json() : {providers: []})
         .then(({providers = []}) => {
-            if (!signupSocial || providers.length === 0) return;
             providers.forEach(provider => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'social-auth-button social-auth-button--' + provider.key;
-                button.dataset.provider = provider.key;
                 button.innerHTML = provider.key === 'google'
                     ? '<img class="google-auth-icon" src="/client/custom/img/google-g.svg" alt=""><span>Continue with Google</span>'
                     : '<span class="fab fa-' + provider.icon + '" aria-hidden="true"></span><span>Continue with ' + provider.label + '</span>';
                 button.addEventListener('click', () => {
                     const target = new URL(provider.startUrl, location.origin);
-                    const company = form.elements.company;
-                    const terms = form.elements.terms;
-                    clearErrors();
-                    if (!company.checkValidity() || !terms.checked) {
-                        company.classList.toggle('invalid', !company.checkValidity());
-                        terms.focus();
-                        formMessage.textContent = 'Enter your company name and accept the terms before continuing with Google.';
-                        formMessage.hidden = false;
-                        return;
-                    }
                     target.searchParams.set('intent', 'signup');
                     target.searchParams.set('plan', selectedPlan);
-                    target.searchParams.set('company', company.value.trim());
-                    target.searchParams.set('terms', '1');
-                    target.searchParams.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
                     location.assign(target);
                 });
                 signupSocial.append(button);
             });
-            signupSocial.hidden = false;
-            signupDivider.hidden = false;
+            signupSocial.hidden = providers.length === 0;
+            signupDivider.hidden = providers.length === 0;
         })
         .catch(() => {});
-    form?.elements.plan.addEventListener('change', event => {
-        selectedPlan = event.currentTarget.value;
-    });
 
-    // Enhance the server-rendered pricing cards with live plan limits and
-    // signup actions while preserving their basic no-JavaScript fallback.
+    // Enhance pricing actions while preserving their non-JavaScript links.
     document.querySelectorAll('.price-card').forEach((card, index) => {
         const plan = plans[index];
         if (!plan) return;
@@ -221,8 +273,7 @@
         action.setAttribute('tabindex', '0');
         action.dataset.signupPlan = plan.key;
         action.textContent = plan.cta;
-        const list = card.querySelector('ul');
-        list.innerHTML = plan.items.map(item => `<li><span class="fas fa-check" aria-hidden="true"></span>${item}</li>`).join('');
+        card.querySelector('ul').innerHTML = plan.items.map(item => `<li><span class="fas fa-check" aria-hidden="true"></span>${item}</li>`).join('');
         const currency = card.querySelector('.currency');
         if (currency) currency.innerHTML = '&pound;';
     });
@@ -243,42 +294,58 @@
         if (event.target === dialog) dialog.close();
     });
 
-    const api = async (path, payload) => {
-        const response = await fetch(`/api/v1/Nexa/signup${path}`, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload),
-        });
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw Object.assign(new Error(body.message || 'Something went wrong.'), {body});
-        return body;
-    };
+    emailStart?.addEventListener('submit', async event => {
+        event.preventDefault();
+        methodMessage.hidden = true;
+        const emailError = document.querySelector('[data-email-start-error]');
+        emailError.textContent = '';
+        if (!emailStart.reportValidity()) return;
+        const submit = emailStart.querySelector('[type="submit"]');
+        setLoading(submit, true);
+        try {
+            const result = await api('', {email: emailStart.elements.email.value.trim(), plan: selectedPlan});
+            showProfile('email', result.attemptToken, result.plan || selectedPlan);
+        } catch (error) {
+            methodMessage.textContent = error.message;
+            methodMessage.hidden = false;
+            emailError.textContent = error.body?.fields?.email || '';
+        } finally {
+            setLoading(submit, false);
+        }
+    });
 
-    const clearErrors = () => {
-        formMessage.hidden = true;
-        form.querySelectorAll('[data-error-for]').forEach(error => error.textContent = '');
-        form.querySelectorAll('.invalid').forEach(field => field.classList.remove('invalid'));
-    };
+    form?.elements.plan.addEventListener('change', event => {
+        selectedPlan = event.currentTarget.value;
+    });
+
+    document.querySelector('[data-signup-back]')?.addEventListener('click', () => {
+        if (signupMethod === 'social') {
+            attemptToken = '';
+        }
+        showState(methodView, 'method');
+        window.setTimeout(() => emailStart.elements.email.focus(), 50);
+    });
 
     form?.addEventListener('submit', async event => {
         event.preventDefault();
         clearErrors();
         if (!form.reportValidity()) return;
-
         const values = Object.fromEntries(new FormData(form));
         const payload = {
             ...values,
+            attemptToken,
             terms: form.elements.terms.checked,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
         };
         const submit = form.querySelector('[type="submit"]');
-        submit.disabled = true;
-        submit.classList.add('loading');
-
+        setLoading(submit, true);
         try {
-            const result = await api('', payload);
-            signupEmail = String(values.email).trim().toLowerCase();
+            const result = await api('/complete', payload);
+            if (result.status === 'active' && result.loginUrl) {
+                showState(success, 'verify');
+                window.setTimeout(() => location.assign(result.loginUrl), 450);
+                return;
+            }
             document.querySelector('[data-pending-email]').textContent = result.email;
             if (result.verificationCode) {
                 localCode.textContent = 'Local verification code: ' + result.verificationCode;
@@ -286,20 +353,12 @@
             } else {
                 localCode.hidden = true;
             }
-            showState(pending);
+            showState(pending, 'verify');
             window.setTimeout(() => verificationForm.elements.code.focus(), 50);
         } catch (error) {
-            formMessage.textContent = error.message;
-            formMessage.hidden = false;
-            Object.entries(error.body?.fields || {}).forEach(([name, message]) => {
-                const field = form.elements[name];
-                if (field) field.classList.add('invalid');
-                const target = form.querySelector(`[data-error-for="${name}"]`);
-                if (target) target.textContent = message;
-            });
+            displayFieldErrors(error);
         } finally {
-            submit.disabled = false;
-            submit.classList.remove('loading');
+            setLoading(submit, false);
         }
     });
 
@@ -308,7 +367,7 @@
         event.currentTarget.disabled = true;
         message.classList.remove('is-error', 'is-success');
         try {
-            const result = await api('/resend', {email: signupEmail});
+            const result = await api('/resend', {attemptToken});
             message.textContent = result.message;
             message.classList.add('is-success');
             if (result.verificationCode) {
@@ -328,27 +387,40 @@
         if (!verificationForm.reportValidity()) return;
         const submit = verificationForm.querySelector('[type="submit"]');
         const message = document.querySelector('[data-code-message]');
-        submit.disabled = true;
+        setLoading(submit, true);
         message.hidden = true;
-        showState(verifying);
+        showState(verifying, 'verify');
         try {
-            await api('/verify', {
-                email: signupEmail,
-                code: verificationForm.elements.code.value,
-            });
-            showState(success);
+            const result = await api('/verify', {attemptToken, code: verificationForm.elements.code.value});
+            showState(success, 'verify');
+            if (result.loginUrl) window.setTimeout(() => location.assign(result.loginUrl), 450);
         } catch (error) {
             document.querySelector('[data-verification-error]').textContent = error.message;
-            showState(verificationError);
+            showState(verificationError, 'verify');
         } finally {
-            submit.disabled = false;
+            setLoading(submit, false);
         }
     });
 
     document.querySelector('[data-back-to-code]')?.addEventListener('click', () => {
-        showState(pending);
+        showState(pending, 'verify');
         window.setTimeout(() => verificationForm.elements.code.focus(), 50);
     });
-    const requestedPlan = new URLSearchParams(location.search).get('signup');
-    if (plans.some(plan => plan.key === requestedPlan)) openDialog(requestedPlan);
+
+    const params = new URLSearchParams(location.search);
+    const requestedSignup = params.get('signup');
+    if (requestedSignup === 'complete' && location.hash.startsWith('#nexa-onboarding=')) {
+        try {
+            const encoded = location.hash.slice('#nexa-onboarding='.length).replace(/-/g, '+').replace(/_/g, '/');
+            attemptToken = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '='));
+            showProfile('social', attemptToken, params.get('plan') || 'growth');
+            history.replaceState(null, '', `/?signup=complete&plan=${encodeURIComponent(selectedPlan)}`);
+        } catch {
+            openDialog(params.get('plan') || 'growth');
+            methodMessage.textContent = 'Your social signup session could not be restored. Please try again.';
+            methodMessage.hidden = false;
+        }
+    } else if (plans.some(plan => plan.key === requestedSignup)) {
+        openDialog(requestedSignup);
+    }
 })();

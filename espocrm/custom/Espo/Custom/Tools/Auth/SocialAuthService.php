@@ -11,6 +11,7 @@ use Espo\Core\Authentication\Oidc\TokenValidator;
 use Espo\Core\Tenant\TenantContext;
 use Espo\Core\Tenant\TenantContextStore;
 use Espo\Core\Utils\Config;
+use Espo\Custom\Tools\Signup\SignupService;
 use Espo\ORM\EntityManager;
 use PDO;
 use RuntimeException;
@@ -32,6 +33,8 @@ final class SocialAuthService
         private AuthTokenManager $authTokenManager,
         private TenantContextStore $tenantContextStore,
         private AuthProviderRegistry $providerRegistry,
+        private SignupService $signupService,
+        private MicrosoftIdTokenValidator $microsoftTokenValidator,
     ) {}
 
     /** @param array<string, string|array<scalar, mixed>> $query */
@@ -42,17 +45,11 @@ final class SocialAuthService
         $payload = ['intent' => $intent];
 
         if ($intent === 'signup') {
-            $company = trim((string) ($query['company'] ?? ''));
             $plan = trim((string) ($query['plan'] ?? 'growth'));
-            $terms = ($query['terms'] ?? '') === '1';
-            if (mb_strlen($company) < 2 || mb_strlen($company) > 120 || !$terms) {
-                throw new RuntimeException('Complete the company and terms fields before continuing with Google.');
+            if (!in_array($plan, ['launch', 'growth', 'scale'], true)) {
+                throw new RuntimeException('The selected plan is unavailable.');
             }
-            $payload += [
-                'company' => $company,
-                'plan' => $plan,
-                'timezone' => trim((string) ($query['timezone'] ?? 'UTC')) ?: 'UTC',
-            ];
+            $payload['plan'] = $plan;
         }
 
         $state = $this->randomUrlToken();
@@ -67,8 +64,8 @@ final class SocialAuthService
             json_encode($payload, JSON_THROW_ON_ERROR),
         ]);
 
-        return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
-            'client_id' => $this->clientId(),
+        return $this->authorizationEndpoint($provider) . '?' . http_build_query([
+            'client_id' => $this->clientId($provider),
             'redirect_uri' => $this->callbackUrl($provider),
             'response_type' => 'code',
             'scope' => 'openid email profile',
@@ -89,31 +86,59 @@ final class SocialAuthService
             $attempt = $this->consumeAttempt($provider, $state);
             $rawToken = $this->exchangeCode($code, $provider);
             $token = Token::create($rawToken);
-            $this->jwtValidator->validate($token);
-            $this->tokenValidator->validateFields($token);
-            $this->tokenValidator->validateSignature($token);
 
-            $claims = $token->getPayload();
-            if (!in_array($claims->getIss(), ['https://accounts.google.com', 'accounts.google.com'], true) ||
-                !hash_equals($attempt['nonce_hash'], hash('sha256', (string) $claims->getNonce())) ||
-                $claims->get('email_verified') !== true) {
-                throw new RuntimeException('Google identity validation failed.');
-            }
+            if ($provider === 'microsoft') {
+                $profile = $this->microsoftTokenValidator->validate(
+                    $token,
+                    $this->clientId($provider),
+                    $this->microsoftTenant(),
+                    $attempt['nonce_hash'],
+                );
+            } else {
+                $this->jwtValidator->validate($token);
+                $this->tokenValidator->validateFields($token);
+                $this->tokenValidator->validateSignature($token);
 
-            $profile = [
-                'subject' => (string) $claims->getSub(),
-                'email' => strtolower(trim((string) $claims->get('email'))),
-                'firstName' => trim((string) $claims->get('given_name')),
-                'lastName' => trim((string) $claims->get('family_name')),
-                'picture' => trim((string) $claims->get('picture')),
-            ];
-            if (!filter_var($profile['email'], FILTER_VALIDATE_EMAIL) || $profile['subject'] === '') {
+                $claims = $token->getPayload();
+                if (!in_array($claims->getIss(), ['https://accounts.google.com', 'accounts.google.com'], true) ||
+                    !hash_equals($attempt['nonce_hash'], hash('sha256', (string) $claims->getNonce())) ||
+                    $claims->get('email_verified') !== true) {
+                    throw new RuntimeException('Google identity validation failed.');
+                }
+
+                $profile = [
+                    'subject' => (string) $claims->getSub(),
+                    'email' => strtolower(trim((string) $claims->get('email'))),
+                    'firstName' => trim((string) $claims->get('given_name')),
+                    'lastName' => trim((string) $claims->get('family_name')),
+                    'picture' => trim((string) $claims->get('picture')),
+                ];
+            }            if (!filter_var($profile['email'], FILTER_VALIDATE_EMAIL) || $profile['subject'] === '') {
                 throw new RuntimeException('Google did not return a verified email identity.');
             }
 
-            $identity = $attempt['intent'] === 'signup'
-                ? $this->signup($provider, $profile, $attempt['payload'])
-                : $this->findIdentity($provider, $profile['subject']);
+            if ($attempt['intent'] === 'signup') {
+                $identity = $this->findIdentity($provider, $profile['subject']);
+
+                // Existing linked identities sign in. New identities resume
+                // workspace onboarding before tenant records are provisioned.
+                if ($identity !== null) {
+                    return $this->sessionUrl($identity);
+                }
+
+                $signup = $this->signupService->beginSocial(
+                    $provider,
+                    $profile,
+                    (string) ($attempt['payload']['plan'] ?? 'growth'),
+                );
+
+                return $this->completionUrl(
+                    (string) $signup['attemptToken'],
+                    (string) ($attempt['payload']['plan'] ?? 'growth'),
+                );
+            }
+
+            $identity = $this->findIdentity($provider, $profile['subject']);
 
             if ($identity === null) {
                 return $this->failureUrl('social_account_not_linked');
@@ -155,14 +180,14 @@ final class SocialAuthService
 
     private function exchangeCode(string $code, string $provider): string
     {
-        $curl = curl_init('https://oauth2.googleapis.com/token');
+        $curl = curl_init($this->tokenEndpoint($provider));
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query([
-                'client_id' => $this->clientId(),
-                'client_secret' => $this->clientSecret(),
+                'client_id' => $this->clientId($provider),
+                'client_secret' => $this->clientSecret($provider),
                 'code' => $code,
                 'grant_type' => 'authorization_code',
                 'redirect_uri' => $this->callbackUrl($provider),
@@ -179,54 +204,6 @@ final class SocialAuthService
             throw new RuntimeException('Google token exchange failed.');
         }
         return $data['id_token'];
-    }
-
-    /** @param array<string,string> $profile @param array<string,mixed> $payload */
-    private function signup(string $provider, array $profile, array $payload): ?array
-    {
-        $existing = $this->findIdentity($provider, $profile['subject']);
-        if ($existing !== null) return $existing;
-
-        $pdo = $this->entityManager->getPDO();
-        $emailCheck = $pdo->prepare('SELECT 1 FROM nexa_tenant_owner_identity WHERE normalized_email = ? LIMIT 1');
-        $emailCheck->execute([$profile['email']]);
-        if ($emailCheck->fetchColumn()) {
-            // Never link a Google subject to a password account based on email alone.
-            throw new RuntimeException('An account already uses this email. Sign in with its existing method.');
-        }
-        $planStatement = $pdo->prepare('SELECT id FROM nexa_plan_definition WHERE plan_key = ? AND status = \'active\'');
-        $planStatement->execute([(string) ($payload['plan'] ?? 'growth')]);
-        $planId = $planStatement->fetchColumn();
-        if (!$planId) throw new RuntimeException('The selected plan is unavailable.');
-
-        $tenantId = $this->uuid();
-        $userId = $this->entityId();
-        $ownerId = $this->uuid();
-        $company = trim((string) ($payload['company'] ?? ''));
-        $slug = $this->slug($company);
-        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
-        $trialEnd = (new DateTimeImmutable('+14 days'))->format('Y-m-d H:i:s.u');
-        $profileJson = json_encode($profile, JSON_THROW_ON_ERROR);
-
-        $pdo->beginTransaction();
-        try {
-            $this->sql($pdo, 'INSERT INTO nexa_tenant (id, slug, display_name, status, timezone) VALUES (?, ?, ?, \'active\', ?)', [$tenantId, $slug, $company, (string) ($payload['timezone'] ?? 'UTC')]);
-            $this->sql($pdo, 'INSERT INTO nexa_tenant_subscription (id, tenant_id, plan_id, status, period_starts_at, trial_ends_at) VALUES (?, ?, ?, \'trialing\', ?, ?)', [$this->uuid(), $tenantId, $planId, $now, $trialEnd]);
-            $this->sql($pdo, 'INSERT INTO nexa_tenant_service (tenant_id, service_id, status, soft_limit_override, hard_limit_override, configuration_json, starts_at) SELECT ?, service_id, IF(is_enabled = 1, \'active\', \'disabled\'), soft_limit, hard_limit, configuration_json, ? FROM nexa_plan_service WHERE plan_id = ?', [$tenantId, $now, $planId]);
-            $this->sql($pdo, 'INSERT INTO `user` (id, deleted, user_name, type, password, first_name, last_name, is_active, created_at, modified_at, delete_id, tenant_id, service_id) VALUES (?, 0, ?, \'admin\', ?, ?, ?, 1, ?, ?, \'0\', ?, ?)', [$userId, $profile['email'], password_hash(bin2hex(random_bytes(32)), PASSWORD_BCRYPT), $profile['firstName'], $profile['lastName'], $now, $now, $tenantId, self::CRM_SERVICE_ID]);
-            $emailId = $this->entityId();
-            $this->sql($pdo, 'INSERT INTO email_address (id, name, deleted, `lower`, invalid, opt_out, tenant_id, service_id) VALUES (?, ?, 0, ?, 0, 0, ?, ?)', [$emailId, $profile['email'], $profile['email'], $tenantId, self::CRM_SERVICE_ID]);
-            $this->sql($pdo, 'INSERT INTO entity_email_address (entity_id, email_address_id, entity_type, `primary`, deleted, tenant_id, service_id) VALUES (?, ?, \'User\', 1, 0, ?, ?)', [$userId, $emailId, $tenantId, self::CRM_SERVICE_ID]);
-            $this->sql($pdo, 'INSERT INTO nexa_tenant_owner_identity (id, tenant_id, owner_user_id, email, normalized_email, status, verified_at) VALUES (?, ?, ?, ?, ?, \'active\', CURRENT_TIMESTAMP(6))', [$ownerId, $tenantId, $userId, $profile['email'], $profile['email']]);
-            $this->sql($pdo, 'INSERT INTO nexa_provisioning_operation (id, tenant_id, operation_type, status, idempotency_key, attempt_count, completed_at) VALUES (?, ?, \'social_signup\', \'completed\', ?, 1, CURRENT_TIMESTAMP(6))', [$this->uuid(), $tenantId, 'social-signup:' . $ownerId]);
-            $this->sql($pdo, 'INSERT INTO nexa_external_identity (id, tenant_id, user_id, provider, provider_subject, normalized_email, profile_json, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(6))', [$this->uuid(), $tenantId, $userId, $provider, $profile['subject'], $profile['email'], $profileJson]);
-            $pdo->commit();
-        } catch (Throwable $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            throw $e;
-        }
-
-        return ['tenant_id' => $tenantId, 'slug' => $slug, 'display_name' => $company, 'user_id' => $userId, 'user_name' => $profile['email']];
     }
 
     /** @return array<string,string>|null */
@@ -267,24 +244,62 @@ final class SocialAuthService
         return rtrim((string) $this->config->get('siteUrl'), '/') . '/?login=1&socialError=' . rawurlencode($reason);
     }
 
+    private function completionUrl(string $attemptToken, string $plan): string
+    {
+        $payload = rtrim(strtr(base64_encode($attemptToken), '+/', '-_'), '=');
+
+        return rtrim((string) $this->config->get('siteUrl'), '/')
+            . '/?signup=complete&plan=' . rawurlencode($plan)
+            . '#nexa-onboarding=' . $payload;
+    }
+
     private function assertProvider(string $provider): void
     {
         $enabled = array_column($this->providerRegistry->getPublicProviders(), 'key');
-        if ($provider !== 'google' || !in_array($provider, $enabled, true)) {
+        if (!in_array($provider, $enabled, true)) {
             throw new RuntimeException('This identity provider is not configured.');
         }
     }
 
     private function callbackUrl(string $provider): string
     {
-        $configured = trim((string) (getenv('NEXA_AUTH_GOOGLE_REDIRECT_URI') ?: $this->config->get('nexaGoogleRedirectUri', '')));
+        $key = 'NEXA_AUTH_' . strtoupper($provider) . '_REDIRECT_URI';
+        $configured = trim((string) (getenv($key) ?: ($provider === 'google' ? $this->config->get('nexaGoogleRedirectUri', '') : $this->config->get('nexaMicrosoftRedirectUri', ''))));
         return $configured !== ''
             ? $configured
             : rtrim((string) $this->config->get('siteUrl'), '/') . '/api/v1/Nexa/auth/provider/' . $provider . '/callback';
     }
 
-    private function clientId(): string { return trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_ID') ?: $this->config->get('oidcClientId', ''))); }
-    private function clientSecret(): string { return trim((string) (getenv('NEXA_AUTH_GOOGLE_CLIENT_SECRET') ?: $this->config->get('oidcClientSecret', ''))); }
+    private function clientId(string $provider): string
+    {
+        $key = 'NEXA_AUTH_' . strtoupper($provider) . '_CLIENT_ID';
+        return trim((string) (getenv($key) ?: ($provider === 'google' ? $this->config->get('oidcClientId', '') : $this->config->get('nexaMicrosoftClientId', ''))));
+    }
+
+    private function clientSecret(string $provider): string
+    {
+        $key = 'NEXA_AUTH_' . strtoupper($provider) . '_CLIENT_SECRET';
+        return trim((string) (getenv($key) ?: ($provider === 'google' ? $this->config->get('oidcClientSecret', '') : $this->config->get('nexaMicrosoftClientSecret', ''))));
+    }
+
+    private function microsoftTenant(): string
+    {
+        return trim((string) (getenv('NEXA_AUTH_MICROSOFT_TENANT_ID') ?: $this->config->get('nexaMicrosoftTenantId', 'common')));
+    }
+
+    private function authorizationEndpoint(string $provider): string
+    {
+        return $provider === 'microsoft'
+            ? 'https://login.microsoftonline.com/' . rawurlencode($this->microsoftTenant()) . '/oauth2/v2.0/authorize'
+            : 'https://accounts.google.com/o/oauth2/v2/auth';
+    }
+
+    private function tokenEndpoint(string $provider): string
+    {
+        return $provider === 'microsoft'
+            ? 'https://login.microsoftonline.com/' . rawurlencode($this->microsoftTenant()) . '/oauth2/v2.0/token'
+            : 'https://oauth2.googleapis.com/token';
+    }
     private function randomUrlToken(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
     private function entityId(): string { return substr(bin2hex(random_bytes(9)), 0, 17); }
     private function slug(string $company): string { return substr(strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $company), '-')) ?: 'workspace', 0, 54) . '-' . bin2hex(random_bytes(4)); }

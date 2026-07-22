@@ -37,6 +37,16 @@ require_once 'bootstrap.php';
 $enabled = static fn (string $key): bool =>
     filter_var($environment[$key] ?? false, FILTER_VALIDATE_BOOL) === true;
 
+$recoveryCooldown = filter_var(
+    $environment['PASSWORD_RECOVERY_RESEND_COOLDOWN_SECONDS'] ?? '60',
+    FILTER_VALIDATE_INT,
+    ['options' => ['min_range' => 0, 'max_range' => 3600]]
+);
+if ($recoveryCooldown === false) {
+    fwrite(STDERR, 'PASSWORD_RECOVERY_RESEND_COOLDOWN_SECONDS must be from 0 to 3600.' . PHP_EOL);
+    exit(1);
+}
+
 $application = new Application();
 $factory = $application->getContainer()->getByClass(InjectableFactory::class);
 $writer = $factory->create(ConfigWriter::class);
@@ -44,6 +54,7 @@ $writer->setMultiple([
     // Apply product branding to existing installations as well as clean setups.
     'applicationName' => ($environment['CRM_NAME'] ?? '') ?: 'Nexa CRM',
     'passwordRecoveryNoExposure' => true,
+    'passwordRecoveryResendCooldown' => $recoveryCooldown,
     'nexaSignupExposeVerificationCode' => $enabled('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE'),
     'nexaPublicAuthProviders' => [
         'google' => $enabled('NEXA_AUTH_GOOGLE_ENABLED'),
@@ -54,6 +65,10 @@ $writer->setMultiple([
     'oidcClientId' => $environment['NEXA_AUTH_GOOGLE_CLIENT_ID'] ?? '',
     'oidcClientSecret' => $environment['NEXA_AUTH_GOOGLE_CLIENT_SECRET'] ?? '',
     'nexaGoogleRedirectUri' => $environment['NEXA_AUTH_GOOGLE_REDIRECT_URI'] ?? '',
+    'nexaMicrosoftClientId' => $environment['NEXA_AUTH_MICROSOFT_CLIENT_ID'] ?? '',
+    'nexaMicrosoftClientSecret' => $environment['NEXA_AUTH_MICROSOFT_CLIENT_SECRET'] ?? '',
+    'nexaMicrosoftTenantId' => $environment['NEXA_AUTH_MICROSOFT_TENANT_ID'] ?? 'common',
+    'nexaMicrosoftRedirectUri' => $environment['NEXA_AUTH_MICROSOFT_REDIRECT_URI'] ?? '',
     'oidcAuthorizationEndpoint' => 'https://accounts.google.com/o/oauth2/v2/auth',
     'oidcTokenEndpoint' => 'https://oauth2.googleapis.com/token',
     'oidcUserInfoEndpoint' => 'https://openidconnect.googleapis.com/v1/userinfo',

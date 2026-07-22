@@ -538,3 +538,21 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
 }
 .social-auth-button--google:hover { border-color: #747775; color: #1f1f1f; background: #f8fafd; box-shadow: 0 1px 2px rgba(60, 64, 67, .3); }
 .social-auth-button--google:focus-visible { border-color: #1a73e8; outline: 2px solid #1a73e8; outline-offset: 2px; box-shadow: none; }
+/* Progressive signup keeps identity selection separate from workspace setup. */
+.signup-method { width: min(100%, 500px); margin: auto; display: grid; gap: 20px; }
+.signup-method .signup-social { gap: 12px; }
+.email-start-form { display: grid; gap: 8px; }
+.email-start-form label { color: #314140; font-size: 12px; font-weight: 740; }
+.email-start-form input { width: 100%; height: 52px; padding: 10px 14px; border: 1px solid #c5d2d6; border-radius: 7px; outline: 0; color: var(--ink); background: #f8fafb; font: inherit; }
+.email-start-form input:focus { border-color: #16758a; background: #fff; box-shadow: 0 0 0 3px rgba(22,117,138,.13); }
+.email-start-form small { min-height: 14px; color: #a62f2a; font-size: 11px; font-weight: 600; }
+.email-start-form .button { width: 100%; margin-top: 4px; }
+.email-profile-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 18px; }
+.verified-identity { padding: 12px 14px; display: flex; align-items: center; gap: 10px; border: 1px solid #9bcac1; border-radius: 6px; color: #155f59; background: #edf8f5; font-size: 13px; font-weight: 700; }
+.signup-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.signup-form-actions .signup-submit { width: min(100%, 260px); }
+@media (max-width: 560px) {
+    .email-profile-fields { grid-template-columns: 1fr; gap: 12px; }
+    .signup-form-actions { align-items: stretch; flex-direction: column-reverse; }
+    .signup-form-actions .signup-submit { width: 100%; }
+}

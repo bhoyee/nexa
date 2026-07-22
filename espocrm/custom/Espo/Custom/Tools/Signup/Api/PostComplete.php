@@ -8,8 +8,8 @@ use Espo\Core\Api\Response;
 use Espo\Custom\Tools\Signup\SignupService;
 use Throwable;
 
-/** Rotates the email verification code without disclosing attempt state. */
-final class PostResend implements Action
+/** Completes the workspace profile for an opaque signup attempt. */
+final class PostComplete implements Action
 {
     public function __construct(
         private SignupService $service,
@@ -20,11 +20,10 @@ final class PostResend implements Action
     {
         try {
             $this->support->assertJsonRequest($request);
-            $token = (string) ($request->getParsedBody()->attemptToken ?? '');
 
             return $this->support->success(
-                $this->service->resend(
-                    $token,
+                $this->service->complete(
+                    $request->getParsedBody(),
                     $this->support->fingerprint($request),
                 ),
             );
