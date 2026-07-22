@@ -55,7 +55,8 @@ $assert(
 );
 $assert(
     str_contains($loginTemplateSource, 'Good to see you again') &&
-    str_contains($loginTemplateSource, 'modern-login-proof'),
+    str_contains($loginTemplateSource, 'modern-login-proof') &&
+    str_contains($loginTemplateSource, 'type="button" class="modern-login-forgot"'),
     'The primary sign-in view must render the distinct Nexa authentication experience.'
 );
 $assert(
