@@ -65,6 +65,7 @@ class RecoveryService
     /** Milliseconds. */
     private const REQUEST_DELAY = 3000;
     private const REQUEST_LIFETIME = '3 hours';
+    private const RESEND_COOLDOWN_SECONDS = 60;
     private const NEW_USER_REQUEST_LIFETIME = '2 days';
     private const EXISTING_USER_REQUEST_LIFETIME = '2 days';
     private const INTERNAL_SMTP_INTERVAL_PERIOD = '1 hour';
@@ -220,12 +221,14 @@ class RecoveryService
             ->where(['userId' => $user->getId()])
             ->findOne();
 
-        if ($existingRequest) {
+        if ($existingRequest && !$this->resendCooldownPassed($existingRequest)) {
             if (!$noExposure) {
                 throw new ForbiddenSilent('Already-Sent');
             }
 
-            $this->fail("Denied for $userId, already sent.");
+            // Cooldown is an expected neutral outcome, not an operational
+            // warning or an account-discovery signal.
+            $this->delay();
 
             return false;
         }
@@ -244,7 +247,7 @@ class RecoveryService
             throw new Error("Email sending error.");
         }
 
-        $this->entityManager->saveEntity($request);
+        $this->replaceExistingRequest($existingRequest, $request);
 
         $lifetime = $config->get('passwordRecoveryRequestLifetime') ?? self::REQUEST_LIFETIME;
 
@@ -257,6 +260,51 @@ class RecoveryService
         }
 
         return true;
+    }
+
+    private function resendCooldownPassed(PasswordChangeRequest $request): bool
+    {
+        $createdAt = $request->get('createdAt');
+
+        if (!is_string($createdAt) || $createdAt === '') {
+            return true;
+        }
+
+        $configured = $this->config->get('passwordRecoveryResendCooldown');
+        $seconds = is_numeric($configured) ? (int) $configured : self::RESEND_COOLDOWN_SECONDS;
+        $seconds = max(0, $seconds);
+
+        return DateTime::fromString($createdAt)
+            ->addSeconds($seconds)
+            ->isLessThanOrEqualTo(DateTime::createNow());
+    }
+
+    private function replaceExistingRequest(
+        ?PasswordChangeRequest $existingRequest,
+        PasswordChangeRequest $request
+    ): void {
+        if (!$existingRequest) {
+            $this->entityManager->saveEntity($request);
+
+            return;
+        }
+
+        // Keep the previous link valid until SMTP accepts its replacement,
+        // then rotate both records atomically within the current tenant.
+        $pdo = $this->entityManager->getPDO();
+        $pdo->beginTransaction();
+
+        try {
+            $this->entityManager->removeEntity($existingRequest);
+            $this->entityManager->saveEntity($request);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $e;
+        }
     }
 
     /**

@@ -134,6 +134,15 @@ $assert(
     str_contains($coreRecoverySource, 'expiresIn'),
     'Password recovery must render branded HTML with the configured expiry.'
 );
+$assert(
+    str_contains($coreRecoverySource, 'RESEND_COOLDOWN_SECONDS = 60') &&
+    str_contains($coreRecoverySource, 'replaceExistingRequest($existingRequest, $request)') &&
+    strpos($coreRecoverySource, '$this->send(') <
+        strpos($coreRecoverySource, '$this->replaceExistingRequest(') &&
+    str_contains($authConfigSource, 'PASSWORD_RECOVERY_RESEND_COOLDOWN_SECONDS') &&
+    !str_contains($coreRecoverySource, 'Denied for $userId, already sent.'),
+    'Recovery resend must enforce a configurable cooldown and rotate only after mail is accepted.'
+);
 
 $tenantResolverSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/application/Espo/Core/Tenant/TenantResolver.php'
