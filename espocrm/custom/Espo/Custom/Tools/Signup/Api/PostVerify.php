@@ -20,11 +20,15 @@ final class PostVerify implements Action
     {
         try {
             $this->support->assertJsonRequest($request);
-            $token = trim((string) ($request->getParsedBody()->token ?? ''));
-            if ($token === '') {
-                throw new SignupProblem(422, 'validation_failed', 'A verification token is required.');
+            $body = $request->getParsedBody();
+            $email = trim((string) ($body->email ?? ''));
+            $code = trim((string) ($body->code ?? ''));
+            if ($email === '' || $code === '') {
+                throw new SignupProblem(422, 'validation_failed', 'Email and verification code are required.');
             }
-            return $this->support->success($this->service->verify($token));
+            return $this->support->success(
+                $this->service->verify($email, $code, $this->support->fingerprint($request))
+            );
         } catch (Throwable $e) {
             return $this->support->problem($e);
         }

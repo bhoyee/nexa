@@ -45,12 +45,12 @@ final class SignupService
         $userId = $this->entityId();
         $emailId = $this->entityId();
         $operationId = $this->uuid();
-        $token = $this->token();
-        $tokenHash = $this->tokenHash($token);
+        $code = $this->verificationCode();
+        $tokenHash = $this->codeHash($data['email'], $code);
         $slug = $this->slug($data['company']);
         $now = (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
         $trialEnd = (new DateTimeImmutable('+14 days'))->format('Y-m-d H:i:s.u');
-        $verificationEnd = (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s.u');
+        $verificationEnd = (new DateTimeImmutable('+15 minutes'))->format('Y-m-d H:i:s.u');
 
         // Tenant, subscription, entitlements and owner identity form one unit.
         // Any failure rolls back the complete workspace rather than leaving partial data.
@@ -103,14 +103,13 @@ final class SignupService
 
         // Delivery is deliberately outside the transaction. A temporary SMTP
         // failure leaves a valid pending account that can use the resend flow.
-        $verificationUrl = $this->verificationUrl($token);
         $emailSent = $this->mailer->sendVerification(
             $tenantId,
             $slug,
             $data['company'],
             $data['firstName'],
             $data['email'],
-            $verificationUrl
+            $code
         );
 
         $result = [
@@ -121,38 +120,41 @@ final class SignupService
             'emailSent' => $emailSent,
         ];
         if ($this->canExposeLocalVerification()) {
-            $result['verificationUrl'] = $verificationUrl;
+            $result['verificationCode'] = $code;
         }
 
         return $result;
     }
 
     /** @return array<string, mixed> */
-    public function verify(string $token): array
+    public function verify(string $email, string $code, string $fingerprint): array
     {
-        if (!preg_match('/^[A-Za-z0-9_-]{43}$/', $token)) {
-            throw new SignupProblem(400, 'invalid_token', 'The verification link is invalid.');
+        $email = strtolower(trim($email));
+        $code = trim($code);
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || !preg_match('/^\d{8}$/', $code)) {
+            throw new SignupProblem(400, 'invalid_code', 'Enter the valid eight-digit verification code.');
         }
 
         $pdo = $this->entityManager->getPDO();
+        $this->enforceRateLimit($pdo, $fingerprint, 'verify', 8);
         $pdo->beginTransaction();
 
         // Lock the identity row so two clicks cannot activate the same tenant
         // concurrently or produce duplicate audit/provisioning transitions.
         try {
-            $statement = $pdo->prepare('SELECT * FROM nexa_tenant_owner_identity WHERE verification_token_hash = ? FOR UPDATE');
-            $statement->execute([$this->tokenHash($token)]);
+            $statement = $pdo->prepare('SELECT * FROM nexa_tenant_owner_identity WHERE normalized_email = ? AND verification_token_hash = ? FOR UPDATE');
+            $statement->execute([$email, $this->codeHash($email, $code)]);
             $owner = $statement->fetch(PDO::FETCH_ASSOC);
 
             if (!$owner) {
-                throw new SignupProblem(400, 'invalid_token', 'The verification link is invalid.');
+                throw new SignupProblem(400, 'invalid_code', 'The verification code is invalid.');
             }
             if ($owner['status'] === 'active') {
                 $pdo->commit();
                 return ['status' => 'active', 'loginUrl' => '/?login=1&source=signup'];
             }
             if (new DateTimeImmutable($owner['verification_expires_at']) < new DateTimeImmutable()) {
-                throw new SignupProblem(410, 'token_expired', 'This verification link has expired. Request a new link.');
+                throw new SignupProblem(410, 'code_expired', 'This verification code has expired. Request a new code.');
             }
 
             $this->insert($pdo, 'UPDATE nexa_tenant_owner_identity SET status = \'active\', verification_token_hash = NULL, verification_expires_at = NULL, verified_at = CURRENT_TIMESTAMP(6) WHERE id = ?', [$owner['id']]);
@@ -185,19 +187,18 @@ final class SignupService
         $statement->execute([$email]);
         $owner = $statement->fetch(PDO::FETCH_ASSOC);
 
-        $result = ['status' => 'accepted', 'message' => 'If a pending account exists, a new link has been sent.'];
+        $result = ['status' => 'accepted', 'message' => 'If a pending account exists, a new verification code has been sent.'];
         // Always return the same public response. This prevents the resend API
         // from becoming an email-address discovery endpoint.
         if (!$owner) {
             return $result;
         }
 
-        $token = $this->token();
-        $this->insert($pdo, 'UPDATE nexa_tenant_owner_identity SET verification_token_hash = ?, verification_expires_at = DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 24 HOUR) WHERE id = ?', [$this->tokenHash($token), $owner['id']]);
-        $url = $this->verificationUrl($token);
-        $this->mailer->sendVerification($owner['tenant_id'], $owner['slug'], $owner['display_name'], '', $email, $url);
+        $code = $this->verificationCode();
+        $this->insert($pdo, 'UPDATE nexa_tenant_owner_identity SET verification_token_hash = ?, verification_expires_at = DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 15 MINUTE) WHERE id = ?', [$this->codeHash($email, $code), $owner['id']]);
+        $this->mailer->sendVerification($owner['tenant_id'], $owner['slug'], $owner['display_name'], '', $email, $code);
         if ($this->canExposeLocalVerification()) {
-            $result['verificationUrl'] = $url;
+            $result['verificationCode'] = $code;
         }
 
         return $result;
@@ -274,31 +275,26 @@ final class SignupService
         $statement->execute($params);
     }
 
-    private function verificationUrl(string $token): string
-    {
-        return rtrim((string) $this->config->get('siteUrl', ''), '/') . '/#verify=' . rawurlencode($token);
-    }
-
     private function canExposeLocalVerification(): bool
     {
         // This escape hatch exists only for local development without SMTP.
         // Both an explicit flag and a localhost site URL are required.
-        if (filter_var(getenv('NEXA_SIGNUP_EXPOSE_VERIFICATION_URL') ?: false, FILTER_VALIDATE_BOOL) !== true) {
+        if (filter_var(getenv('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE') ?: false, FILTER_VALIDATE_BOOL) !== true) {
             return false;
         }
         $host = strtolower((string) parse_url((string) $this->config->get('siteUrl', ''), PHP_URL_HOST));
         return in_array($host, ['localhost', '127.0.0.1', 'nexa.local'], true);
     }
 
-    private function tokenHash(string $token): string
+    private function codeHash(string $email, string $code): string
     {
-        // Store only a keyed digest; a database leak must not reveal usable links.
-        return hash_hmac('sha256', $token, (string) $this->config->get('hashSecretKey', 'nexa'));
+        // Bind the short-lived code to its email and store only a keyed digest.
+        return hash_hmac('sha256', strtolower($email) . ':' . $code, (string) $this->config->get('hashSecretKey', 'nexa'));
     }
 
-    private function token(): string
+    private function verificationCode(): string
     {
-        return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        return str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
     }
 
     private function uuid(): string

@@ -30,7 +30,7 @@ final class SignupMailer
         string $company,
         string $firstName,
         string $address,
-        string $verificationUrl,
+        string $verificationCode,
     ): bool {
         if (!$this->emailSender->hasSystemSmtp()) {
             return false;
@@ -41,16 +41,20 @@ final class SignupMailer
         try {
             return $this->tenantContextStore->runWith(
                 new TenantContext($tenantId, $slug, 'self-service-signup', $company),
-                function () use ($company, $firstName, $address, $verificationUrl): bool {
+                function () use ($company, $firstName, $address, $verificationCode): bool {
                     /** @var Email $email */
                     $email = $this->entityManager->getNewEntity(Email::ENTITY_TYPE);
                     $name = htmlspecialchars($firstName !== '' ? $firstName : 'there', ENT_QUOTES, 'UTF-8');
                     $workspace = htmlspecialchars($company, ENT_QUOTES, 'UTF-8');
-                    $url = htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8');
+                    $code = htmlspecialchars($verificationCode, ENT_QUOTES, 'UTF-8');
+                    $body = '<p>Hello ' . $name . ',</p>' .
+                        '<p>Enter this code to activate <strong>' . $workspace . '</strong>:</p>' .
+                        '<p><strong>' . $code . '</strong></p>' .
+                        '<p>This code expires in 15 minutes. Never share it with anyone.</p>';
 
                     $email
                         ->setSubject('Verify your Nexa CRM workspace')
-                        ->setBody("<p>Hello {$name},</p><p>Verify your email to activate <strong>{$workspace}</strong>.</p><p><a href=\"{$url}\">Verify email and activate workspace</a></p><p>This link expires in 24 hours.</p>")
+                        ->setBody($body)
                         ->setIsHtml(true)
                         ->addToAddress($address);
 

@@ -11,4 +11,6 @@ All notable Nexa product changes are recorded in this file. Releases follow
 - A professional responsive pricing and self-service tenant signup experience.
 - Email-verified tenant provisioning with globally unique owner identities and rate limits.
 - Launch, Growth and Scale entitlement catalogs applied automatically during signup.
+- Responsive login, signup, email-code verification, password recovery and reset states.
+- Configuration-gated social authentication entry points for the M04 provider contracts.
 - A validated, tag-driven GitHub release workflow.

@@ -16,5 +16,17 @@
         "method": "post",
         "actionClassName": "Espo\\Custom\\Tools\\Signup\\Api\\PostResend",
         "noAuth": true
+    },
+    {
+        "route": "/Nexa/auth/providers",
+        "method": "get",
+        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\GetProviders",
+        "noAuth": true
+    },
+    {
+        "route": "/Nexa/auth/recovery",
+        "method": "post",
+        "actionClassName": "Espo\\Custom\\Tools\\Auth\\Api\\PostRecovery",
+        "noAuth": true
     }
 ]

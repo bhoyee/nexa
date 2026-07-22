@@ -25,7 +25,7 @@ $required = @(
     'scripts/dev/initialize-local-database.ps1', 'scripts/dev/complete-local-setup.ps1',
     'scripts/dev/setup-native-windows.ps1', 'scripts/dev/mariadb-version-policy.ps1',
     'scripts/dev/install-native-application.php', 'tests/development/MariaDbVersionPolicyTest.ps1',
-    'scripts/dev/configure-smtp.php', 'scripts/dev/install-development-seeds.php',
+    'scripts/dev/configure-smtp.php', 'scripts/dev/configure-auth-experience.php', 'scripts/dev/install-development-seeds.php',
     'scripts/dev/verify-local-install.php',
     'database/shared/testing/0000_espocrm_9_1_9_schema.sql',
     'database/shared/migrations/0001_initial_shared_saas.sql', 'database/shared/migrations/0002_expand_espocrm_tenant_scope.sql',
@@ -41,6 +41,7 @@ $required = @(
     'espocrm/bootstrap.php', 'espocrm/application/Espo/Core/Application.php',
     'espocrm/client/lib/espo-main.js', 'espocrm/client/res/templates/login.tpl',
     'tests/signup/SignupValidatorTest.php', 'tests/signup/SmtpEnvironmentTest.php',
+    'tests/signup/AuthExperienceTest.php', 'tests/browser/auth.spec.js', 'tests/browser/fixtures/auth.html',
     'espocrm/client/custom/tenant-workspace.js', 'espocrm/client/custom/css/tenant-workspace.css',
     'espocrm/client/custom/css/nexa-design-system.css',
     'espocrm/custom/Espo/Custom/Tools/App/AppParams/TenantIdentity.php',
@@ -103,9 +104,11 @@ $phpRoots = @(
 )
 $phpFiles = Get-ChildItem -LiteralPath $phpRoots -Filter '*.php' -File -Recurse -ErrorAction SilentlyContinue
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\bin\provision-demo-tenants.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'espocrm\application\Espo\EntryPoints\ChangePassword.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-development-seeds.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\verify-local-install.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-smtp.php')
+$phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\configure-auth-experience.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'scripts\dev\install-native-application.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\tenant\CrmDatabaseSmokeTest.php')
 $phpFiles += Get-Item -LiteralPath (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
@@ -127,6 +130,8 @@ if ($php) {
     if ($LASTEXITCODE -eq 0) { Pass 'Signup validation suite' } else { Fail 'Signup validation suite failed.' }
     & php (Join-Path $root 'tests\signup\SmtpEnvironmentTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'SMTP environment suite' } else { Fail 'SMTP environment suite failed.' }
+    & php (Join-Path $root 'tests\signup\AuthExperienceTest.php')
+    if ($LASTEXITCODE -eq 0) { Pass 'Authentication experience suite' } else { Fail 'Authentication experience suite failed.' }
     & php (Join-Path $root 'tests\architecture\ModuleConventionTest.php')
     if ($LASTEXITCODE -eq 0) { Pass 'Module convention suite' } else { Fail 'Module convention suite failed.' }
 }

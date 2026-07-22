@@ -36,6 +36,8 @@ use Espo\Core\EntryPoint\EntryPoint;
 use Espo\Core\EntryPoint\Traits\NoAuth;
 use Espo\Core\Api\Request;
 use Espo\Core\Api\Response;
+use Espo\Core\Tenant\TenantContextStore;
+use Espo\Core\Tenant\TenantResolver;
 use Espo\ORM\EntityManager;
 use Espo\Tools\UserSecurity\Password\ConfigProvider;
 
@@ -47,6 +49,8 @@ class ChangePassword implements EntryPoint
         private EntityManager $entityManager,
         private ActionRenderer $actionRenderer,
         private ConfigProvider $configProvider,
+        private TenantResolver $tenantResolver,
+        private TenantContextStore $tenantContextStore,
     ) {}
 
     public function run(Request $request, Response $response): void
@@ -57,12 +61,14 @@ class ChangePassword implements EntryPoint
             throw new BadRequest("No request ID.");
         }
 
-        $passwordChangeRequest = $this->entityManager
-            ->getRDBRepository(PasswordChangeRequest::ENTITY_TYPE)
-            ->where([
-                'requestId' => $requestId,
-            ])
-            ->findOne();
+        $tenant = $this->tenantResolver->resolvePasswordChangeRequest($requestId);
+        $passwordChangeRequest = $tenant === null ? null : $this->tenantContextStore->runWith(
+            $tenant,
+            fn () => $this->entityManager
+                ->getRDBRepository(PasswordChangeRequest::ENTITY_TYPE)
+                ->where(['requestId' => $requestId])
+                ->findOne()
+        );
 
         $strengthParams = [
             'passwordGenerateLength' => $this->configProvider->getGenerateLength(),

@@ -20,6 +20,9 @@ if ($LASTEXITCODE -ne 0) {
 & $PhpPath (Join-Path $PSScriptRoot 'configure-smtp.php') "--env=$EnvironmentFile"
 if ($LASTEXITCODE -ne 0) { throw 'System SMTP configuration failed.' }
 
+& $PhpPath (Join-Path $PSScriptRoot 'configure-auth-experience.php') "--env=$EnvironmentFile"
+if ($LASTEXITCODE -ne 0) { throw 'Authentication experience configuration failed.' }
+
 & $PhpPath (Join-Path $PSScriptRoot 'install-development-seeds.php')
 if ($LASTEXITCODE -ne 0) { throw 'Development seed installation failed.' }
 

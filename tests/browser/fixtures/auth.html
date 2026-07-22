@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nexa authentication states</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; display: grid; grid-template-columns: minmax(280px, 44%) 1fr; color: #172222; background: #f7f8f6; font: 15px/1.5 Arial, sans-serif; }
+        aside { min-height: 100vh; padding: 42px; display: flex; flex-direction: column; justify-content: space-between; color: #fff; background: #172222; }
+        aside strong { font-size: 20px; } aside h2 { max-width: 480px; margin: 0 0 12px; font-size: 44px; line-height: 1.1; } aside p { max-width: 480px; color: #c7d8d5; }
+        main { padding: 42px; display: grid; place-items: center; }
+        section { width: min(100%, 440px); } [hidden] { display: none !important; }
+        h1 { margin: 0 0 8px; font-size: 36px; } header p { margin: 0 0 26px; color: #5d6b69; }
+        form { display: grid; gap: 16px; } label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
+        input, select, button, a.button { width: 100%; min-height: 48px; padding: 11px 13px; border: 1px solid #bdc8c5; border-radius: 7px; background: #fff; color: #172222; font: inherit; }
+        button, a.button { display: grid; place-items: center; border-color: #0f766e; background: #0f766e; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; }
+        button.secondary { border-color: #bdc8c5; background: #fff; color: #172222; }
+        input:focus, button:focus, a:focus { outline: 3px solid rgba(15,118,110,.28); outline-offset: 2px; }
+        .links { display: flex; justify-content: space-between; gap: 16px; margin-top: 18px; } a { color: #0f766e; font-weight: 700; }
+        .social { display: grid; gap: 10px; margin-bottom: 18px; } .divider { margin: 16px 0; color: #5d6b69; text-align: center; }
+        .message { margin-bottom: 18px; padding: 12px; border-left: 3px solid #0f766e; background: #eaf5f1; }
+        .message.error { border-color: #b83c35; background: #fff1ef; }
+        .state { text-align: center; } .state .icon { width: 64px; height: 64px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 50%; background: #dcefeb; color: #0f766e; font-size: 28px; font-weight: 700; }
+        .code { font-size: 24px; font-weight: 700; letter-spacing: 6px; text-align: center; }
+        @media (max-width: 760px) { body { display: block; } aside { min-height: 150px; padding: 24px; } aside div:last-child { display: none; } main { padding: 30px 20px; } h1 { font-size: 30px; } }
+    </style>
+</head>
+<body>
+<aside><strong>Nexa CRM</strong><div><h2>Customer relationships, made clear.</h2><p>One secure workspace for every customer conversation.</p></div></aside>
+<main>
+    <section data-state="login">
+        <header><h1>Welcome back</h1><p>Sign in to continue to Nexa CRM.</p></header>
+        <div class="social" data-social hidden><button class="secondary" type="button">Continue with Google</button></div>
+        <div class="divider" data-social-divider hidden>or continue with your account</div>
+        <form data-login><label>Username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign in</button></form>
+        <div class="links"><a href="?state=recovery">Forgot password?</a><a href="?state=signup&plan=growth">Create account</a></div>
+    </section>
+    <section data-state="signup" hidden>
+        <header><h1>Create your workspace</h1><p>Start a secure 14-day trial. No card required.</p></header>
+        <form data-signup><label>Plan<select name="plan"><option value="launch">Launch</option><option value="growth">Growth</option><option value="scale">Scale</option></select></label><label>Company<input name="company" autocomplete="organization" required></label><label>Work email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><button type="submit">Create workspace</button></form>
+    </section>
+    <section class="state" data-state="verify" hidden><div class="icon" aria-hidden="true">8</div><header><h1>Enter your verification code</h1><p>We sent an eight-digit code to j***@example.test. It expires in 15 minutes.</p></header><form data-verify><label>Verification code<input class="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required></label><button type="submit">Verify and continue</button><button class="secondary" type="button">Send a new code</button></form></section>
+    <section data-state="recovery" hidden><header><h1>Reset your password</h1><p>Enter the username and email used for your workspace.</p></header><form data-recovery><label>Username<input name="username" autocomplete="username" required></label><label>Email address<input name="email" type="email" autocomplete="email" required></label><button type="submit">Send reset instructions</button></form></section>
+    <section data-state="reset" hidden><header><h1>Choose a new password</h1><p>Your reset session is protected and can only be used once.</p></header><form><label>New password<input type="password" autocomplete="new-password" required></label><label>Confirm password<input type="password" autocomplete="new-password" required></label><button type="submit">Update password</button></form></section>
+    <section class="state" data-state="success" hidden><div class="icon" aria-hidden="true">✓</div><header><h1>Workspace active</h1><p>Your tenant is ready. Continue to the shared sign-in page.</p></header><a class="button" href="?state=login">Continue to sign in</a></section>
+    <section class="state" data-state="expired" hidden><div class="icon" aria-hidden="true">!</div><header><h1>This reset session is unavailable</h1><p>The link may have expired or already been used. Request a new password reset to continue.</p></header><a class="button" href="?state=recovery">Request a new reset</a></section>
+    <section class="state" data-state="failure" hidden><div class="icon" aria-hidden="true">!</div><h1>We could not verify that code</h1><div class="message error" role="alert">That code is invalid or has expired.</div><a class="button" href="?state=verify">Try another code</a></section>
+</main>
+<script>
+    const params = new URLSearchParams(location.search);
+    const state = params.get('state') || 'login';
+    document.querySelectorAll('[data-state]').forEach(panel => panel.hidden = panel.dataset.state !== state);
+    const plan = params.get('plan');
+    const planField = document.querySelector('[data-signup] [name="plan"]');
+    if (planField && ['launch', 'growth', 'scale'].includes(plan)) planField.value = plan;
+    if (params.get('provider') === 'google') {
+        document.querySelector('[data-social]').hidden = false;
+        document.querySelector('[data-social-divider]').hidden = false;
+    }
+    document.querySelector('[data-signup]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=verify'; });
+    document.querySelector('[data-verify]')?.addEventListener('submit', event => { event.preventDefault(); location.search = '?state=success'; });
+    document.querySelector('[data-recovery]')?.addEventListener('submit', event => { event.preventDefault(); event.currentTarget.innerHTML = '<div class="message" role="status">If the details match an account, password reset instructions will be sent.</div>'; });
+</script>
+</body>
+</html>

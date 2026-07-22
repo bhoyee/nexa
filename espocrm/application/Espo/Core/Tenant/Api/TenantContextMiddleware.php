@@ -21,19 +21,26 @@ final class TenantContextMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // A new customer has no tenant context yet. Only these exact POST routes
-        // may enter the audited platform context needed to create one; every
-        // other request must resolve an existing tenant below.
+        // Authentication begins before a tenant context exists. Only the exact
+        // allow-listed public routes may enter platform context; every other
+        // request must resolve an existing tenant below.
         if ($this->isPublicPlatformRoute($request)) {
             return $this->platformExecutionGateway->run(
-                'public self-service tenant registration',
+                'public authentication and tenant registration',
                 fn () => $handler->handle($request)
             );
         }
 
+        $resetRequestId = $this->extractPasswordResetRequestId($request);
         $identifier = $this->extractLoginIdentifier($request);
 
-        if ($identifier !== null) {
+        if ($resetRequestId !== null) {
+            $tenant = $this->tenantResolver->resolvePasswordChangeRequest($resetRequestId);
+
+            if ($tenant === null) {
+                return $this->errorResponse(401, 'Unauthorized');
+            }
+        } elseif ($identifier !== null) {
             $tenant = $this->tenantResolver->resolveLoginIdentifier($identifier);
 
             if ($tenant === null) {
@@ -63,17 +70,18 @@ final class TenantContextMiddleware implements MiddlewareInterface
 
     private function isPublicPlatformRoute(ServerRequestInterface $request): bool
     {
-        if (strtoupper($request->getMethod()) !== 'POST') {
-            return false;
-        }
-
+        $method = strtoupper($request->getMethod());
         $path = '/' . trim($request->getUri()->getPath(), '/');
 
-        return in_array($path, [
+        $postRoutes = [
             '/api/v1/Nexa/signup',
             '/api/v1/Nexa/signup/verify',
             '/api/v1/Nexa/signup/resend',
-        ], true);
+            '/api/v1/Nexa/auth/recovery',
+        ];
+
+        return ($method === 'POST' && in_array($path, $postRoutes, true)) ||
+            ($method === 'GET' && $path === '/api/v1/Nexa/auth/providers');
     }
 
     private function extractLoginIdentifier(ServerRequestInterface $request): ?string
@@ -107,5 +115,20 @@ final class TenantContextMiddleware implements MiddlewareInterface
         $identifier = trim(substr($decoded, 0, $separator));
 
         return $identifier !== '' ? $identifier : null;
+    }
+
+    private function extractPasswordResetRequestId(ServerRequestInterface $request): ?string
+    {
+        $path = '/' . trim($request->getUri()->getPath(), '/');
+        if (strtoupper($request->getMethod()) !== 'POST' ||
+            $path !== '/api/v1/User/changePasswordByRequest') {
+            return null;
+        }
+
+        $body = $request->getParsedBody();
+        $requestId = is_array($body) ? ($body['requestId'] ?? null) :
+            (is_object($body) ? ($body->requestId ?? null) : null);
+
+        return is_string($requestId) && trim($requestId) !== '' ? trim($requestId) : null;
     }
 }

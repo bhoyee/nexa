@@ -60,6 +60,30 @@ final class TenantResolver
         return $this->contextFromRow($rows[0], 'login-identity');
     }
 
+    public function resolvePasswordChangeRequest(string $requestId): ?TenantContext
+    {
+        $requestId = trim($requestId);
+        if ($requestId === '' || strlen($requestId) > 64) {
+            return null;
+        }
+
+        // The opaque, single-use request ID is the only tenant signal available
+        // on the shared reset domain. Resolve it before tenant-scoped ORM work.
+        $statement = $this->entityManager->getPDO()->prepare(
+            'SELECT DISTINCT t.id, t.slug, t.display_name FROM password_change_request pcr ' .
+            'INNER JOIN nexa_tenant t ON t.id = pcr.tenant_id ' .
+            'WHERE pcr.request_id = :requestId AND pcr.deleted = 0 AND t.status = :active LIMIT 2'
+        );
+        $statement->execute(['requestId' => $requestId, 'active' => 'active']);
+        $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) !== 1) {
+            return null;
+        }
+
+        return $this->contextFromRow($rows[0], 'password-reset-request');
+    }
+
     /** @param array{id: string, slug: string, display_name: string} $row */
     private function contextFromRow(array $row, string $source): TenantContext
     {

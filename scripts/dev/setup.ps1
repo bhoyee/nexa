@@ -46,7 +46,7 @@ else {
     $content = Add-EnvValue $content 'DEMO_TENANT_A_ADMIN_PASSWORD' $(if ($legacyPassword) { $legacyPassword } else { New-RandomSecret })
     $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_USERNAME' 'demo-admin-b'
     $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_PASSWORD' (New-RandomSecret)
-    $content = Add-EnvValue $content 'NEXA_SIGNUP_EXPOSE_VERIFICATION_URL' 'true'
+    $content = Add-EnvValue $content 'NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE' 'true'
     $content = [regex]::Replace($content, '(?m)^DEMO_TENANT_ADMIN_(USERNAME|PASSWORD)=.*\r?\n?', '')
     Set-Content -LiteralPath $envPath -Value $content.TrimEnd("`r", "`n") -Encoding ASCII
     Write-Host 'Kept the existing .env and ensured separate demo tenant credentials.'
