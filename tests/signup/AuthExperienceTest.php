@@ -109,6 +109,32 @@ $assert(
     'Recovery must resolve the tenant from the globally reserved email without requesting a username.'
 );
 
+$recoveryEmailBody = file_get_contents(
+    dirname(__DIR__, 2) .
+    '/espocrm/custom/Espo/Custom/Resources/templates/passwordChangeLink/en_US/User/body.tpl'
+);
+$recoveryEmailSubject = file_get_contents(
+    dirname(__DIR__, 2) .
+    '/espocrm/custom/Espo/Custom/Resources/templates/passwordChangeLink/en_US/User/subject.tpl'
+);
+$coreRecoverySource = file_get_contents(
+    dirname(__DIR__, 2) .
+    '/espocrm/application/Espo/Tools/UserSecurity/Password/RecoveryService.php'
+);
+$assert(
+    str_contains($recoveryEmailSubject, 'Reset your Nexa CRM password') &&
+    str_contains($recoveryEmailBody, '<table role="presentation"') &&
+    str_contains($recoveryEmailBody, 'href="{{link}}"') &&
+    str_contains($recoveryEmailBody, '{{expiresIn}}') &&
+    str_contains($recoveryEmailBody, 'If you did not request a password reset'),
+    'Password recovery email must retain the branded, responsive and security-aware layout.'
+);
+$assert(
+    str_contains($coreRecoverySource, 'setIsHtml(true)') &&
+    str_contains($coreRecoverySource, 'expiresIn'),
+    'Password recovery must render branded HTML with the configured expiry.'
+);
+
 $tenantResolverSource = file_get_contents(
     dirname(__DIR__, 2) . '/espocrm/application/Espo/Core/Tenant/TenantResolver.php'
 );

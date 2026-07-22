@@ -432,6 +432,8 @@ class RecoveryService
         $link = $siteUrl . '?entryPoint=changePassword&id=' . $requestId;
 
         $data['link'] = $link;
+        $data['expiresIn'] = $this->config->get('passwordRecoveryRequestLifetime') ??
+            self::REQUEST_LIFETIME;
 
         $htmlizer = $this->htmlizerFactory->create(true);
 
@@ -441,6 +443,7 @@ class RecoveryService
         $email
             ->setSubject($subject)
             ->setBody($body)
+            ->setIsHtml(true)
             ->addToAddress($emailAddress);
 
         $email->set([
