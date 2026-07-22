@@ -69,3 +69,14 @@ test('progressive email signup carries the selected plan into workspace details'
     await expect(page.locator('[data-state="signup-profile"]')).toBeVisible();
     await expect(page.locator('[data-progressive-profile] [name="plan"]')).toHaveValue('scale');
 });
+
+for (const state of ['mfa', 'mfa-recovery']) {
+    test(`MFA state ${state} is keyboard and screen-reader accessible`, async ({page}) => {
+        await page.goto(`${fixture}?state=${state}`);
+        await expect(page.locator(`[data-state="${state}"]`)).toBeVisible();
+        expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        await page.keyboard.press('Tab');
+        await expect(page.locator(':focus')).toBeVisible();
+    });
+}

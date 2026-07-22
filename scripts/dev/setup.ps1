@@ -15,6 +15,13 @@ function New-RandomSecret {
     return [Convert]::ToBase64String($bytes).Replace('+', 'A').Replace('/', 'B').TrimEnd('=')
 }
 
+function New-RandomEncryptionKey {
+    $bytes = New-Object byte[] 32
+    $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $generator.GetBytes($bytes) } finally { $generator.Dispose() }
+    return [Convert]::ToBase64String($bytes)
+}
+
 function Get-EnvValue([string] $Content, [string] $Name) {
     $match = [regex]::Match($Content, '(?m)^' + [regex]::Escape($Name) + '=(.*)$')
     if ($match.Success) { return $match.Groups[1].Value.Trim() }
@@ -34,6 +41,7 @@ if (-not (Test-Path $envPath)) {
     $content = $content.Replace('replace_with_a_strong_admin_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_tenant_a_admin_password', (New-RandomSecret))
     $content = $content.Replace('replace_with_a_tenant_b_admin_password', (New-RandomSecret))
+    $content = $content.Replace('replace_with_a_base64_32_byte_key', (New-RandomEncryptionKey))
     Set-Content -LiteralPath $envPath -Value $content -Encoding ASCII
     Write-Host 'Created .env with local random credentials. Do not commit it.' -ForegroundColor Green
 }
@@ -47,6 +55,7 @@ else {
     $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_USERNAME' 'demo-admin-b'
     $content = Add-EnvValue $content 'DEMO_TENANT_B_ADMIN_PASSWORD' (New-RandomSecret)
     $content = Add-EnvValue $content 'NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE' 'true'
+    $content = Add-EnvValue $content 'NEXA_AUTH_SECRET_KEY' (New-RandomEncryptionKey)
     $content = [regex]::Replace($content, '(?m)^DEMO_TENANT_ADMIN_(USERNAME|PASSWORD)=.*\r?\n?', '')
     Set-Content -LiteralPath $envPath -Value $content.TrimEnd("`r", "`n") -Encoding ASCII
     Write-Host 'Kept the existing .env and ensured separate demo tenant credentials.'

@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'nexa/sso-runtime',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '86559fde3493882fafe52eb2e11eb04a281318fe',
+        'type' => 'project',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => false,
+    ),
+    'versions' => array(
+        'nexa/sso-runtime' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '86559fde3493882fafe52eb2e11eb04a281318fe',
+            'type' => 'project',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'onelogin/php-saml' => array(
+            'pretty_version' => '4.3.2',
+            'version' => '4.3.2.0',
+            'reference' => '26b3a47349415e5b7aa300ba4ab7fc316c65f19e',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../onelogin/php-saml',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'robrichards/xmlseclibs' => array(
+            'pretty_version' => '3.1.5',
+            'version' => '3.1.5.0',
+            'reference' => '03062be78178cbb5e8f605cd255dc32a14981f92',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../robrichards/xmlseclibs',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);

@@ -1,0 +1,5 @@
+{
+    "Totp": {
+        "loginClassName": "Espo\\Custom\\Tools\\Auth\\NexaTotpLogin"
+    }
+}

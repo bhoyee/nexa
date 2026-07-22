@@ -33,6 +33,18 @@
             <form id="login-form" class="modern-login-form">
                 <div class="modern-social-providers" data-auth-providers hidden aria-label="Social account sign in"></div>
                 <div class="modern-auth-divider" data-auth-divider hidden><span>or continue with your account</span></div>
+                <div class="modern-enterprise-discovery">
+                    <button type="button" class="modern-sso-toggle" data-sso-toggle aria-expanded="false" aria-controls="enterprise-sso-fields">Use company SSO</button>
+                    <div id="enterprise-sso-fields" class="modern-sso-fields" data-sso-fields hidden>
+                        <label for="sso-email">Work email</label>
+                        <div class="modern-sso-row">
+                            <div class="modern-login-input"><span class="far fa-envelope" aria-hidden="true"></span><input class="form-control" id="sso-email" type="email" autocomplete="email" maxlength="190"></div>
+                            <button type="button" class="btn btn-default" data-sso-discover>Continue</button>
+                        </div>
+                        <div class="modern-recovery-message" data-sso-message role="status" aria-live="polite" hidden></div>
+                        <div class="modern-sso-providers" data-sso-providers></div>
+                    </div>
+                </div>
                 {{#if hasSignIn}}
                 <div class="cell modern-login-provider" data-name="sign-in">
                     <button class="btn btn-default" id="sign-in" type="button">{{signInText}}</button>

@@ -57,6 +57,8 @@
     <section class="state" data-state="success" hidden><div class="icon" aria-hidden="true">✓</div><header><h1>Workspace active</h1><p>Your tenant is ready. Continue to the shared sign-in page.</p></header><a class="button" href="?state=login">Continue to sign in</a></section>
     <section class="state" data-state="expired" hidden><div class="icon" aria-hidden="true">!</div><header><h1>This reset session is unavailable</h1><p>The link may have expired or already been used. Request a new password reset to continue.</p></header><a class="button" href="?state=recovery">Request a new reset</a></section>
     <section class="state" data-state="failure" hidden><div class="icon" aria-hidden="true">!</div><h1>We could not verify that code</h1><div class="message error" role="alert">That code is invalid or has expired.</div><a class="button" href="?state=verify">Try another code</a></section>
+    <section data-state="mfa" hidden><header><h1>Confirm it is you</h1><p>Enter a code from your authenticator app or use one unused recovery code.</p></header><form><label>Authentication or recovery code<input name="code" autocomplete="one-time-code" required aria-describedby="mfa-help"></label><p id="mfa-help">Recovery codes use the format XXXX-XXXX-XXXX.</p><button type="submit">Verify identity</button></form></section>
+    <section class="state" data-state="mfa-recovery" hidden><div class="icon" aria-hidden="true">#</div><header><h1>Save your recovery codes</h1><p>Each code works once. Store them somewhere secure before continuing.</p></header><div class="message" role="status">Ten new recovery codes were generated.</div><button type="button">Download codes</button></section>
 </main>
 <script>
     const params = new URLSearchParams(location.search);

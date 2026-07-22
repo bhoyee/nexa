@@ -1,0 +1,18 @@
+{
+    "onFailHookClassNameList": [
+        "__APPEND__",
+        "Espo\\Custom\\Tools\\Auth\\AuthenticationAuditHook"
+    ],
+    "onLoginHookClassNameList": [
+        "__APPEND__",
+        "Espo\\Custom\\Tools\\Auth\\TenantAuthPolicyHook"
+    ],
+    "onSuccessHookClassNameList": [
+        "__APPEND__",
+        "Espo\\Custom\\Tools\\Auth\\AuthenticationAuditHook"
+    ],
+    "onSecondStepRequiredHookClassNameList": [
+        "__APPEND__",
+        "Espo\\Custom\\Tools\\Auth\\AuthenticationAuditHook"
+    ]
+}
