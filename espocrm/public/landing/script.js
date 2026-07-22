@@ -147,9 +147,13 @@
     const verifying = document.querySelector('[data-signup-verifying]');
     const success = document.querySelector('[data-signup-success]');
     const verificationError = document.querySelector('[data-signup-error]');
-    const localVerification = document.querySelector('[data-local-verification]');
+    const verificationForm = document.querySelector('[data-verification-form]');
+    const localCode = document.querySelector('[data-local-code]');
+    const signupSocial = document.querySelector('[data-signup-social]');
+    const signupDivider = document.querySelector('[data-signup-divider]');
     const stateViews = [form, pending, verifying, success, verificationError];
     let signupEmail = '';
+    let selectedPlan = 'growth';
 
     const showState = target => stateViews.forEach(view => {
         if (view) view.hidden = view !== target;
@@ -158,11 +162,38 @@
     // The dialog is a small state machine: form, pending verification,
     // verifying, active, or error. Only one state is visible at a time.
     const openDialog = (plan = 'growth') => {
+        selectedPlan = plan;
         form.elements.plan.value = plan;
         showState(form);
         if (!dialog.open) dialog.showModal();
         window.setTimeout(() => form.elements.company.focus(), 50);
     };
+
+    fetch('/api/v1/Nexa/auth/providers', {credentials: 'same-origin'})
+        .then(response => response.ok ? response.json() : {providers: []})
+        .then(({providers = []}) => {
+            if (!signupSocial || providers.length === 0) return;
+            providers.forEach(provider => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'social-auth-button';
+                button.dataset.provider = provider.key;
+                button.textContent = 'Continue with ' + provider.label;
+                button.addEventListener('click', () => {
+                    const target = new URL(provider.startUrl, location.origin);
+                    target.searchParams.set('intent', 'signup');
+                    target.searchParams.set('plan', selectedPlan);
+                    location.assign(target);
+                });
+                signupSocial.append(button);
+            });
+            signupSocial.hidden = false;
+            signupDivider.hidden = false;
+        })
+        .catch(() => {});
+    form?.elements.plan.addEventListener('change', event => {
+        selectedPlan = event.currentTarget.value;
+    });
 
     // Enhance the server-rendered pricing cards with live plan limits and
     // signup actions while preserving their basic no-JavaScript fallback.
@@ -234,15 +265,14 @@
             const result = await api('', payload);
             signupEmail = String(values.email).trim().toLowerCase();
             document.querySelector('[data-pending-email]').textContent = result.email;
-            // Production receives verification by SMTP. The URL is returned
-            // only by an explicitly enabled localhost development environment.
-            if (result.verificationUrl) {
-                localVerification.href = result.verificationUrl;
-                localVerification.hidden = false;
+            if (result.verificationCode) {
+                localCode.textContent = 'Local verification code: ' + result.verificationCode;
+                localCode.hidden = false;
             } else {
-                localVerification.hidden = true;
+                localCode.hidden = true;
             }
             showState(pending);
+            window.setTimeout(() => verificationForm.elements.code.focus(), 50);
         } catch (error) {
             formMessage.textContent = error.message;
             formMessage.hidden = false;
@@ -264,9 +294,9 @@
         try {
             const result = await api('/resend', {email: signupEmail});
             message.textContent = result.message;
-            if (result.verificationUrl) {
-                localVerification.href = result.verificationUrl;
-                localVerification.hidden = false;
+            if (result.verificationCode) {
+                localCode.textContent = 'Local verification code: ' + result.verificationCode;
+                localCode.hidden = false;
             }
         } catch (error) {
             message.textContent = error.message;
@@ -275,26 +305,32 @@
         }
     });
 
-    const verifyToken = async token => {
-        if (!dialog.open) dialog.showModal();
-        // Remove the fragment immediately. Verification tokens use a fragment
-        // so they are never sent in the initial HTTP request or access logs.
+    verificationForm?.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!verificationForm.reportValidity()) return;
+        const submit = verificationForm.querySelector('[type="submit"]');
+        const message = document.querySelector('[data-code-message]');
+        submit.disabled = true;
+        message.hidden = true;
         showState(verifying);
-        history.replaceState(null, '', `${location.pathname}${location.search}`);
         try {
-            await api('/verify', {token});
+            await api('/verify', {
+                email: signupEmail,
+                code: verificationForm.elements.code.value,
+            });
             showState(success);
         } catch (error) {
             document.querySelector('[data-verification-error]').textContent = error.message;
             showState(verificationError);
+        } finally {
+            submit.disabled = false;
         }
-    };
+    });
 
-    document.querySelector('[data-back-to-signup]')?.addEventListener('click', () => showState(form));
-    const verificationToken = new URLSearchParams(location.hash.slice(1)).get('verify');
+    document.querySelector('[data-back-to-code]')?.addEventListener('click', () => {
+        showState(pending);
+        window.setTimeout(() => verificationForm.elements.code.focus(), 50);
+    });
     const requestedPlan = new URLSearchParams(location.search).get('signup');
-    // Query links support direct plan campaigns; verification takes priority
-    // when both a plan query and a token fragment are present.
-    if (!verificationToken && plans.some(plan => plan.key === requestedPlan)) openDialog(requestedPlan);
-    if (verificationToken) verifyToken(verificationToken);
+    if (plans.some(plan => plan.key === requestedPlan)) openDialog(requestedPlan);
 })();

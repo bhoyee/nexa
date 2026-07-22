@@ -5,8 +5,8 @@ This inventory is the redesign map for the authenticated application, unauthenti
 | Area | Routes and screens | Desktop behavior | Tablet and mobile behavior | Shared foundations | Module | Decision |
 |---|---|---|---|---|---|---|
 | Public | `/`, pricing anchors, feature sections | Full acquisition page and persistent header actions | Collapsed header, stacked content and touch-sized actions | Public header, footer, plan and feature patterns | M02 | Replace |
-| Authentication | `?login=1`, password recovery | Centered branded authentication workflow | Single-column form with visible labels and errors | Auth layout, form, alert, loading state | M03 | Replace |
-| Signup | `?signup=1`, email verification, resend | Plan-aware account and workspace creation | Single-column progressive workflow | Auth layout, form, OTP input, success state | M03/M04 | Extend |
+| Authentication | `?login=1`, password recovery and secure reset | Branded sign-in, neutral recovery and configuration-gated social entry points | Single-column form with visible labels, focus order and errors | Auth layout, form, alert, loading and expiry states | M02/M04 | Replace |
+| Signup | `?signup=<plan>`, email-code verification and resend | Plan-aware account and workspace creation with an eight-digit email code | Single-column progressive workflow with one-time-code input | Auth layout, form, code input, success and failure states | M02/M04 | Extend |
 | Home | `#Home`, dashboard layouts and dashlets | Persistent sidebar, header and configurable dashboard | Drawer navigation and single-column dashlets | App shell, toolbar, grid, empty/loading states | M02/M19 | Replace |
 | CRM lists | Accounts, Contacts, Leads, Opportunities, Cases, Targets | Dense table, filters, bulk actions and saved views | Responsive rows, horizontal containment and compact filters | Table, filters, toolbar, pagination | M05/M06 | Extend |
 | CRM records | create, detail, edit, relationship panels, stream | Two-column record workspace and related panels | One-column sections and sticky primary action | Form, field, tabs, activity stream, dialog | M05/M06 | Extend |

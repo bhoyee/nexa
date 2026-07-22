@@ -148,6 +148,8 @@
         <div class="signup-content">
             <form class="signup-form" data-signup-form novalidate>
                 <div class="form-message" data-form-message role="alert" hidden></div>
+                <div class="signup-social field-wide" data-signup-social hidden aria-label="Social account signup"></div>
+                <div class="auth-divider field-wide" data-signup-divider hidden><span>or continue with email</span></div>
                 <label>Plan<select name="plan" required><option value="launch">Launch</option><option value="growth">Growth</option><option value="scale">Scale</option></select></label>
                 <label class="field-wide">Company name<input name="company" type="text" minlength="2" maxlength="120" autocomplete="organization" required><small data-error-for="company"></small></label>
                 <label>First name<input name="firstName" type="text" minlength="2" maxlength="100" autocomplete="given-name" required><small data-error-for="firstName"></small></label>
@@ -160,14 +162,21 @@
                 <button class="button button-coral field-wide signup-submit" type="submit"><span>Create my workspace</span><span class="fas fa-arrow-right" aria-hidden="true"></span></button>
                 <p class="signin-link field-wide">Already have a workspace? <a href="/?login=1&amp;source=landing">Sign in</a></p>
             </form>
-            <section class="signup-state" data-signup-pending hidden>
-                <span class="state-icon"><span class="fas fa-envelope" aria-hidden="true"></span></span><p class="eyebrow dark">Check your inbox</p><h3>Verify your email</h3><p>We sent an activation link to <strong data-pending-email></strong>. It expires in 24 hours.</p>
-                <a class="button button-coral local-verification" data-local-verification hidden>Open local verification link</a>
-                <button class="text-button" type="button" data-resend>Resend verification email</button><p class="state-note" data-resend-message role="status"></p>
+            <section class="signup-state" data-signup-pending hidden aria-labelledby="verification-title">
+                <span class="state-icon"><span class="fas fa-envelope" aria-hidden="true"></span></span><p class="eyebrow dark">Check your inbox</p><h3 id="verification-title">Enter your verification code</h3><p>We sent an eight-digit code to <strong data-pending-email></strong>. It expires in 15 minutes.</p>
+                <form data-verification-form novalidate>
+                    <label for="signup-verification-code">Verification code</label>
+                    <input id="signup-verification-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" aria-describedby="verification-help" required>
+                    <small id="verification-help">Enter all eight digits from the email.</small>
+                    <div class="form-message" data-code-message role="alert" hidden></div>
+                    <button class="button button-coral" type="submit"><span>Verify and continue</span><span class="fas fa-arrow-right" aria-hidden="true"></span></button>
+                </form>
+                <p class="local-code" data-local-code hidden></p>
+                <button class="text-button" type="button" data-resend>Send a new code</button><p class="state-note" data-resend-message role="status" aria-live="polite"></p>
             </section>
             <section class="signup-state" data-signup-verifying hidden><span class="state-icon loading"><span class="fas fa-circle-notch fa-spin" aria-hidden="true"></span></span><h3>Activating your workspace</h3><p>We are confirming your email and applying your plan.</p></section>
             <section class="signup-state" data-signup-success hidden><span class="state-icon success"><span class="fas fa-check" aria-hidden="true"></span></span><p class="eyebrow dark">Workspace active</p><h3>Welcome to Nexa CRM</h3><p>Your tenant is ready. Sign in with the email and password you just created.</p><a class="button button-coral" href="/?login=1&amp;source=signup">Continue to sign in</a></section>
-            <section class="signup-state" data-signup-error hidden><span class="state-icon error"><span class="fas fa-exclamation" aria-hidden="true"></span></span><h3>We could not verify this link</h3><p data-verification-error></p><button class="button button-dark" type="button" data-back-to-signup>Back to signup</button></section>
+            <section class="signup-state" data-signup-error hidden><span class="state-icon error"><span class="fas fa-exclamation" aria-hidden="true"></span></span><h3>We could not verify that code</h3><p data-verification-error></p><button class="button button-dark" type="button" data-back-to-code>Try again</button></section>
         </div>
     </div>
 </dialog>

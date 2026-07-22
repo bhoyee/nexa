@@ -288,6 +288,11 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
 .terms small { grid-column: 2; }
 .honeypot { position: fixed !important; left: -10000px !important; opacity: 0; }
 .form-message { grid-column: 1 / -1; padding: 11px 13px; border-left: 3px solid #b83c35; color: #7e2925; background: #fff1ef; font-size: 13px; }
+.signup-social { display: grid; gap: 10px; }
+.social-auth-button { min-height: 46px; padding: 10px 16px; border: 1px solid #aebcba; border-radius: 5px; color: var(--ink); background: #fff; font-weight: 750; }
+.social-auth-button:hover, .social-auth-button:focus-visible { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(8, 127, 120, .12); }
+.auth-divider { display: flex; align-items: center; gap: 12px; color: var(--ink-soft); font-size: 12px; text-align: center; }
+.auth-divider::before, .auth-divider::after { content: ''; height: 1px; flex: 1; background: var(--line); }
 .signup-submit { width: 100%; margin-top: 2px; }
 .signup-submit.loading span:first-child::after { content: '...'; }
 .signup-submit:disabled { cursor: wait; opacity: .72; }
@@ -296,6 +301,13 @@ details p { padding: 0 48px 24px 0; color: var(--ink-soft); font-size: 14px; }
 .signup-state { width: min(100%, 480px); margin: auto; text-align: center; }
 .signup-state h3 { margin: 12px 0; font-size: 30px; }
 .signup-state > p:not(.eyebrow) { color: var(--ink-soft); }
+.signup-state form { margin: 24px auto 0; display: grid; gap: 10px; text-align: left; }
+.signup-state form label { color: #314140; font-size: 12px; font-weight: 740; }
+.signup-state form input { width: 100%; height: 52px; padding: 8px 14px; border: 1px solid #cbd7d4; border-radius: 5px; color: var(--ink); background: #fff; font-size: 24px; font-weight: 750; letter-spacing: 6px; text-align: center; }
+.signup-state form input:focus { outline: 0; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(8, 127, 120, .12); }
+.signup-state form small { color: var(--ink-soft); font-size: 11px; }
+.signup-state form .button { width: 100%; margin-top: 8px; }
+.local-code { margin-top: 14px; padding: 10px; border: 1px dashed var(--teal); color: var(--teal) !important; background: var(--teal-soft); font-family: monospace; font-weight: 700; }
 .state-icon { width: 64px; height: 64px; margin: 0 auto 24px; display: grid; place-items: center; border-radius: 50%; color: var(--teal); background: var(--teal-soft); font-size: 24px; }
 .state-icon.success { color: #fff; background: var(--green); }
 .state-icon.error { color: #fff; background: #b83c35; }

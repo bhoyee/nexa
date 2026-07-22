@@ -138,7 +138,7 @@ body.modern-login-page #main { min-height: 100vh; }
 
 .modern-login-mobile-brand { display: none; color: #172222; }
 
-#login.modern-login-panel {
+.modern-login-panel {
     width: min(100%, 430px);
     margin: 0;
     padding: 0;
@@ -147,6 +147,12 @@ body.modern-login-page #main { min-height: 100vh; }
     background: transparent;
     box-shadow: none;
 }
+
+.modern-social-providers { display: grid; gap: 10px; margin-bottom: 20px; }
+.modern-social-button { min-height: 50px; border: 1px solid #b8c4c1; border-radius: 8px; color: #172222; background: #fff; font-size: 14px; font-weight: 700; }
+.modern-social-button:hover, .modern-social-button:focus { border-color: #0f766e; color: #0f766e; box-shadow: 0 0 0 3px rgba(15, 118, 110, .14); }
+.modern-auth-divider { margin: 0 0 20px; display: flex; align-items: center; gap: 12px; color: #7b8886; font-size: 12px; text-align: center; }
+.modern-auth-divider::before, .modern-auth-divider::after { content: ''; height: 1px; flex: 1; background: #d8dfdc; }
 
 .modern-login-header { margin-bottom: 34px; }
 .modern-login-eyebrow { color: #0f766e; }
@@ -299,6 +305,31 @@ body.modern-login-page #main { min-height: 100vh; }
     text-align: center;
 }
 
+.modern-create-account { margin: 22px 0 0; color: #687574; font-size: 13px; text-align: center; }
+.modern-create-account a, .modern-back-button { color: #0f766e; font-weight: 700; }
+.modern-back-button { margin: 0 0 28px; padding: 6px 0; border: 0; background: transparent; }
+.modern-recovery-message { margin-bottom: 20px; padding: 12px 14px; border-left: 3px solid #0f766e; color: #21433f; background: #eaf5f1; font-size: 13px; line-height: 1.5; }
+.modern-recovery-message.error { border-left-color: #b83c35; color: #7e2925; background: #fff1ef; }
+.modern-submit { width: 100%; min-height: 50px; margin-top: 4px; border-color: #0f766e; border-radius: 8px; background: #0f766e; color: #fff; font-weight: 700; }
+.modern-submit:hover, .modern-submit:focus { border-color: #0b5f59; background: #0b5f59; color: #fff; }
+
+.modern-reset-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(320px, 42%) minmax(0, 58%); background: #f7f8f6; }
+.modern-reset-brand { padding: 48px; display: flex; flex-direction: column; justify-content: space-between; color: #fff; background: #172222; }
+.modern-reset-brand h1 { max-width: 430px; margin: 0 0 16px; color: #fff; font-size: 46px; line-height: 1.12; }
+.modern-reset-brand p:last-child { max-width: 430px; color: #c8d6d3; font-size: 16px; line-height: 1.6; }
+.modern-reset-content { padding: 48px; display: grid; place-items: center; }
+.modern-reset-panel { width: min(100%, 480px); }
+.modern-reset-panel header { margin-bottom: 30px; }
+.modern-reset-panel h2 { margin: 0 0 10px; color: #172222; font-size: 34px; }
+.modern-reset-panel header > p:last-child { color: #687574; line-height: 1.6; }
+.modern-reset-panel label { margin-bottom: 8px; color: #354342; font-size: 13px; font-weight: 650; }
+.modern-reset-panel .form-control { min-height: 48px; border-color: #cbd3d0; border-radius: 8px; }
+.modern-reset-panel .form-control:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15, 118, 110, .14); }
+.reset-password-tools { min-height: 32px; margin: 0 0 18px; display: flex; justify-content: space-between; }
+.modern-reset-expired { text-align: center; }
+.modern-reset-expired > .fas { margin-bottom: 22px; color: #0f766e; font-size: 46px; }
+.modern-reset-expired p { margin-bottom: 24px; color: #687574; line-height: 1.6; }
+
 .modern-login-security .fa-shield-alt { margin-right: 6px; color: #0f766e; }
 
 body.modern-login-page > footer {
@@ -344,7 +375,7 @@ body.modern-login-page > footer a { color: #53615f; }
     }
 
     .modern-login-mobile-brand { display: flex; margin-bottom: 36px; }
-    #login.modern-login-panel { max-width: 480px; margin: 0 auto; }
+    .modern-login-panel { max-width: 480px; margin: 0 auto; }
     .modern-login-header h1 { font-size: 32px; }
 
     body.modern-login-page > footer {
@@ -353,6 +384,12 @@ body.modern-login-page > footer a { color: #53615f; }
         padding: 0 20px 20px;
         background: #f7f8f6;
     }
+
+    .modern-reset-shell { display: block; }
+    .modern-reset-brand { min-height: 180px; padding: 26px; }
+    .modern-reset-brand > div { display: none; }
+    .modern-reset-content { min-height: calc(100vh - 180px); padding: 36px 22px; place-items: start center; }
+    .modern-reset-panel h2 { font-size: 30px; }
 }
 
 @media (max-width: 420px) {
