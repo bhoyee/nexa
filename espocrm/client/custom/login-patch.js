@@ -8,6 +8,9 @@ require(['views/login', 'views/user/password-change-request'], (LoginView, Passw
         return {
             ...defaultData.call(this),
             applicationName: this.getConfig().get('applicationName') || 'Nexa CRM',
+            // Nexa owns recovery through its tenant-aware endpoint, so the entry
+            // point must not depend on EspoCRM's legacy SMTP-derived UI flag.
+            showForgotPassword: true,
         };
     };
 
