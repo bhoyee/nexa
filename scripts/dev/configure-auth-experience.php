@@ -42,6 +42,7 @@ $application = new Application();
 $writer = $application->getContainer()->getByClass(ConfigWriter::class);
 $writer->setMultiple([
     'passwordRecoveryNoExposure' => true,
+    'nexaSignupExposeVerificationCode' => $enabled('NEXA_SIGNUP_EXPOSE_VERIFICATION_CODE'),
     'nexaPublicAuthProviders' => [
         'google' => $enabled('NEXA_AUTH_GOOGLE_ENABLED'),
         'microsoft' => $enabled('NEXA_AUTH_MICROSOFT_ENABLED'),

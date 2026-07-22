@@ -33,6 +33,10 @@ $signupSource = file_get_contents(
 $assert(str_contains($signupSource, 'random_int(0, 99999999)'), 'Verification must use an eight-digit random code.');
 $assert(str_contains($signupSource, "INTERVAL 15 MINUTE"), 'Resent codes must expire after 15 minutes.');
 $assert(
+    str_contains($signupSource, 'nexaSignupExposeVerificationCode'),
+    'Native setup must expose local verification codes through application configuration.'
+);
+$assert(
     str_contains($signupSource, 'strtolower($email)') && str_contains($signupSource, '$code'),
     'Code digests must be bound to email.'
 );
